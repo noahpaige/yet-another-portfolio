@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
+import { motion, useTransform, MotionValue } from "framer-motion";
 
 type HSLColor = { h: number; s: number; l: number };
 
@@ -44,15 +45,17 @@ const c2 = { h: 242.2, s: 84, l: 4.9 };
 type BlobData = {
   path: string;
   colors: [string, string];
-  groupStyle: React.CSSProperties;
+  rotation: number;
+  scale: number;
   animDuration: string;
+  depth: number;
 };
 
 const generateBlobs = (): BlobData[] => {
   const n = 8;
   const gap = 0.75;
   const shapeMin = 0.5;
-  const shapeMax = 3;
+  const shapeMax = 4;
 
   const blobs: BlobData[] = [];
 
@@ -63,6 +66,7 @@ const generateBlobs = (): BlobData[] => {
     const rotation = Math.floor(Math.random() * 360);
     const scale = interpolate(shapeMax, shapeMin, sFactor);
     const duration = 20 + Math.random() * 20;
+    const depth = Math.random(); // For parallax intensity
 
     blobs.push({
       path: paths[Math.floor(Math.random() * paths.length)],
@@ -72,25 +76,32 @@ const generateBlobs = (): BlobData[] => {
           interpolateHSL(c1, c2, hFactor + gap, sFactor, lFactor - gap)
         ),
       ],
-      groupStyle: {
-        transform: `rotate(${rotation}deg) scale(${scale})`,
-        translateZ: "0",
-      } as React.CSSProperties,
+      rotation: rotation,
+      scale: scale,
       animDuration: `${duration}s`,
+      depth,
     });
   }
 
   return blobs;
 };
 
-const AnimatedBackground: React.FC = () => {
+interface AnimatedBackgroundProps {
+  scrollYProgress: MotionValue<number>;
+}
+
+const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
+  scrollYProgress,
+}) => {
   const blobs = useMemo(() => generateBlobs(), []);
 
   return (
     <svg
+      aria-hidden="true"
       viewBox="0 0 100 100"
       preserveAspectRatio="xMidYMid slice"
-      className="fixed top-0 left-0 w-full h-full -z-20 blur-2xl"
+      className="fixed top-0 left-0 w-full h-full -z-20"
+      style={{ filter: "blur(30px)" }}
     >
       <defs>
         {blobs.map((blob, index) => (
@@ -107,23 +118,29 @@ const AnimatedBackground: React.FC = () => {
           </linearGradient>
         ))}
       </defs>
-      {blobs.map((blob, index) => (
-        <g
-          key={`path-${index}`}
-          style={blob.groupStyle}
-          className="transform-gpu"
-        >
-          <path
-            d={blob.path}
-            fill={`url(#gradient-${index})`}
-            stroke={`url(#gradient-${index})`}
-            className="animate-spin transform-gpu"
-            style={{ animationDuration: blob.animDuration }}
-          />
-        </g>
-      ))}
+
+      {blobs.map((blob, index) => {
+        //const y = useTransform(scrollYProgress, [0, 1], [0, -blob.depth * 30]);
+        const y = useTransform(scrollYProgress, [0, 1], [80, 20]);
+
+        return (
+          <motion.g
+            key={`path-${index}`}
+            style={{ rotate: blob.rotation, scale: blob.scale, y: y }}
+            className="transform-gpu"
+          >
+            <path
+              d={blob.path}
+              fill={`url(#gradient-${index})`}
+              stroke={`url(#gradient-${index})`}
+              className="animate-spin transform-gpu"
+              style={{ animationDuration: blob.animDuration }}
+            />
+          </motion.g>
+        );
+      })}
     </svg>
   );
 };
 
-export default AnimatedBackground;
+export default React.memo(AnimatedBackground);
