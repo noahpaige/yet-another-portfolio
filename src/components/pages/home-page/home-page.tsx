@@ -13,7 +13,7 @@ import { Home, Folder, Info, Mail } from "lucide-react";
 import { useSmoothWheelScroll } from "@/components/pages/home-page/hooks/use-smooth-wheel-scroll";
 
 const SECTIONS = new Map([
-  ["Welcome", { component: WelcomeSection, icon: Home }],
+  ["Home", { component: WelcomeSection, icon: Home }],
   ["Projects", { component: () => <div>Projects</div>, icon: Folder }],
   ["About", { component: () => <div>About</div>, icon: Info }],
   ["Contact", { component: () => <div>Contact</div>, icon: Mail }],

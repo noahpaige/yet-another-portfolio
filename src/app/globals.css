@@ -41,6 +41,8 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
+  --font-doto: "Doto", sans-serif;
 }
 
 :root {
@@ -132,4 +134,33 @@
 
 .animate-spin {
   animation: rotate linear infinite;
+}
+
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@keyframes slide-up {
+  0% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0%);
+    opacity: 1;
+  }
+}
+
+@layer utilities {
+  .animate-blink {
+    animation: blink 1s steps(1, start) infinite;
+  }
+  .animate-slide-up {
+    animation: slide-up 0.4s ease-out forwards;
+  }
 }

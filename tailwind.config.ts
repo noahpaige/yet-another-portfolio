@@ -13,6 +13,15 @@ const config: Config = {
           250: "#dedde2", // your custom zinc-250 value
         },
       },
+      keyframes: {
+        blink: {
+          "0%, 49%": { opacity: "1", color: "red" },
+          "50%, 100%": { opacity: "0" },
+        },
+      },
+      animation: {
+        blink: "blink 1s step-start infinite",
+      },
     },
   },
   plugins: [],
