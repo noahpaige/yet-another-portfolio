@@ -90,6 +90,33 @@ interface AnimatedBackgroundProps {
   scrollYProgress: MotionValue<number>;
 }
 
+interface BlobProps {
+  blob: BlobData;
+  index: number;
+  scrollYProgress: MotionValue<number>;
+}
+
+const Blob: React.FC<BlobProps> = ({ blob, index, scrollYProgress }) => {
+  //const y = useTransform(scrollYProgress, [0, 1], [0, -blob.depth * 30]);
+  const y = useTransform(scrollYProgress, [0, 1], [80, 20]);
+
+  return (
+    <motion.g
+      key={`path-${index}`}
+      style={{ rotate: blob.rotation, scale: blob.scale, y: y }}
+      className="transform-gpu"
+    >
+      <path
+        d={blob.path}
+        fill={`url(#gradient-${index})`}
+        stroke={`url(#gradient-${index})`}
+        className="animate-spin transform-gpu"
+        style={{ animationDuration: blob.animDuration }}
+      />
+    </motion.g>
+  );
+};
+
 const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
   scrollYProgress,
 }) => {
@@ -119,26 +146,14 @@ const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
         ))}
       </defs>
 
-      {blobs.map((blob, index) => {
-        //const y = useTransform(scrollYProgress, [0, 1], [0, -blob.depth * 30]);
-        const y = useTransform(scrollYProgress, [0, 1], [80, 20]);
-
-        return (
-          <motion.g
-            key={`path-${index}`}
-            style={{ rotate: blob.rotation, scale: blob.scale, y: y }}
-            className="transform-gpu"
-          >
-            <path
-              d={blob.path}
-              fill={`url(#gradient-${index})`}
-              stroke={`url(#gradient-${index})`}
-              className="animate-spin transform-gpu"
-              style={{ animationDuration: blob.animDuration }}
-            />
-          </motion.g>
-        );
-      })}
+      {blobs.map((blob, index) => (
+        <Blob
+          key={`blob-${index}`}
+          blob={blob}
+          index={index}
+          scrollYProgress={scrollYProgress}
+        />
+      ))}
     </svg>
   );
 };
