@@ -1,4 +1,3 @@
-// components/pages/home-page/hooks/use-scroll-sections.ts
 import { RefObject, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -13,67 +12,62 @@ export function useScrollSections(
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // Scroll to a section manually
   const scrollToSection = (section: string) => {
     const el = document.getElementById(`section-${section}`);
     if (el) {
       setScrollingManually(true);
       el.scrollIntoView({ behavior: "smooth" });
 
+      // Just wait a moment, then resume listening to IntersectionObserver
       setTimeout(() => {
         setScrollingManually(false);
-        setActiveSection(section);
-        const params = new URLSearchParams(window.location.search);
-        params.set("section", section);
-        router.replace(`?${params.toString()}`);
-      }, 600); // matches scroll duration
+      }, 800); // Give some time for smooth scroll to complete
     }
   };
 
-  // Observe which section is in view
+  // 📦 Efficient intersection-based scroll tracking
   useEffect(() => {
     const container = scrollRef.current;
     if (!container) return;
 
-    const handleScroll = () => {
-      if (scrollingManually) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (scrollingManually) return;
 
-      const sectionElements = Array.from(container.children) as HTMLElement[];
+        const visible = entries.find((entry) => entry.isIntersecting);
+        if (!visible) return;
 
-      const containerTop = container.getBoundingClientRect().top;
-
-      for (const el of sectionElements) {
-        const rect = el.getBoundingClientRect();
-        const offsetTop = rect.top - containerTop;
-        const height = rect.height;
-
-        if (offsetTop >= 0 && offsetTop < height / 2) {
-          const section = el.getAttribute("data-section");
-          if (section && section !== activeSection) {
-            setActiveSection(section);
-            const params = new URLSearchParams(window.location.search);
-            params.set("section", section);
-            router.replace(`?${params.toString()}`);
-          }
-          break;
+        const section = visible.target.getAttribute("data-section");
+        if (section && section !== activeSection) {
+          setActiveSection(section);
+          const params = new URLSearchParams(window.location.search);
+          params.set("section", section);
+          router.replace(`?${params.toString()}`);
         }
+      },
+      {
+        root: container,
+        threshold: 0.5, // Adjust based on how much of section must be visible
       }
-    };
+    );
 
-    container.addEventListener("scroll", handleScroll);
+    const children = Array.from(container.children);
+    children.forEach((el) => observer.observe(el));
+
     return () => {
-      container.removeEventListener("scroll", handleScroll);
+      children.forEach((el) => observer.unobserve(el));
+      observer.disconnect();
     };
   }, [scrollingManually, activeSection, router, scrollRef]);
 
-  // Scroll to section from search param on load
+  // Handle initial deep link
   useEffect(() => {
     const selected = searchParams.get("section");
     if (selected) {
-      setTimeout(() => {
+      requestAnimationFrame(() => {
         const el = document.getElementById(`section-${selected}`);
         if (el) el.scrollIntoView({ behavior: "smooth" });
-      }, 100);
+      });
     }
   }, [searchParams]);
 
