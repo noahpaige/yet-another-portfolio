@@ -5,35 +5,33 @@ export function useSmoothWheelScroll(scrollRef: RefObject<HTMLElement>) {
     const container = scrollRef.current;
     if (!container) return;
 
-    let lastScrollTime = 0;
+    let isScrolling = false;
     let scrollTimeout: NodeJS.Timeout | null = null;
 
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
 
-      const now = Date.now();
-      if (now - lastScrollTime < 100) return;
-      lastScrollTime = now;
+      if (isScrolling) return;
+      isScrolling = true;
 
       const direction = e.deltaY > 0 ? 1 : -1;
-      const scrollAmount = container.clientHeight; // scroll one full section
+      const scrollAmount = container.clientHeight;
 
       container.scrollBy({
         top: direction * scrollAmount,
         behavior: "smooth",
       });
 
-      // throttle further scrolls
-      if (scrollTimeout) clearTimeout(scrollTimeout);
       scrollTimeout = setTimeout(() => {
-        lastScrollTime = 0;
-      }, 200);
+        isScrolling = false;
+      }, 500); // Allow time for scroll animation to finish
     };
 
     container.addEventListener("wheel", handleWheel, { passive: false });
 
     return () => {
       container.removeEventListener("wheel", handleWheel);
+      if (scrollTimeout) clearTimeout(scrollTimeout);
     };
-  }, [scrollRef]);
+  }, []); // ✅ `scrollRef` does not need to be in deps
 }
