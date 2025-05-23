@@ -6,7 +6,7 @@ import { useScroll } from "framer-motion";
 import WelcomeSection from "@/components/pages/home-page/sections/welcome-section";
 import HomePageSection from "@/components/pages/home-page/sections/home-page-section";
 import BottomNav from "@/components/pages/home-page/bottom-nav";
-import AnimatedBackground from "@/components/animated-background";
+import AnimatedBackground from "@/components/animated-background/animated-background2";
 import ClientOnly from "@/components/client-only";
 import { useScrollSections } from "@/components/pages/home-page/hooks/use-scroll-sections";
 import { Home, Folder, Info, Mail } from "lucide-react";

@@ -1,13 +1,8 @@
 "use client";
 
 import React, { useMemo } from "react";
+import { motion, MotionValue, useMotionValueEvent } from "framer-motion";
 import AnimatedBlob from "@/components/animated-background/animated-blob";
-import {
-  motion,
-  useTransform,
-  MotionValue,
-  useMotionValueEvent,
-} from "framer-motion";
 
 type HSLColor = { h: number; s: number; l: number };
 
@@ -133,8 +128,6 @@ const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
 }) => {
   const blobs = useMemo(() => generateBlobs(), []);
 
-  const y = useTransform(scrollYProgress, [0, 1], [80, 20]);
-
   const [colorIndex, setColorIndex] = React.useState(0);
 
   useMotionValueEvent(scrollYProgress, "change", (latest) => {
@@ -175,38 +168,13 @@ const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
       {blobs.map((blob, index) => {
         return (
           <AnimatedBlob
-            key={`blob-${index}`}
-            blob={blob}
+            key={index}
             index={index}
             gradientId={`gradient-${index}`}
+            blob={blob}
             scrollYProgress={scrollYProgress}
             numBlobs={blobs.length}
           />
-        );
-        const combinedRotation = useTransform(
-          scrollYProgress,
-          [0, 1],
-          [blob.rotation, blob.rotation + (360 / blobs.length) * index]
-        );
-        return (
-          <motion.g
-            key={`path-${index}`}
-            style={{
-              rotate: combinedRotation,
-              scale: blob.scale,
-              y,
-              willChange: "transform",
-            }}
-            className="transform-gpu"
-          >
-            <path
-              d={blob.path}
-              fill={`url(#gradient-${index})`}
-              stroke={`url(#gradient-${index})`}
-              className="transform-gpu p-2 animate-blob-spin"
-              style={{ animationDuration: blob.animDuration }}
-            />
-          </motion.g>
         );
       })}
     </svg>

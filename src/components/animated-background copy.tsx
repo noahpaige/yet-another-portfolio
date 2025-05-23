@@ -1,13 +1,7 @@
 "use client";
 
-import React, { useMemo } from "react";
-import AnimatedBlob from "@/components/animated-background/animated-blob";
-import {
-  motion,
-  useTransform,
-  MotionValue,
-  useMotionValueEvent,
-} from "framer-motion";
+import React, { useEffect, useMemo } from "react";
+import { motion, useTransform, MotionValue } from "framer-motion";
 
 type HSLColor = { h: number; s: number; l: number };
 
@@ -37,6 +31,22 @@ const interpolateHSL = (
 };
 
 const hslToString = (hsl: HSLColor) => `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`;
+
+const parseHSL = (str: string): HSLColor => {
+  const [h, s, l] = str.match(/[\d.]+/g)!.map(Number);
+  return { h, s, l };
+};
+
+function interpolateColor(
+  colorA: { a: string; b: string },
+  colorB: { a: string; b: string },
+  factor: number,
+  key: "a" | "b"
+) {
+  const c1 = parseHSL(colorA[key]);
+  const c2 = parseHSL(colorB[key]);
+  return hslToString(interpolateHSL(c1, c2, factor, factor, factor));
+}
 
 const paths = [
   "M25.7,-30.2C32.4,-25.1,36.2,-16.1,38.3,-6.4C40.3,3.2,40.6,13.4,36.8,22.3C32.9,31.3,25,39,15.5,42.2C6.1,45.4,-4.8,44.2,-13.5,39.8C-22.3,35.5,-29,28,-33.3,19.7C-37.6,11.3,-39.6,2,-38.7,-7.5C-37.8,-17,-34.1,-26.6,-27.2,-31.7C-20.3,-36.7,-10.1,-37.3,-0.3,-36.9C9.5,-36.6,19.1,-35.3,25.7,-30.2Z",
@@ -134,15 +144,19 @@ const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
   const blobs = useMemo(() => generateBlobs(), []);
 
   const y = useTransform(scrollYProgress, [0, 1], [80, 20]);
+  const colorIndex = useTransform(scrollYProgress, [0, 1], [0, blobs.length]);
 
-  const [colorIndex, setColorIndex] = React.useState(0);
+  const roundedColorIndex = useTransform(colorIndex, (val) =>
+    Math.floor(val % blobs[0].colors.length)
+  );
 
-  useMotionValueEvent(scrollYProgress, "change", (latest) => {
-    const index = Math.floor(latest * (blobs[0].colors.length - 1));
-    setColorIndex(index);
-    console.log("colorIndex changed:", colorIndex);
-  });
+  useEffect(() => {
+    const unsubscribe = scrollYProgress.on("change", (latest) => {
+      console.log("MotionValue changed:", latest);
+    });
 
+    return () => unsubscribe(); // cleanup on unmount or prop change
+  }, [scrollYProgress]);
   return (
     <svg
       aria-hidden="true"
@@ -162,10 +176,13 @@ const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
               y1="1"
               y2="0"
             >
-              <motion.stop offset="0%" stopColor={blob.colors[colorIndex].a} />
+              <motion.stop
+                offset="0%"
+                stopColor={blob.colors[roundedColorIndex.get()].a}
+              />
               <motion.stop
                 offset="100%"
-                stopColor={blob.colors[colorIndex].b}
+                stopColor={blob.colors[roundedColorIndex.get()].b}
               />
             </linearGradient>
           );
@@ -173,16 +190,6 @@ const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
       </defs>
 
       {blobs.map((blob, index) => {
-        return (
-          <AnimatedBlob
-            key={`blob-${index}`}
-            blob={blob}
-            index={index}
-            gradientId={`gradient-${index}`}
-            scrollYProgress={scrollYProgress}
-            numBlobs={blobs.length}
-          />
-        );
         const combinedRotation = useTransform(
           scrollYProgress,
           [0, 1],

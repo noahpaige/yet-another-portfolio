@@ -30,7 +30,7 @@ export default function BottomNav({
   };
   return (
     <div className="fixed bottom-4 w-full flex justify-center z-50">
-      <div className="relative flex gap-2 bg-white/10 backdrop-blur-md rounded-xl px-4 py-2">
+      <div className="relative flex gap-2 bg-white/10 backdrop-blur-md rounded-xl p-2">
         {options.map((option) => {
           const isActive = option.name === current;
           const isHovered = option.name === hovered;
