@@ -25,11 +25,8 @@ export default function WelcomeSection() {
   const phrase = phrases[index];
 
   useEffect(() => {
-    let hideTimeout: NodeJS.Timeout;
-    let nextTimeout: NodeJS.Timeout;
-
-    hideTimeout = setTimeout(() => setShow(false), 3000);
-    nextTimeout = setTimeout(() => {
+    const hideTimeout: NodeJS.Timeout = setTimeout(() => setShow(false), 3000);
+    const nextTimeout: NodeJS.Timeout = setTimeout(() => {
       setIndex((prev) => (prev + 1) % phrases.length);
       setShow(true);
     }, 4000);
