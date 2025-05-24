@@ -30,15 +30,13 @@ export default function BottomNav({
   };
   return (
     <div className="fixed bottom-4 w-full flex justify-center z-50">
-      <div className="relative flex gap-2 bg-white/10 backdrop-blur-md rounded-xl p-2">
+      <div className="relative flex gap-2 bg-slate-200/30 backdrop-blur-md rounded-xl p-2">
         {options.map((option) => {
           const isActive = option.name === current;
           const isHovered = option.name === hovered;
 
           const textColor =
-            isHovered || isActive
-              ? "text-white"
-              : "text-zinc-400 hover:text-white";
+            isHovered || isActive ? "text-white" : "text-zinc-300";
 
           const IconComponent = option.icon;
 
@@ -58,7 +56,7 @@ export default function BottomNav({
               {displayHighlight === option.name && (
                 <motion.div
                   layoutId="navHighlight"
-                  className="absolute inset-0 bg-white/30 rounded-md z-0"
+                  className="absolute inset-0 bg-slate-200/30 rounded-md z-0"
                   transition={{
                     type: "spring",
                     stiffness: 300,
@@ -67,7 +65,12 @@ export default function BottomNav({
                 />
               )}
               <span className="relative z-10 flex items-center gap-2">
-                <IconComponent size={18} className="shrink-0" />
+                <IconComponent
+                  size={18}
+                  className={`shrink-0 transition-colors ${
+                    isActive && "stroke-3"
+                  }`}
+                />
                 <span className="hidden sm:inline">{option.name}</span>
               </span>
             </button>
