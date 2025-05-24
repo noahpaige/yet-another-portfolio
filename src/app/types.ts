@@ -1,8 +1,6 @@
 export type BlobData = {
-  path: string;
+  path: Path2D;
   colors: { a: string; b: string }[];
-  rotation: number;
+  rotation: { angle: number; curSpeed: number; baseSpeed: number };
   scale: number;
-  animDuration: string;
-  depth: number;
 };
