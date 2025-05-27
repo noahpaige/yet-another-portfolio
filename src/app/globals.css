@@ -42,6 +42,9 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
+  --shadow-soft-light: inset 0px 0px 2px rgba(255, 255, 255, 0.3);
+  --shadow-soft-dark: inset 0px 0px 2px rgba(0, 0, 0, 0.3);
+
   --font-doto: "Doto", sans-serif;
 
   --animate-blob-spin: sspin 1s linear infinite;
@@ -53,6 +56,15 @@
     to {
       transform: rotate(360deg);
     }
+  }
+}
+
+@layer components {
+  .glass-layer {
+    @apply bg-slate-900/30 rounded-xl p-2 shadow-soft-light;
+  }
+  .glass-layer-light {
+    @apply bg-slate-200/10 rounded-md z-0 shadow-soft-light;
   }
 }
 
