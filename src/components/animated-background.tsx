@@ -97,7 +97,7 @@ const generateBlobs = (count: number): BlobData[] => {
     const rawPath = paths[Math.floor(Math.random() * paths.length)];
     const path2D = new Path2D(rawPath);
 
-    const speed = 0.075 * (i / count) * (1 + Math.random() * 0.9);
+    const speed = 0.1 * ((count - 1 - i) / count) * (1 + Math.random() * 0.9);
     blobs.push({
       path: path2D,
       rotation: {
@@ -133,8 +133,8 @@ const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
 
     blobs.current.forEach((blob, index) => {
       blob.rotation.curSpeed =
-        25 *
-        Math.pow(index / blobs.current.length, 2) *
+        15 *
+        Math.pow((blobs.current.length - index) / blobs.current.length, 0.1) *
         blob.rotation.baseSpeed *
         scrollDirection.current;
     });
@@ -196,8 +196,8 @@ const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
         const grad = offCtx.createLinearGradient(
           -(RENDER_SIZE / 2),
           RENDER_SIZE / 2,
-          RENDER_SIZE / 16,
-          -(RENDER_SIZE / 16)
+          RENDER_SIZE / 8,
+          -(RENDER_SIZE / 8)
         );
         grad.addColorStop(0, blob.colors[colorIndex.current].a);
         grad.addColorStop(1, blob.colors[colorIndex.current].b);
