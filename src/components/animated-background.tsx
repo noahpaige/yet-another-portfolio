@@ -5,10 +5,8 @@ import { MotionValue, useMotionValueEvent } from "framer-motion";
 import { BlobData } from "@/app/types";
 import { interp } from "@/lib/interp";
 
-const NUM_BLOBS = 8;
-const RENDER_SIZE = 50;
-// const MIN_SIZE = 1.5;
-// const MAX_SIZE = 3.5;
+const NUM_BLOBS = 12;
+const RENDER_SIZE = 32;
 
 interface AnimatedBackgroundProps {
   scrollYProgress: MotionValue<number>;
@@ -58,28 +56,47 @@ const paths = [
   "M23.1,-27.4C28.5,-23,30.4,-14.4,31,-6.1C31.6,2.1,31.1,9.8,27.6,16C24.1,22.1,17.7,26.5,10,30.9C2.3,35.2,-6.8,39.3,-14.7,37.6C-22.7,36,-29.5,28.5,-33.2,20.1C-36.9,11.8,-37.5,2.5,-36.1,-6.6C-34.8,-15.8,-31.7,-24.9,-25.3,-29.1C-19,-33.3,-9.5,-32.6,-0.3,-32.3C8.9,-31.9,17.7,-31.8,23.1,-27.4Z",
 ];
 
+// const colorPairs: [HSLColor, HSLColor][] = [
+//   [
+//     { h: 145, s: 50, l: 30 },
+//     { h: 290, s: 35, l: 10 },
+//   ],
+//   [
+//     { h: 155, s: 25, l: 10 },
+//     { h: 260, s: 40, l: 30 },
+//   ],
+//   [
+//     { h: 360, s: 80, l: 20 },
+//     { h: 40, s: 35, l: 10 },
+//   ],
+//   [
+//     { h: 35, s: 50, l: 30 },
+//     { h: 0, s: 35, l: 10 },
+//   ],
+// ];
+
 const colorPairs: [HSLColor, HSLColor][] = [
   [
-    { h: 155, s: 50, l: 30 },
-    { h: 100, s: 35, l: 10 },
+    { h: 145, s: 50, l: 30 },
+    { h: 290, s: 35, l: 10 },
   ],
   [
-    { h: 180, s: 50, l: 30 },
-    { h: 350, s: 25, l: 10 },
+    { h: 290, s: 35, l: 10 },
+    { h: 140, s: 55, l: 26.67 },
   ],
   [
-    { h: 267, s: 50, l: 40 },
-    { h: 20, s: 25, l: 10 },
+    { h: 135, s: 60, l: 23.33 },
+    { h: 290, s: 35, l: 10 },
   ],
   [
-    { h: 35, s: 50, l: 30 },
-    { h: 350, s: 25, l: 10 },
+    { h: 290, s: 35, l: 10 },
+    { h: 130, s: 65, l: 20 },
   ],
 ];
 
 const generateBlobs = (count: number): BlobData[] => {
   const blobs: BlobData[] = [];
-  const numColors = 32;
+  const numColors = 64;
   const colorsPerPair = Math.floor(numColors / (colorPairs.length - 1));
   for (let i = 0; i < count; i++) {
     const colorSteps: { a: string; b: string }[] = [];
