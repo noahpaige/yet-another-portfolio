@@ -141,7 +141,6 @@ const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
   const scrollDirection = useRef(1);
 
   useMotionValueEvent(scrollYProgress, "change", (latest) => {
-    console.log("latest", latest);
     const i = Math.floor(latest * (blobs.current[0].colors.length - 1));
     colorIndex.current = i;
 
@@ -246,6 +245,7 @@ const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
         height: "100vh",
         zIndex: -1,
         pointerEvents: "none",
+        // filter: "blur(40px)",
         background: blobs.current[0].colors[colorIndex.current].b,
       }}
     />
