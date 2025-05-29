@@ -12,6 +12,7 @@ import ClientOnly from "@/components/client-only";
 import { useScrollSections } from "@/components/pages/home-page/hooks/use-scroll-sections";
 import { Home, Folder, Info, Mail } from "lucide-react";
 import { useSmoothWheelScroll } from "@/components/pages/home-page/hooks/use-smooth-wheel-scroll";
+import NoiseOverlay from "@/components/noise-overlay";
 
 const SECTIONS = new Map([
   ["HOME", { component: WelcomeSection, icon: Home }],
@@ -45,11 +46,12 @@ export default function HomePage() {
       <div className="relative z-0 bg-slate-900">
         <ClientOnly>
           <AnimatedBackground scrollYProgress={scrollYProgress} />
+          <NoiseOverlay opacity={0.05} resolution={1} />
         </ClientOnly>
 
         <div
           ref={scrollContainerRef}
-          className="h-screen overflow-y-scroll snap-y snap-mandatory scroll-smooth text-zinc-200"
+          className="h-screen overflow-x-hidden overflow-y-scroll snap-y snap-mandatory scroll-smooth text-zinc-200"
         >
           {Array.from(SECTIONS.entries()).map(([name, section]) => (
             <HomePageSection
