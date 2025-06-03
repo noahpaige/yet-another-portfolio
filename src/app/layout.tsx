@@ -30,7 +30,9 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="antialiased font-lexend-deca">{children}</body>
+      <body className="antialiased font-lexend-deca overflow-hidden">
+        {children}
+      </body>
     </html>
   );
 }
