@@ -4,7 +4,7 @@ import { RefObject, useRef } from "react";
 import { useScroll } from "framer-motion";
 
 import WelcomeSection from "@/components/pages/home-page/sections/welcome-section";
-import AboutSection from "@/components/pages/home-page/sections/about-section";
+import AboutSection from "@/components/pages/home-page/sections/about/about-section";
 import HomePageSection from "@/components/pages/home-page/sections/home-page-section";
 import BottomNav from "@/components/pages/home-page/bottom-nav";
 import AnimatedBackground from "@/components/animated-background";
@@ -51,7 +51,7 @@ export default function HomePage() {
 
         <div
           ref={scrollContainerRef}
-          className="h-screen overflow-x-hidden overflow-y-scroll snap-y snap-mandatory scroll-smooth text-zinc-200"
+          className="h-screen overflow-x-hidden overflow-y-scroll snap-y snap-mandatory scroll-smooth text-zinc-200 @container"
         >
           {Array.from(SECTIONS.entries()).map(([name, section]) => (
             <HomePageSection
