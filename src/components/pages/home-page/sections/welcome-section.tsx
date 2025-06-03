@@ -50,12 +50,12 @@ export default function WelcomeSection() {
         </motion.h2>
 
         <motion.h1
-          className="text-5xl sm:text-6xl md:text-7xl font-extrabold leading-[1.1] text-white font-ibm-plex-mono font-[100]"
+          className="text-[clamp(48px,10vw,256px)] font-extrabold leading-[1.1] text-white font-ibm-plex-mono font-extralight"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-          Noah Paige
+          NOAH PAIGE
         </motion.h1>
 
         <div className="mt-12 min-h-[2.5rem] sm:min-h-[3rem] md:min-h-[3.5rem] text-right">

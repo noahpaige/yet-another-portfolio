@@ -50,7 +50,7 @@ const NoiseOverlay: React.FC<NoiseOverlayProps> = ({
         top: 0,
         left: 0,
         width: "100%",
-        zIndex: 0,
+        zIndex: -1,
         pointerEvents: "none",
         opacity,
         imageRendering: "pixelated",
