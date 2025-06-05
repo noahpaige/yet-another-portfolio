@@ -20,8 +20,8 @@ const NoiseOverlay: React.FC<NoiseOverlayProps> = ({
     const drawStaticNoise = () => {
       const width = window.innerWidth * resolution;
       const height = document.documentElement.scrollHeight * resolution;
-      console.log("window height: ", window.innerHeight);
-      console.log("scroll height: ", document.documentElement.scrollHeight);
+      // console.log("window height: ", window.innerHeight);
+      // console.log("scroll height: ", document.documentElement.scrollHeight);
 
       canvas.width = width;
       canvas.height = height;
