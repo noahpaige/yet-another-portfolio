@@ -63,12 +63,32 @@
   }
 }
 
+@layer utilities {
+  @media (max-width: 800px) {
+    .responsive-animated-about-card {
+      display: inline;
+    }
+  }
+
+  @media (min-width: 801px) {
+    .responsive-animated-about-card {
+      @apply flex items-baseline-last;
+    }
+  }
+}
+
 @layer components {
   .glass-layer {
     @apply bg-slate-900/30 rounded-xl p-2 shadow-soft-light backdrop-blur-[1px];
   }
+  .glass-layer-important {
+    @apply !bg-slate-900/30 !rounded-xl p-2 !shadow-soft-light !backdrop-blur-[1px];
+  }
   .glass-layer-light {
     @apply bg-slate-200/10 rounded-md z-0 shadow-soft-light;
+  }
+  .glass-hover-card {
+    @apply !bg-slate-900/30 !rounded-xl !p-2 !shadow-soft-light !backdrop-blur-[10px] !border-none;
   }
 }
 

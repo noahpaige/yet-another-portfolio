@@ -3,75 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useInView } from "framer-motion";
 import AnimatedAboutCard from "@/components/pages/home-page/sections/about/animated-about-card";
-
-const bblocks = [
-  {
-    header: "I AM",
-    body: "a web developer with experience in game design and 3D graphics.",
-  },
-  {
-    header: "I WORK",
-    body: "on web and 3D displays for US government rocket launches at CACI.",
-  },
-  {
-    header: "I ESCAPE",
-    body: "to the surf and the snow!",
-  },
-];
-
-const headingsContainerVariants = {
-  hidden: {},
-  show: {
-    transition: {
-      staggerChildren: 0.4,
-    },
-  },
-};
-
-const letterVariants = {
-  hidden: {
-    rotateX: -90,
-    y: 300,
-  },
-  show: (i: number) => ({
-    rotateX: 0,
-    y: 0,
-    transition: {
-      type: "spring",
-      stiffness: 90,
-      damping: 14,
-      delay: Math.pow(0.2 * i, 1 / 2),
-    },
-  }),
-  exit: {
-    x: -100,
-    opacity: 0,
-    transition: { duration: 0.1, ease: "easeIn" },
-  },
-};
-
-const wordSpacingVariants = {
-  hidden: {
-    x: -100,
-  },
-  show: (i: number) => ({
-    x: 10,
-    transition: {
-      duration: 0.5,
-      delay: 0.3 + Math.pow(0.2 * i, 1 / 2),
-      ease: "easeInOut",
-    },
-  }),
-};
-
-const bodyVariants = {
-  hidden: { opacity: 0, y: 20 },
-  show: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.5, delay: 2 + i * 0.2 },
-  }),
-};
+import { CONTENT_BOUNDS } from "@/app/constants";
+import { useClampCSS } from "@/components/shared/hooks/useClampCSS";
+import { blocks } from "@/components/pages/home-page/sections/about/content-blocks";
 
 export default function AboutSection() {
   const [show, setShow] = useState(false);
@@ -79,53 +13,43 @@ export default function AboutSection() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: false, margin: "-100px" });
 
+  const gapSize = useClampCSS(
+    16,
+    64,
+    CONTENT_BOUNDS.yMinPx,
+    CONTENT_BOUNDS.yMaxPx,
+    0,
+    0
+  );
+
   useEffect(() => {
     setShow(isInView);
   }, [isInView]);
 
-  const blocks = [
-    {
-      heading: "I AM",
-      lines: [
-        "a web developer with experience",
-        "in game design and 3D graphics.",
-      ],
-    },
-    {
-      heading: "I WORK",
-      lines: [
-        "on web and 3D displays for US",
-        "government rocket launches at CACI.",
-      ],
-    },
-    {
-      heading: "I ESCAPE",
-      lines: ["to the surf", "and the snow!"],
-    },
-  ];
-
   return (
-    <div
-      ref={ref}
-      className="flex flex-col h-screen items-center justify-start px-6"
-    >
-      {bblocks.map((block, blockIndex) => {
-        return (
-          <div key={blockIndex} className="w-full">
-            <AnimatedAboutCard
-              show={show}
-              header={block.header}
-              body={block.body}
-              headerMinPx={48}
-              headerMaxPx={256}
-              bodyMinPx={12}
-              bodyMaxPx={48}
-              delay={blockIndex * 200}
-              bodyAnimDelay={500}
-            />
-          </div>
-        );
-      })}
+    <div ref={ref} className="h-full flex items-center justify-center">
+      <div
+        className={`flex flex-col items-center justify-start px-6 max-w-[${CONTENT_BOUNDS.xMaxPx}px]`}
+        style={{ gap: gapSize }}
+      >
+        {blocks.map((block, blockIndex) => {
+          return (
+            <div key={blockIndex} className="w-full">
+              <AnimatedAboutCard
+                show={show}
+                header={block.header}
+                body={block.body}
+                headerMinPx={48}
+                headerMaxPx={200}
+                bodyMinPx={16}
+                bodyMaxPx={64}
+                delay={blockIndex * 200}
+                bodyAnimDelay={500}
+              />
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

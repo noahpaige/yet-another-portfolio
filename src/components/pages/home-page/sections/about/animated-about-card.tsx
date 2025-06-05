@@ -2,6 +2,11 @@
 
 import { useAnimate } from "framer-motion";
 import { useEffect, useRef } from "react";
+import React from "react";
+import { CONTENT_BOUNDS } from "@/app/constants";
+import { useClampCSS } from "@/components/shared/hooks/useClampCSS";
+
+type RichTextSegment = string | React.ReactElement | undefined;
 
 const myAnimations = {
   headerReveal: {
@@ -44,12 +49,16 @@ const myAnimations = {
     },
   },
 };
+interface AnimationProperties {
+  duration: number;
+  staggerDelay?: number;
+}
 
 const animateChildren = async (
   parent: Element,
   animateFn: ReturnType<typeof useAnimate>[1],
   styles: unknown,
-  properties: unknown,
+  properties: AnimationProperties,
   checkCancel?: () => boolean
 ) => {
   const children = parent.children;
@@ -66,7 +75,7 @@ const animateChildren = async (
 interface AnimatedAboutCardProps {
   show: boolean;
   header: string;
-  body: string;
+  body: RichTextSegment[]; // ✅ New structure
   headerMinPx: number;
   headerMaxPx: number;
   bodyMinPx: number;
@@ -89,6 +98,22 @@ export default function AnimatedAboutCard({
   const [scopeHeader, animateHeader] = useAnimate();
   const [scopeBody, animateBody] = useAnimate();
   const animationIdRef = useRef(Symbol());
+  const bodyFontSize = useClampCSS(
+    bodyMinPx,
+    bodyMaxPx,
+    CONTENT_BOUNDS.yMinPx,
+    CONTENT_BOUNDS.yMaxPx,
+    CONTENT_BOUNDS.xMinPx,
+    CONTENT_BOUNDS.xMaxPx
+  );
+  const headerFontSize = useClampCSS(
+    headerMinPx,
+    headerMaxPx,
+    CONTENT_BOUNDS.yMinPx,
+    CONTENT_BOUNDS.yMaxPx,
+    CONTENT_BOUNDS.xMinPx,
+    CONTENT_BOUNDS.xMaxPx
+  );
 
   // Set initial hidden styles
   useEffect(() => {
@@ -102,13 +127,14 @@ export default function AnimatedAboutCard({
       },
       { duration: 0 }
     );
+
     animateChildren(
       scopeBody.current,
       animateBody,
       myAnimations.bodyReveal.hidden.styles,
       { duration: 0 }
     );
-  }, [animateHeader, animateBody]);
+  }, [animateHeader, animateBody, scopeHeader, scopeBody]);
 
   useEffect(() => {
     if (!scopeHeader.current || !scopeBody.current) return;
@@ -132,7 +158,6 @@ export default function AnimatedAboutCard({
       );
       if (isCancelled()) return;
 
-      // ✅ Add this delay before body animation
       if (bodyAnimDelay > 0) {
         await new Promise((r) => setTimeout(r, bodyAnimDelay));
         if (isCancelled()) return;
@@ -176,31 +201,40 @@ export default function AnimatedAboutCard({
     }, 150);
 
     return () => clearTimeout(timeoutId);
-  }, [show, animateHeader, animateBody, delay]);
+  }, [
+    show,
+    animateHeader,
+    animateBody,
+    delay,
+    scopeHeader,
+    scopeBody,
+    bodyAnimDelay,
+  ]);
 
   return (
-    <div className="text-white p-4 leading-tight">
+    <div className="text-white leading-none">
       <div
-        className="font-lexend-deca font-thin"
-        style={{
-          fontSize: `clamp(${bodyMinPx}px, 10vw, ${bodyMaxPx}px)`,
-        }}
+        className="font-lexend-deca font-extralight text-white responsive-animated-about-card"
+        style={{ fontSize: bodyFontSize }}
       >
         <span
           ref={scopeHeader}
-          className="font-space-mono text-nowrap inline-block align-baseline"
-          style={{
-            fontSize: `clamp(${headerMinPx}px, 10vw, ${headerMaxPx}px)`,
-            transformOrigin: "left",
-            marginRight: "0.5ch",
-          }}
+          className="font-space-mono text-slate-100 text-nowrap pr-3 [word-spacing:-0.25em]"
+          style={{ fontSize: headerFontSize, transformOrigin: "left" }}
         >
           {header}
         </span>
+
         <span ref={scopeBody}>
-          {body.split(" ").map((word, i) => (
-            <span key={i}>{word + " "}</span>
-          ))}
+          {body.map((segment, i) =>
+            typeof segment === "string" ? (
+              segment
+                .split(" ")
+                .map((word, j) => <span key={`${i}-${j}`}>{word + " "}</span>)
+            ) : (
+              <span key={`el-${i}`}>{segment}</span>
+            )
+          )}
         </span>
       </div>
     </div>
