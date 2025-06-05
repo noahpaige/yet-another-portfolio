@@ -29,7 +29,7 @@ export default function BottomNav({
     }, 700); // match scroll duration
   };
   return (
-    <div className="fixed bottom-4 w-full flex justify-center z-50">
+    <div className="fixed bottom-4 w-full flex justify-center z-50 h-14">
       <div className="relative flex gap-2 glass-layer">
         {options.map((option) => {
           const isActive = option.name === current;
