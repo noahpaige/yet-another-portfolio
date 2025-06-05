@@ -12,9 +12,10 @@ export default function HomePageSection({ children, id, sectionName }: Props) {
     <section
       id={id}
       data-section={sectionName}
-      className="h-screen snap-start flex justify-center items-center overflow-hidden"
+      className="h-screen w-screen flex flex-col overflow-hidden snap-start"
     >
-      {children}
+      <div className="CONTENT flex-1 w-full overflow-hidden">{children}</div>
+      <div className="SPACER w-full h-[calc(var(--spacing)*22)] shrink-0" />
     </section>
   );
 }
