@@ -14,7 +14,7 @@ import {
 import { JSX } from "react";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { ProgressiveBlur } from "@/components/ui/progressive-blur";
-
+import { Tilt } from "@/components/ui/tilt";
 interface ProjectCardProps {
   title: string;
   imageSrc: string;
@@ -36,27 +36,29 @@ export default function ProjectCard({
         damping: 22,
       }}
     >
-      <MorphingDialogTrigger className="flex w-full h-24 xs:h-32 sm:h-40 md:h-64 lg:h-80 flex-col overflow-hidden glass-layer rounded-xl transition-[height]">
-        <div className="relative h-full w-full overflow-hidden rounded-md">
-          <MorphingDialogImage
-            src={imageSrc}
-            alt={imageAltText}
-            className="absolute inset-0 h-full w-full object-cover"
-          />
-          <ProgressiveBlur
-            className="pointer-events-none absolute bottom-0 left-0 h-[50%] w-full "
-            blurIntensity={6}
-          />
-          <div className="absolute bottom-0 left-0 w-full px-3 py-2">
-            <MorphingDialogTitle className="text-white text-base">
-              {title}
-            </MorphingDialogTitle>
-            <MorphingDialogSubtitle className="text-zinc-300 text-sm hidden sm:block">
-              TAGS GO HERE
-            </MorphingDialogSubtitle>
+      <Tilt rotationFactor={6}>
+        <MorphingDialogTrigger className="flex w-full h-24 xs:h-32 sm:h-40 md:h-64 lg:h-80 flex-col overflow-hidden glass-layer-hoverable rounded-xl transition-[height] transition-shadow">
+          <div className="relative h-full w-full overflow-hidden rounded-md">
+            <MorphingDialogImage
+              src={imageSrc}
+              alt={imageAltText}
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+            <ProgressiveBlur
+              className="pointer-events-none absolute bottom-0 left-0 h-[50%] w-full rounded-b-md"
+              blurIntensity={6}
+            />
+            <div className="absolute bottom-0 left-0 w-full px-3 py-2">
+              <MorphingDialogTitle className="text-white text-base">
+                {title}
+              </MorphingDialogTitle>
+              <MorphingDialogSubtitle className="text-zinc-300 text-sm hidden sm:block">
+                TAGS GO HERE
+              </MorphingDialogSubtitle>
+            </div>
           </div>
-        </div>
-      </MorphingDialogTrigger>
+        </MorphingDialogTrigger>
+      </Tilt>
       <MorphingDialogContainer>
         <div className="w-full h-full p-4 ">
           <div
@@ -74,7 +76,7 @@ export default function ProjectCard({
                   className="absolute inset-0 h-full w-full object-cover"
                 />
                 <ProgressiveBlur
-                  className="pointer-events-none absolute bottom-0 left-0 h-[50%] w-full"
+                  className="pointer-events-none absolute bottom-0 left-0 h-[50%] w-full rounded-b-md"
                   blurIntensity={6}
                 />
                 <div className="absolute bottom-0 left-0 w-full px-6 pb-4">
