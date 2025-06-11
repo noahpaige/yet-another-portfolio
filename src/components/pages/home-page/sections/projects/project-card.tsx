@@ -103,7 +103,7 @@ export default function ProjectCard({
                 </MorphingDialogDescription>
               </div>
 
-              <MorphingDialogClose className="text-zinc-50 hover:cursor-pointer hover:glass-layer" />
+              <MorphingDialogClose className="text-zinc-50/50 hover:cursor-pointer glass-layer-hoverable hover:text-zinc-50 transition-all" />
             </MorphingDialogContent>
           </div>
         </div>

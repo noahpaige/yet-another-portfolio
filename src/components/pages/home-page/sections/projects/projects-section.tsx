@@ -40,7 +40,7 @@ export default function ProjectsSection() {
         {show && (
           <motion.div
             key="projects-grid"
-            className="grid auto-rows-auto grid-cols-1 sm:grid-cols-3 gap-2 p-6"
+            className="grid auto-rows-auto grid-cols-1 sm:grid-cols-3 gap-3 p-6"
             style={{ width: "calc(min(100%, 1536px))" }}
             variants={containerVariants}
             initial="hidden"
