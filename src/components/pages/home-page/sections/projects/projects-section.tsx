@@ -224,25 +224,20 @@ export default function ProjectsSection() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: false, margin: "-100px" });
 
-  const itemsPerCol = 2;
-
   useEffect(() => {
     setShow(isInView);
   }, [isInView]);
 
   return (
-    <div
-      ref={ref}
-      className={`grid auto-rows grid-cols-${itemsPerCol + 1} gap-2 p-6`}
-    >
+    <div ref={ref} className={`grid auto-rows grid-cols-3 gap-2 p-6`}>
       {projects.map((project, projectIndex) => {
         return (
           <div
             key={projectIndex}
-            className={`row-span-1 col-span-${
+            className={`row-span-1 ${
               projectIndex === 0 || projectIndex === 3 || projectIndex === 4
-                ? 2
-                : 1
+                ? "col-span-2"
+                : "col-span-1"
             }`}
           >
             <ProjectCard
