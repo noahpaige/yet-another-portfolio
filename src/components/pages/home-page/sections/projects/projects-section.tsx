@@ -80,7 +80,7 @@ const projects = [
     image: "/choom.png",
     imageAltText: "My Number 1 Choom",
     content: (
-      <div className="bg-gradient-to-br from-gray-900 via-zinc-800 to-black text-white p-6 rounded-2xl shadow-xl max-w-2xl mx-auto space-y-6 font-sans">
+      <div className=" text-white p-6  mx-auto space-y-6 font-sans">
         <h1 className="text-4xl font-extrabold text-yellow-400 tracking-wide">
           For My Choom, Jackie Welles
         </h1>
@@ -114,7 +114,7 @@ const projects = [
     image: "/clair_obscure.png",
     imageAltText: "It's harder than you think!",
     content: (
-      <div className="bg-gradient-to-b from-indigo-950 via-gray-900 to-slate-800 text-slate-100 p-6 rounded-2xl shadow-2xl max-w-2xl mx-auto space-y-6 font-serif">
+      <div className="text-slate-100 p-6 mx-auto space-y-6 font-serif">
         <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-purple-300 drop-shadow-sm">
           Clair Obscur: Expedition 33
         </h1>
@@ -149,7 +149,7 @@ const projects = [
     image: "control.jpg",
     imageAltText: "How does the director even get over there?",
     content: (
-      <div className="bg-gradient-to-b from-neutral-950 via-zinc-900 to-black text-zinc-100 p-6 rounded-2xl shadow-2xl max-w-2xl mx-auto space-y-6 font-sans tracking-tight">
+      <div className=" text-zinc-100 p-6 mx-auto space-y-6 font-sans tracking-tight">
         <h1 className="text-4xl font-extrabold text-red-500 uppercase">
           Control
         </h1>
@@ -185,23 +185,23 @@ const projects = [
     image: "./indiana_jones.png",
     imageAltText: "Gotcha!",
     content: (
-      <div className="bg-gradient-to-br from-yellow-100 via-amber-200 to-orange-100 text-stone-900 p-6 rounded-2xl shadow-xl max-w-2xl mx-auto space-y-6 font-serif">
-        <h1 className="text-4xl md:text-5xl font-bold tracking-wide text-yellow-900 drop-shadow">
+      <div className="text-stone-100 p-6 mx-auto space-y-6 font-serif">
+        <h1 className="text-4xl md:text-5xl font-bold tracking-wide text-yellow-100 drop-shadow">
           Indiana Jones: The Great Circle
         </h1>
 
-        <p className="text-lg leading-relaxed text-stone-800">
+        <p className="text-lg leading-relaxed text-stone-200">
           Dust off the fedora. Grab the whip. *The Great Circle* sends Indy
           across the globe once again — decoding ancient myths, dodging modern
           threats, and uncovering the lost secrets of a mysterious, sacred
           geometry.
         </p>
 
-        <p className="text-lg italic text-stone-700">
+        <p className="text-lg italic text-stone-200">
           “The circle connects what time tried to scatter.”
         </p>
 
-        <p className="text-md text-stone-700 border-t border-stone-300 pt-4">
+        <p className="text-md text-stone-200 border-t border-stone-300 pt-4">
           From dusty tombs to icy peaks, Indy must piece together a puzzle
           hidden in plain sight — a map older than civilization itself. It’s not
           just about treasure. It’s about truth. And no one chases it like Dr.
@@ -209,7 +209,7 @@ const projects = [
         </p>
 
         <div className="flex justify-end">
-          <span className="text-sm text-stone-600">
+          <span className="text-sm text-stone-400">
             ✦ Fortune and glory, kid.
           </span>
         </div>
@@ -229,27 +229,33 @@ export default function ProjectsSection() {
   }, [isInView]);
 
   return (
-    <div ref={ref} className={`grid auto-rows grid-cols-3 gap-2 p-6`}>
-      {projects.map((project, projectIndex) => {
-        return (
-          <div
-            key={projectIndex}
-            className={`row-span-1 ${
-              projectIndex === 0 || projectIndex === 3 || projectIndex === 4
-                ? "col-span-2"
-                : "col-span-1"
-            }`}
-          >
-            <ProjectCard
-              show={show}
-              title={project.title}
-              imageSrc={project.image}
-              imageAltText={project.imageAltText || ""}
-              content={project.content}
-            />
-          </div>
-        );
-      })}
+    <div className="h-full w-full flex items-center justify-center">
+      <div
+        ref={ref}
+        className={`grid auto-rows-auto grid-cols-1 sm:grid-cols-3 gap-2 p-6`}
+        style={{ width: "calc(min(100%, 1536px))" }}
+      >
+        {projects.map((project, projectIndex) => {
+          return (
+            <div
+              key={projectIndex}
+              className={`row-span-1 ${
+                projectIndex === 0 || projectIndex === 3 || projectIndex === 4
+                  ? "sm:col-span-2"
+                  : "col-span-1"
+              }`}
+            >
+              <ProjectCard
+                show={show}
+                title={project.title}
+                imageSrc={project.image}
+                imageAltText={project.imageAltText || ""}
+                content={project.content}
+              />
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
