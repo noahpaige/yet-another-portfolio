@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useInView } from "framer-motion";
 import ProjectCard from "@/components/pages/home-page/sections/projects/project-card";
-import { projects } from "./project-defs";
+import { projects } from "@/components/pages/home-page/sections/projects/project-defs";
 import { motion, AnimatePresence } from "motion/react";
 
 // Parent (the grid) – handles staggering
