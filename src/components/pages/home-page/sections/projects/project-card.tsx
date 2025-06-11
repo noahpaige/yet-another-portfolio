@@ -16,7 +16,6 @@ import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { ProgressiveBlur } from "@/components/ui/progressive-blur";
 
 interface ProjectCardProps {
-  show: boolean;
   title: string;
   imageSrc: string;
   imageAltText: string;
@@ -24,7 +23,6 @@ interface ProjectCardProps {
 }
 
 export default function ProjectCard({
-  show,
   title,
   imageSrc,
   imageAltText,
