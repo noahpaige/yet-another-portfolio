@@ -6,18 +6,19 @@ import { useScroll } from "framer-motion";
 import WelcomeSection from "@/components/pages/home-page/sections/welcome-section";
 import AboutSection from "@/components/pages/home-page/sections/about/about-section";
 import HomePageSection from "@/components/pages/home-page/sections/home-page-section";
+import ProjectsSection from "@/components/pages/home-page/sections/projects/projects-section";
 import BottomNav from "@/components/pages/home-page/bottom-nav";
 import AnimatedBackground from "@/components/animated-background";
 import ClientOnly from "@/components/client-only";
-import { useScrollSections } from "@/components/pages/home-page/hooks/use-scroll-sections";
+import { useScrollSections } from "@/hooks/use-scroll-sections";
 import { Home, Folder, Info, Mail } from "lucide-react";
-import { useSmoothWheelScroll } from "@/components/pages/home-page/hooks/use-smooth-wheel-scroll";
+import { useSmoothWheelScroll } from "@/hooks/use-smooth-wheel-scroll";
 import NoiseOverlay from "@/components/noise-overlay";
 
 const SECTIONS = new Map([
   ["HOME", { component: WelcomeSection, icon: Home }],
   ["ABOUT", { component: AboutSection, icon: Info }],
-  ["PROJECTS", { component: () => <div>Projects</div>, icon: Folder }],
+  ["PROJECTS", { component: ProjectsSection, icon: Folder }],
   ["CONTACT", { component: () => <div>Contact</div>, icon: Mail }],
 ]);
 

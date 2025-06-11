@@ -4,7 +4,7 @@ import { useAnimate } from "framer-motion";
 import { useEffect, useRef } from "react";
 import React from "react";
 import { CONTENT_BOUNDS } from "@/app/constants";
-import { useClampCSS } from "@/components/shared/hooks/useClampCSS";
+import { useClampCSS } from "@/hooks/useClampCSS";
 
 type RichTextSegment = string | React.ReactElement | undefined;
 

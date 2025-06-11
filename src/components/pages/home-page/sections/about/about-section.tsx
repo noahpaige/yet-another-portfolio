@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useInView } from "framer-motion";
 import AnimatedAboutCard from "@/components/pages/home-page/sections/about/animated-about-card";
 import { CONTENT_BOUNDS } from "@/app/constants";
-import { useClampCSS } from "@/components/shared/hooks/useClampCSS";
+import { useClampCSS } from "@/hooks/useClampCSS";
 import { blocks } from "@/components/pages/home-page/sections/about/content-blocks";
 
 export default function AboutSection() {
