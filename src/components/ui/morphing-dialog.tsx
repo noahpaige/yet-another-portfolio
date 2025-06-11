@@ -125,7 +125,6 @@ function MorphingDialogTrigger({
     ...style,
     opacity: isOpen ? 0 : 1,
     pointerEvents: isOpen ? "none" : "auto",
-    transition: "opacity 300ms ease",
   };
 
   return (
@@ -257,12 +256,15 @@ function MorphingDialogContainer({ children }: MorphingDialogContainerProps) {
         <>
           <motion.div
             key={`backdrop-${uniqueId}`}
-            className="fixed inset-0 h-full w-full bg-black/20 backdrop-blur-xs"
+            className="fixed inset-0 h-full w-full bg-black/20 "
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           />
-          <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center"
+            // style={{ height: "calc(100% - calc(var(--spacing) * 18))" }}
+          >
             {children}
           </div>
         </>

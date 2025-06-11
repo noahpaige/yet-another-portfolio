@@ -5,8 +5,17 @@ import { useInView } from "framer-motion";
 import ProjectCard from "@/components/pages/home-page/sections/projects/project-card";
 
 const projects = [
+  // {
+  //   title: "",
+  //   image: "",
+  //   imageAltText: "",
+  //   content: (
+  //     <div>
+  //     </div>
+  //   ),
+  // },
   {
-    title: "Solve the Death Stranding",
+    title: "Deliver Packages",
     image: "/death_stranding.png",
     imageAltText: "Troy Baker babysitting.",
     content: (
@@ -32,7 +41,178 @@ const projects = [
           action game set in feudal Japan.
           <br />
           Some more text here.
+          <br />
+          Some more text here.
+          <br />
+          Some more text here.
+          <br />
+          Some more text here.
+          <br />
+          Some more text here.
+          <br />
+          Some more text here.
+          <br />
+          Some more text here.
+          <br />
+          Some more text here.
+          <br />
+          Some more text here.
+          <br />
+          Some more text here.
+          <br />
+          Some more text here.
+          <br />
+          Some more text here.
+          <br />
+          Some more text here.
+          <br />
+          Some more text here.
+          <br />
+          Some more text here.
+          <br />
+          Some more text here.
         </p>
+      </div>
+    ),
+  },
+  {
+    title: "For my Choom",
+    image: "/choom.png",
+    imageAltText: "My Number 1 Choom",
+    content: (
+      <div className="bg-gradient-to-br from-gray-900 via-zinc-800 to-black text-white p-6 rounded-2xl shadow-xl max-w-2xl mx-auto space-y-6 font-sans">
+        <h1 className="text-4xl font-extrabold text-yellow-400 tracking-wide">
+          For My Choom, Jackie Welles
+        </h1>
+
+        <p className="text-lg leading-relaxed text-zinc-300">
+          He was more than muscle, more than chrome — Jackie was heart. In a
+          world where loyalty is rare and trust even rarer, he gave both freely.
+          He didn’t just ride shotgun — he had your back, every edgerun, every
+          firefight, every fragging second.
+        </p>
+
+        <p className="text-lg leading-relaxed text-zinc-400 italic">
+          “You gotta live life to the fullest. From now on... I only live for
+          the chooms who got my back.”
+        </p>
+
+        <p className="text-md text-zinc-500 border-t border-zinc-700 pt-4">
+          Cyberpsycho or Corpo rat, it didn’t matter. Jackie faced it all
+          head-on with a grin and a gun. And when the chips were down, he still
+          cracked a joke — that’s the kinda legend Night City remembers.
+        </p>
+
+        <div className="flex justify-end">
+          <span className="text-sm text-zinc-600">✦ Siempre, mi hermano.</span>
+        </div>
+      </div>
+    ),
+  },
+  {
+    title: "Turn 34",
+    image: "/clair_obscure.png",
+    imageAltText: "It's harder than you think!",
+    content: (
+      <div className="bg-gradient-to-b from-indigo-950 via-gray-900 to-slate-800 text-slate-100 p-6 rounded-2xl shadow-2xl max-w-2xl mx-auto space-y-6 font-serif">
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-purple-300 drop-shadow-sm">
+          Clair Obscur: Expedition 33
+        </h1>
+
+        <p className="text-lg leading-relaxed text-slate-300">
+          A world painted in despair and beauty — where brushstrokes shape fate
+          and dreams are as fragile as canvas. *Expedition 33* is more than a
+          battle for survival... it’s an elegy whispered through oil and shadow.
+        </p>
+
+        <p className="text-lg text-slate-400 italic">
+          “She chooses a number. They vanish. We march to unmake her memory.”
+        </p>
+
+        <p className="text-md text-slate-400 border-t border-slate-600 pt-4">
+          Each expedition is a requiem, each spell a verse. You are not just a
+          soldier — you are a story fighting to stay written. Through shifting
+          skies and painted beasts, the expedition trudges on, one number closer
+          to the end.
+        </p>
+
+        <div className="flex justify-end">
+          <span className="text-sm text-slate-500">
+            ✦ When she speaks your name, resist the fade.
+          </span>
+        </div>
+      </div>
+    ),
+  },
+  {
+    title: "Pick up the phone",
+    image: "control.jpg",
+    imageAltText: "How does the director even get over there?",
+    content: (
+      <div className="bg-gradient-to-b from-neutral-950 via-zinc-900 to-black text-zinc-100 p-6 rounded-2xl shadow-2xl max-w-2xl mx-auto space-y-6 font-sans tracking-tight">
+        <h1 className="text-4xl font-extrabold text-red-500 uppercase">
+          Control
+        </h1>
+
+        <p className="text-lg leading-relaxed text-zinc-300">
+          The walls move when you’re not looking. The building breathes. In
+          *Control*, you don’t just explore the unknown — you become it. The
+          Oldest House is a monument to secrecy, and Jesse Faden is the key.
+        </p>
+
+        <p className="text-lg text-zinc-400 italic">
+          “You don’t run the Bureau. The Bureau runs you.”
+        </p>
+
+        <p className="text-md text-zinc-500 border-t border-zinc-700 pt-4">
+          Armed with the Service Weapon and haunted by shifting truths, Jesse
+          navigates a web of psychic resonance, bureaucratic horror, and
+          impossible geometry. There are no answers here — only deeper
+          questions.
+        </p>
+
+        <div className="flex justify-end">
+          <span className="text-sm text-zinc-600">
+            ✦ Objects of Power don’t obey the laws of reality. Neither should
+            you.
+          </span>
+        </div>
+      </div>
+    ),
+  },
+  {
+    title: "Find the Great Circle",
+    image: "./indiana_jones.png",
+    imageAltText: "Gotcha!",
+    content: (
+      <div className="bg-gradient-to-br from-yellow-100 via-amber-200 to-orange-100 text-stone-900 p-6 rounded-2xl shadow-xl max-w-2xl mx-auto space-y-6 font-serif">
+        <h1 className="text-4xl md:text-5xl font-bold tracking-wide text-yellow-900 drop-shadow">
+          Indiana Jones: The Great Circle
+        </h1>
+
+        <p className="text-lg leading-relaxed text-stone-800">
+          Dust off the fedora. Grab the whip. *The Great Circle* sends Indy
+          across the globe once again — decoding ancient myths, dodging modern
+          threats, and uncovering the lost secrets of a mysterious, sacred
+          geometry.
+        </p>
+
+        <p className="text-lg italic text-stone-700">
+          “The circle connects what time tried to scatter.”
+        </p>
+
+        <p className="text-md text-stone-700 border-t border-stone-300 pt-4">
+          From dusty tombs to icy peaks, Indy must piece together a puzzle
+          hidden in plain sight — a map older than civilization itself. It’s not
+          just about treasure. It’s about truth. And no one chases it like Dr.
+          Jones.
+        </p>
+
+        <div className="flex justify-end">
+          <span className="text-sm text-stone-600">
+            ✦ Fortune and glory, kid.
+          </span>
+        </div>
       </div>
     ),
   },
@@ -44,22 +224,35 @@ export default function ProjectsSection() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: false, margin: "-100px" });
 
+  const itemsPerCol = 2;
+
   useEffect(() => {
     setShow(isInView);
   }, [isInView]);
 
   return (
-    <div ref={ref} className="h-full flex items-center justify-center gap-2">
+    <div
+      ref={ref}
+      className={`grid auto-rows grid-cols-${itemsPerCol + 1} gap-2 p-6`}
+    >
       {projects.map((project, projectIndex) => {
         return (
-          <ProjectCard
+          <div
             key={projectIndex}
-            show={show}
-            title={project.title}
-            imageSrc={project.image}
-            imageAltText={project.imageAltText || ""}
-            content={project.content}
-          ></ProjectCard>
+            className={`row-span-1 col-span-${
+              projectIndex === 0 || projectIndex === 3 || projectIndex === 4
+                ? 2
+                : 1
+            }`}
+          >
+            <ProjectCard
+              show={show}
+              title={project.title}
+              imageSrc={project.image}
+              imageAltText={project.imageAltText || ""}
+              content={project.content}
+            />
+          </div>
         );
       })}
     </div>
