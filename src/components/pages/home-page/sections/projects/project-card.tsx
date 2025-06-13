@@ -14,7 +14,7 @@ import {
 import { JSX } from "react";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { ProgressiveBlur } from "@/components/ui/progressive-blur";
-import { Tilt } from "@/components/ui/tilt";
+import { Magnetic } from "@/components/ui/magnetic";
 interface ProjectCardProps {
   title: string;
   imageSrc: string;
@@ -36,8 +36,13 @@ export default function ProjectCard({
         damping: 22,
       }}
     >
-      <Tilt rotationFactor={6}>
-        <MorphingDialogTrigger className="flex w-full h-24 xs:h-32 sm:h-40 md:h-64 lg:h-80 flex-col overflow-hidden glass-layer-hoverable rounded-xl transition-[height] transition-shadow">
+      <Magnetic
+        intensity={0.1}
+        range={500}
+        actionArea="self"
+        springOptions={{ stiffness: 500, damping: 50 }}
+      >
+        <MorphingDialogTrigger className="flex w-full h-24 xs:h-32 sm:h-40 md:h-64 lg:h-80 flex-col overflow-hidden glass-layer-hoverable rounded-xl transition-[height]">
           <div className="relative h-full w-full overflow-hidden rounded-md">
             <MorphingDialogImage
               src={imageSrc}
@@ -58,7 +63,7 @@ export default function ProjectCard({
             </div>
           </div>
         </MorphingDialogTrigger>
-      </Tilt>
+      </Magnetic>
       <MorphingDialogContainer>
         <div className="w-full h-full p-4 ">
           <div
@@ -66,7 +71,7 @@ export default function ProjectCard({
             style={{ height: "calc(100% - calc(var(--spacing) * 18))" }}
           >
             <MorphingDialogContent
-              className="pointer-events-auto rounded-xl relative flex h-auto w-full max-h-full flex-col overflow-hidden  glass-layer"
+              className="relative pointer-events-auto rounded-xl relative flex h-auto w-full max-h-full flex-col overflow-hidden  glass-layer"
               style={{ width: "calc(min(100%, 1024px))" }}
             >
               <div className="relative h-24 xs:h-32 sm:h-40 md:h-64 lg:h-80 w-full overflow-hidden rounded-md transition-[height]">
@@ -104,9 +109,16 @@ export default function ProjectCard({
                   </ScrollArea>
                 </MorphingDialogDescription>
               </div>
-              <Tilt className="absolute top-6 right-6" rotationFactor={16}>
-                <MorphingDialogClose className="!static text-zinc-50/50 hover:cursor-pointer glass-layer-hoverable hover:text-zinc-50 transition-all" />
-              </Tilt>
+              <div className="absolute top-0 right-0 z-10">
+                <Magnetic
+                  intensity={0.2}
+                  range={100}
+                  actionArea="self"
+                  springOptions={{ stiffness: 500, damping: 50 }}
+                >
+                  <MorphingDialogClose className=" text-zinc-50/50 hover:cursor-pointer glass-layer-hoverable hover:text-zinc-50 transition-colors p-2" />
+                </Magnetic>
+              </div>
             </MorphingDialogContent>
           </div>
         </div>

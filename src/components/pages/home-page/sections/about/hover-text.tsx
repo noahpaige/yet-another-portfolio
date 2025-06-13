@@ -3,12 +3,12 @@
 import { useState } from "react";
 import { ReactNode } from "react";
 import Image from "next/image";
-import { motion, useAnimation } from "framer-motion";
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
+import { Magnetic } from "@/components/ui/magnetic";
 
 interface Props {
   text: ReactNode; // replaces children
@@ -17,30 +17,6 @@ interface Props {
   imageAlt?: string;
 }
 
-const animVariants = {
-  hover: {
-    backgroundPosition: "0% center",
-    scale: 1.1,
-    margin: "0.7rem",
-    transition: {
-      backgroundPosition: {
-        duration: 1.2,
-        ease: "easeInOut",
-      },
-      scale: {
-        type: "spring",
-        stiffness: 300,
-        damping: 15,
-      },
-    },
-  },
-  rest: {
-    backgroundPosition: "100% center",
-    scale: 1,
-    margin: "0",
-  },
-};
-
 export default function HoverText({
   text,
   cardContent,
@@ -48,27 +24,29 @@ export default function HoverText({
   imageAlt = "Image",
 }: Props) {
   const [isOpen, setIsOpen] = useState(false);
-  const controls = useAnimation();
 
   const handleClick = async () => {
     setIsOpen((prev) => !prev);
-    await controls.start("hover");
-    controls.start("rest");
   };
 
   return (
     <HoverCard open={isOpen} onOpenChange={setIsOpen} openDelay={200}>
       <HoverCardTrigger asChild>
-        <motion.span
-          className="inline-block cursor-pointer"
-          variants={animVariants}
-          initial="rest"
-          animate={controls}
-          whileHover="hover"
-          onClick={handleClick}
-        >
-          {text}
-        </motion.span>
+        <div className="inline-block">
+          <Magnetic
+            intensity={0.2}
+            range={200}
+            actionArea="self"
+            springOptions={{ stiffness: 500, damping: 50 }}
+          >
+            <span
+              className="inline-block cursor-pointer hover:underline"
+              onClick={handleClick}
+            >
+              {text}
+            </span>
+          </Magnetic>
+        </div>
       </HoverCardTrigger>
 
       {(imageSrc || cardContent) && (
