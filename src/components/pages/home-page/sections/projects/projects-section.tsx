@@ -6,15 +6,13 @@ import ProjectCard from "@/components/pages/home-page/sections/projects/project-
 import { projects } from "@/components/pages/home-page/sections/projects/project-defs";
 import { motion, AnimatePresence } from "motion/react";
 
-// Parent (the grid) – handles staggering
 const containerVariants = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
     transition: {
-      // delay the very first child a bit, then stagger the rest
       delayChildren: 0.1,
-      staggerChildren: 0.05, // 0.15 s between cards
+      staggerChildren: 0.05,
     },
   },
   exit: { opacity: 0 },
