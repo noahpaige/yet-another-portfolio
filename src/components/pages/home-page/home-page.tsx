@@ -7,6 +7,7 @@ import WelcomeSection from "@/components/pages/home-page/sections/welcome/welcom
 import AboutSection from "@/components/pages/home-page/sections/about/about-section";
 import HomePageSection from "@/components/pages/home-page/sections/home-page-section";
 import ProjectsSection from "@/components/pages/home-page/sections/projects/projects-section";
+import { ContactSection } from "@/components/pages/home-page/sections/contact/contact-section";
 import BottomNav from "@/components/pages/home-page/bottom-nav";
 import AnimatedBackground from "@/components/animated-background";
 import ClientOnly from "@/components/client-only";
@@ -19,7 +20,7 @@ const SECTIONS = new Map([
   ["HOME", { component: WelcomeSection, icon: Home }],
   ["ABOUT", { component: AboutSection, icon: Info }],
   ["PROJECTS", { component: ProjectsSection, icon: Folder }],
-  ["CONTACT", { component: () => <div>Contact</div>, icon: Mail }],
+  ["CONTACT", { component: ContactSection, icon: Mail }],
 ]);
 
 export default function HomePage() {
