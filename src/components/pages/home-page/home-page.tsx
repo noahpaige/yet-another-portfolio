@@ -44,34 +44,28 @@ export default function HomePage() {
   });
 
   return (
-    <main className="bg-slate-900">
-      <div className="relative z-0 bg-slate-900">
-        <ClientOnly>
+    <main
+      ref={scrollContainerRef}
+      className="relative z-0 h-screen overflow-y-scroll overflow-x-hidden snap-y snap-mandatory scroll-smooth bg-slate-900 text-zinc-200 @container"
+    >
+      <ClientOnly>
+        <div className="sticky inset-0">
           <AnimatedBackground scrollYProgress={scrollYProgress} />
           <NoiseOverlay opacity={0.05} resolution={1} />
-        </ClientOnly>
-
-        <div
-          ref={scrollContainerRef}
-          className="h-screen overflow-x-hidden overflow-y-scroll snap-y snap-mandatory scroll-smooth text-zinc-200 @container"
-        >
-          {Array.from(SECTIONS.entries()).map(([name, section]) => (
-            <HomePageSection
-              key={name}
-              id={`section-${name}`}
-              sectionName={name}
-            >
-              {section.component()}
-            </HomePageSection>
-          ))}
         </div>
+      </ClientOnly>
 
-        <BottomNav
-          options={navOptions}
-          current={activeSection}
-          onSelect={scrollToSection}
-        />
-      </div>
+      {Array.from(SECTIONS.entries()).map(([name, section]) => (
+        <HomePageSection key={name} id={`section-${name}`} sectionName={name}>
+          {section.component()}
+        </HomePageSection>
+      ))}
+
+      <BottomNav
+        options={navOptions}
+        current={activeSection}
+        onSelect={scrollToSection}
+      />
     </main>
   );
 }
