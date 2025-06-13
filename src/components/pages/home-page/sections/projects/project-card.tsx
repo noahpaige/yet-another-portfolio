@@ -104,8 +104,9 @@ export default function ProjectCard({
                   </ScrollArea>
                 </MorphingDialogDescription>
               </div>
-
-              <MorphingDialogClose className="text-zinc-50/50 hover:cursor-pointer glass-layer-hoverable hover:text-zinc-50 transition-all" />
+              <Tilt className="absolute top-6 right-6" rotationFactor={16}>
+                <MorphingDialogClose className="!static text-zinc-50/50 hover:cursor-pointer glass-layer-hoverable hover:text-zinc-50 transition-all" />
+              </Tilt>
             </MorphingDialogContent>
           </div>
         </div>
