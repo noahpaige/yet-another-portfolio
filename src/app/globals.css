@@ -83,19 +83,19 @@
 
 @layer components {
   .glass-layer {
-    @apply bg-slate-900/30 rounded-xl p-2 shadow-soft-light backdrop-blur-[10px];
+    @apply bg-slate-900/50 rounded-xl p-2 shadow-soft-light backdrop-blur-[30px];
   }
   .glass-layer-hoverable {
-    @apply bg-slate-900/30 rounded-xl p-2 shadow-soft-light hover:shadow-soft-light-hovered backdrop-blur-[10px];
+    @apply bg-slate-900/50 rounded-xl p-2 shadow-soft-light hover:shadow-soft-light-hovered backdrop-blur-[30px];
   }
   .glass-layer-light {
-    @apply bg-slate-200/10 rounded-md z-0 shadow-soft-light backdrop-blur-[10px];
+    @apply bg-slate-200/10 rounded-md z-0 shadow-soft-light backdrop-blur-[30px];
   }
   .glass-layer-light-hoverable {
-    @apply bg-slate-200/10 rounded-md z-0 shadow-soft-light hover:shadow-soft-light-hovered backdrop-blur-[10px];
+    @apply bg-slate-200/10 rounded-md z-0 shadow-soft-light hover:shadow-soft-light-hovered backdrop-blur-[30px];
   }
   .glass-hover-card {
-    @apply !bg-slate-900/30 !rounded-xl !p-2 !shadow-soft-light !backdrop-blur-[10px] !border-none;
+    @apply !bg-slate-900/50 !rounded-xl !p-2 !shadow-soft-light !backdrop-blur-[30px] !border-none;
   }
 }
 
