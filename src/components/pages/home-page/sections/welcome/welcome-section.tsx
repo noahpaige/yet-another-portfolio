@@ -2,12 +2,12 @@
 
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { TypewriterText } from "@/components/shared/typewriter-text";
-import { StaggeredSlideText } from "@/components/shared/staggered-slide-text";
-import { ChromaticAberrationText } from "@/components/shared/chomatic-aberration-text";
-import { BasketballScatterText } from "@/components/shared/basketball-scatter-text";
-import { SnowboarderScatterText } from "@/components/shared/snowboard-scatter-text";
-import { SnowCoveredText } from "@/components/shared/snow-covered-text";
+import { TypewriterText } from "@/components/pages/home-page/sections/welcome/typewriter-text";
+import { StaggeredSlideText } from "@/components/pages/home-page/sections/welcome/staggered-slide-text";
+import { ChromaticAberrationText } from "@/components/pages/home-page/sections/welcome/chomatic-aberration-text";
+import { BasketballScatterText } from "@/components/pages/home-page/sections/welcome/basketball-scatter-text";
+import { SnowboarderScatterText } from "@/components/pages/home-page/sections/welcome/snowboard-scatter-text";
+import { SnowCoveredText } from "@/components/pages/home-page/sections/welcome/snow-covered-text";
 
 const phrases = [
   { text: "Powder Hound", animation: "snow-covered" },

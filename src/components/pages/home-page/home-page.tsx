@@ -3,7 +3,7 @@
 import { RefObject, useRef } from "react";
 import { useScroll } from "framer-motion";
 
-import WelcomeSection from "@/components/pages/home-page/sections/welcome-section";
+import WelcomeSection from "@/components/pages/home-page/sections/welcome/welcome-section";
 import AboutSection from "@/components/pages/home-page/sections/about/about-section";
 import HomePageSection from "@/components/pages/home-page/sections/home-page-section";
 import ProjectsSection from "@/components/pages/home-page/sections/projects/projects-section";
