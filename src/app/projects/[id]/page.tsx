@@ -3,13 +3,14 @@ import { getProjectById } from "@/generated/project-index";
 import { notFound } from "next/navigation";
 
 interface ProjectPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function ProjectPage({ params }: ProjectPageProps) {
-  const project = getProjectById(params.id);
+  const { id } = await params;
+  const project = getProjectById(id);
   
   if (!project) {
     notFound();
@@ -18,10 +19,10 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
   // Dynamically import the project content
   let ProjectContent;
   try {
-    const contentModule = await import(`@/projects/${params.id}/content`);
+    const contentModule = await import(`@/projects/${id}/content`);
     ProjectContent = contentModule.default;
   } catch (error) {
-    console.error(`Failed to load content for project ${params.id}:`, error);
+    console.error(`Failed to load content for project ${id}:`, error);
     notFound();
   }
 
@@ -46,6 +47,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
 
           {/* Project Image */}
           <div className="mb-8">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={project.image}
               alt={project.imageAltText}
