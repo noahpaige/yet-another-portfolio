@@ -45,8 +45,8 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
-  --shadow-soft-light: inset 0px 0px 3px rgba(255, 255, 255, 0.4);
-  --shadow-soft-light-hovered: inset 1px 1px 8px rgba(255, 255, 255, 0.5);
+  --shadow-soft-light: inset 0px 0px 4px rgba(255, 255, 255, 0.4);
+  --shadow-soft-light-hovered: inset 1px 1px 6px rgba(255, 255, 255, 0.5);
   --shadow-soft-dark: inset 1px 1px 4px rgba(0, 0, 0, 0.5);
   --shadow-soft-dark-hovered: inset 1px 1px 6px rgba(0, 0, 0, 0.7);
 
@@ -83,19 +83,19 @@
 
 @layer components {
   .glass-layer {
-    @apply bg-slate-900/50 rounded-xl p-2 shadow-soft-light backdrop-blur-[30px];
+    @apply bg-slate-900/50 p-[4px] rounded-xl shadow-soft-light backdrop-blur-[30px];
   }
   .glass-layer-hoverable {
-    @apply bg-slate-900/50 rounded-xl p-2 shadow-soft-light hover:shadow-soft-light-hovered hover:bg-slate-900/80 backdrop-blur-[30px] transition-shadow duration-300 ease-in-out;
+    @apply bg-slate-900/50 p-[4px] rounded-xl shadow-soft-light hover:shadow-soft-light-hovered hover:bg-slate-900/80 backdrop-blur-[30px] transition-shadow duration-300 ease-in-out;
   }
   .glass-layer-light {
-    @apply bg-slate-200/10 rounded-md z-0 shadow-soft-light backdrop-blur-[30px];
+    @apply bg-slate-200/10 p-[4px] rounded-md shadow-soft-light backdrop-blur-[30px];
   }
   .glass-layer-light-hoverable {
-    @apply bg-slate-200/10 rounded-md z-0 shadow-soft-light hover:shadow-soft-light-hovered hover:bg-slate-200/30 backdrop-blur-[30px] transition-shadow duration-300 ease-in-out;
+    @apply bg-slate-200/10 p-[4px] hover:p-[6px] rounded-md shadow-soft-light hover:shadow-soft-light-hovered hover:bg-slate-200/30 backdrop-blur-[30px] transition-shadow duration-300 ease-in-out;
   }
   .glass-hover-card {
-    @apply !bg-slate-900/50 !rounded-xl !p-2 !shadow-soft-light !backdrop-blur-[30px] !border-none;
+    @apply !bg-slate-900/50 !rounded-xl !shadow-soft-light !backdrop-blur-[30px] !border-none;
   }
 }
 

@@ -33,7 +33,7 @@ export default function ProjectCard({
       springOptions={{ stiffness: 500, damping: 50 }}
     >
       <div 
-        className="flex w-full h-24 xs:h-32 sm:h-40 md:h-64 lg:h-80 flex-col overflow-hidden glass-layer-hoverable rounded-xl transition-[height] cursor-pointer"
+        className="flex w-full h-24 xs:h-32 sm:h-40 md:h-64 lg:h-80 flex-col overflow-hidden p-2 glass-layer-hoverable rounded-xl transition-[height] cursor-pointer"
         onClick={handleClick}
       >
         <div className="relative h-full w-full overflow-hidden rounded-md">

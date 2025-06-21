@@ -30,7 +30,7 @@ export default function BottomNav({
   };
   return (
     <div className="fixed bottom-4 w-full flex justify-center z-50 h-14">
-      <div className="relative flex gap-2 glass-layer">
+      <div className="relative flex gap-2 glass-layer p-2">
         {options.map((option) => {
           const isActive = option.name === current;
           const isHovered = option.name === hovered;

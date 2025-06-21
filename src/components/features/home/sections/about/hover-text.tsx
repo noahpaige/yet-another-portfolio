@@ -52,7 +52,7 @@ export default function HoverText({
       {(imageSrc || cardContent) && (
         <HoverCardContent
           side="top"
-          className="w-64 glass-hover-card text-white flex flex-col gap-2"
+          className="w-64 glass-hover-card p-2 text-white flex flex-col gap-2"
         >
           {imageSrc && (
             <Image
