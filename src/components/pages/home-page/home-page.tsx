@@ -22,7 +22,12 @@ const SECTIONS = new Map([
   ["PROJECTS", { component: ProjectsSection, icon: Folder }],
   ["CONTACT", { component: ContactSection, icon: Mail }],
 ]);
-
+// const SECTIONS = new Map([
+//   ["HOME", { component: () => <div>WELCOME</div>, icon: Home }],
+//   ["ABOUT", { component: () => <div>ABOUT</div>, icon: Info }],
+//   ["PROJECTS", { component: () => <div>PROJECTS</div>, icon: Folder }],
+//   ["CONTACT", { component: () => <div>CONTACT</div>, icon: Mail }],
+// ]);
 export default function HomePage() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const sectionNames = Array.from(SECTIONS.keys());
@@ -42,6 +47,7 @@ export default function HomePage() {
     container: scrollContainerRef,
     offset: ["start start", "end end"],
   });
+
 
   return (
     <main

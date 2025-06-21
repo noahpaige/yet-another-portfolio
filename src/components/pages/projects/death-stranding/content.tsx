@@ -1,0 +1,33 @@
+import React from "react";
+
+export default function DeathStrandingContent() {
+  return (
+    <div className="text-zinc-100 p-6 mx-auto space-y-6 font-sans">
+      <h1 className="text-4xl font-extrabold text-blue-400 tracking-wide">
+        The Death Stranding
+      </h1>
+
+      <p className="text-lg leading-relaxed text-zinc-300">
+        <span className="font-bold">The Death Stranding</span> is a survival
+        horror game set in a post-apocalyptic world. The player controls a
+        character who must navigate a dangerous world filled with dangerous
+        creatures.
+      </p>
+
+      <p className="text-lg text-zinc-400 italic">
+        "Keep on keeping on."
+      </p>
+
+      <p className="text-md text-zinc-500 border-t border-zinc-700 pt-4">
+        In a world where the boundaries between life and death have blurred,
+        Sam Porter Bridges must reconnect a fractured America, one delivery at
+        a time. Through rain, snow, and the ever-present threat of BTs, the
+        journey is as much about human connection as it is about survival.
+      </p>
+
+      <div className="flex justify-end">
+        <span className="text-sm text-zinc-600">✦ Bridges connects us all.</span>
+      </div>
+    </div>
+  );
+} 

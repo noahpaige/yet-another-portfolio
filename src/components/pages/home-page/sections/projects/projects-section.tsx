@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useInView } from "framer-motion";
 import ProjectCard from "@/components/pages/home-page/sections/projects/project-card";
-import { projects } from "@/components/pages/home-page/sections/projects/project-defs";
+import { projects } from "@/generated/project-index";
 import { motion, AnimatePresence } from "motion/react";
 
 const containerVariants = {
@@ -54,10 +54,10 @@ export default function ProjectsSection() {
                 }`}
               >
                 <ProjectCard
+                  id={project.id}
                   title={project.title}
                   imageSrc={project.image}
-                  imageAltText={project.imageAltText ?? ""}
-                  content={project.content}
+                  imageAltText={project.imageAltText}
                 />
               </motion.div>
             ))}
