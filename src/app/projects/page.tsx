@@ -38,13 +38,10 @@ export default function ProjectsPage() {
                             alt={project.imageAltText}
                             className="w-full h-full object-cover rounded-lg"
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
                         </div>
                       </Magnetic>
-                    </div>
-
-                    {/* Project Info */}
-                    <div className="px-6 py-3">
+                       <div className="px-6 py-3 absolute bottom-0 left-0">
                        <Magnetic 
                             intensity={0.1}
                             range={200}
@@ -79,9 +76,11 @@ export default function ProjectsPage() {
                         ))}
                       </div>
 
-                      {/* Hover Effect */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-slate-900/10 to-green-900/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
                     </div>
+                    </div>
+
+                    {/* Project Info */}
+                   
                   </div>
                 </Link>
               </Magnetic>
