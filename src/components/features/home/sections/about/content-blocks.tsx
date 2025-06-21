@@ -1,4 +1,4 @@
-import HoverText from "@/components/pages/home-page/sections/about/hover-text";
+import HoverText from "@/components/features/home/sections/about/hover-text";
 
 const blocks = [
   {

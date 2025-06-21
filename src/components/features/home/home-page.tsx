@@ -3,12 +3,12 @@
 import { RefObject, useRef } from "react";
 import { useScroll } from "framer-motion";
 
-import WelcomeSection from "@/components/pages/home-page/sections/welcome/welcome-section";
-import AboutSection from "@/components/pages/home-page/sections/about/about-section";
-import HomePageSection from "@/components/pages/home-page/sections/home-page-section";
-import ProjectsSection from "@/components/pages/home-page/sections/projects/projects-section";
-import { ContactSection } from "@/components/pages/home-page/sections/contact/contact-section";
-import BottomNav from "@/components/pages/home-page/bottom-nav";
+import WelcomeSection from "@/components/features/home/sections/welcome/welcome-section";
+import AboutSection from "@/components/features/home/sections/about/about-section";
+import HomePageSection from "@/components/features/home/sections/home-page-section";
+import ProjectsSection from "@/components/features/home/sections/projects/projects-section";
+import { ContactSection } from "@/components/features/home/sections/contact/contact-section";
+import BottomNav from "@/components/features/home/bottom-nav";
 import AnimatedBackground from "@/components/animated-background";
 import ClientOnly from "@/components/client-only";
 import { useScrollSections } from "@/hooks/use-scroll-sections";
@@ -47,7 +47,6 @@ export default function HomePage() {
     container: scrollContainerRef,
     offset: ["start start", "end end"],
   });
-
 
   return (
     <main
