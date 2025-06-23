@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useInView } from "framer-motion";
-import ProjectCard from "@/components/features/home/sections/projects/project-card";
+import { ProjectCard } from "@/components/ui/project-card";
 import { projects } from "@/generated/project-index";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -53,12 +53,7 @@ export default function ProjectsSection() {
                   i === 0 || i === 3 || i === 4 ? "sm:col-span-2" : "col-span-1"
                 }`}
               >
-                <ProjectCard
-                  id={project.id}
-                  title={project.title}
-                  imageSrc={project.image}
-                  imageAltText={project.imageAltText}
-                />
+                <ProjectCard project={project} />
               </motion.div>
             ))}
           </motion.div>
