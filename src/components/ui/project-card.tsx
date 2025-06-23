@@ -17,19 +17,19 @@ export function ProjectCard({ project }: ProjectCardProps) {
     >
       <Link href={`/projects/${project.id}`}>
         <div className="group relative overflow-hidden rounded-xl glass-layer-hoverable transition-all duration-300">
-          {/* Project Image */}
-          <div className="relative h-48 rounded-lg overflow-hidden">
+          <div className="relative h-24 xs:h-32 sm:h-40 md:h-48 lg:h-64 xl:h-80 rounded-lg overflow-hidden">
             <Magnetic 
-              intensity={0.1}
+              intensity={0.2}
               range={200}
               actionArea="global"
               springOptions={{ stiffness: 300, damping: 30 }}
             >
-              <div className="w-full h-48 scale-110">
+              <div className="w-full h-24 xs:h-32 sm:h-40 md:h-48 lg:h-64 xl:h-80 scale-115">
+                {/* Project Image */}
                 <img
                   src={project.image}
                   alt={project.imageAltText}
-                  className="w-full h-full object-cover rounded-lg"
+                  className="w-full h-24 xs:h-32 sm:h-40 md:h-48 lg:h-64 xl:h-80 object-cover rounded-lg"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
               </div>
