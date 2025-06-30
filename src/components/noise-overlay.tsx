@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef } from "react";
+import { useHardwareCapability } from "@/context/HardwareCapabilityContext";
 
 interface NoiseOverlayProps {
   opacity?: number;
@@ -9,15 +10,57 @@ interface NoiseOverlayProps {
 
 const NoiseOverlay = React.memo<NoiseOverlayProps>(
   ({ opacity = 0.05, resolution = 1 }) => {
+    const { performanceTier, loading } = useHardwareCapability();
     const canvasRef = useRef<HTMLCanvasElement>(null);
+
+    // Adjust quality based on device capabilities
+    const getQualitySettings = () => {
+      if (loading) return { resolution: 1, opacity: 1 };
+
+      switch (performanceTier) {
+        case "low":
+          return { resolution: 0.5, opacity: 0.6 };
+        case "medium":
+          return { resolution: 0.75, opacity: 0.8 };
+        case "high":
+          return { resolution: 1, opacity: 1 };
+        default:
+          return { resolution: 1, opacity: 1 };
+      }
+    };
+
+    const qualitySettings = getQualitySettings();
+    const effectiveResolution = resolution * qualitySettings.resolution;
+    const effectiveOpacity = opacity * qualitySettings.opacity;
+
+    // Log hardware detection and quality settings
+    useEffect(() => {
+      if (!loading) {
+        console.table({
+          "📺 NoiseOverlay - Hardware Detection": {
+            performanceTier,
+            resolution: qualitySettings.resolution,
+            opacity: qualitySettings.opacity,
+            effectiveResolution: effectiveResolution,
+            effectiveOpacity: effectiveOpacity,
+          },
+        });
+      }
+    }, [
+      performanceTier,
+      loading,
+      qualitySettings,
+      effectiveResolution,
+      effectiveOpacity,
+    ]);
 
     useEffect(() => {
       const canvas = canvasRef.current!;
       const ctx = canvas.getContext("2d")!;
 
       const drawStaticNoise = () => {
-        const width = window.innerWidth * resolution;
-        const height = window.innerHeight * resolution;
+        const width = window.innerWidth * effectiveResolution;
+        const height = window.innerHeight * effectiveResolution;
 
         canvas.width = width;
         canvas.height = height;
@@ -36,7 +79,7 @@ const NoiseOverlay = React.memo<NoiseOverlayProps>(
       drawStaticNoise();
       window.addEventListener("resize", drawStaticNoise);
       return () => window.removeEventListener("resize", drawStaticNoise);
-    }, [resolution]);
+    }, [effectiveResolution]);
 
     return (
       <canvas
@@ -48,7 +91,7 @@ const NoiseOverlay = React.memo<NoiseOverlayProps>(
           width: "100%",
           zIndex: -1,
           pointerEvents: "none",
-          opacity,
+          opacity: effectiveOpacity,
           imageRendering: "pixelated",
         }}
       />

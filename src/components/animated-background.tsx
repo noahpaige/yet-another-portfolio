@@ -4,6 +4,7 @@ import React, { useEffect, useRef } from "react";
 import { MotionValue, useMotionValueEvent } from "framer-motion";
 import { BlobData } from "@/app/types";
 import { interp } from "@/lib/interp";
+import { useHardwareCapability } from "@/context/HardwareCapabilityContext";
 
 const NUM_BLOBS = 12;
 const RENDER_SIZE = 32;
@@ -112,17 +113,56 @@ const generateBlobs = (count: number): BlobData[] => {
 
 const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
   ({ scrollYProgress }) => {
+    const { performanceTier, loading } = useHardwareCapability();
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const blobs = useRef(generateBlobs(NUM_BLOBS));
+    const blobs = useRef<BlobData[]>([]);
     const colorIndex = useRef(0);
     const prevScrollY = useRef<number | null>(null);
     const curY = useRef(0.5);
     const desiredY = useRef(0.8);
     const scrollDirection = useRef(1);
     const lastFrameTime = useRef(0);
-    const targetFrameRate = 30; // Limit to 30fps instead of 60fps
-    const frameInterval = 1000 / targetFrameRate; // ~33ms between frames
-    const frameRateMultiplier = 60 / targetFrameRate; // 2x multiplier to compensate for 30fps
+
+    // Adjust quality based on device capabilities
+    const getQualitySettings = () => {
+      if (loading)
+        return { blobCount: NUM_BLOBS, frameRate: 30, blurAmount: 2 };
+
+      switch (performanceTier) {
+        case "low":
+          return { blobCount: 6, frameRate: 20, blurAmount: 1 };
+        case "medium":
+          return { blobCount: 9, frameRate: 25, blurAmount: 2 };
+        case "high":
+          return { blobCount: NUM_BLOBS, frameRate: 30, blurAmount: 2 };
+        default:
+          return { blobCount: NUM_BLOBS, frameRate: 30, blurAmount: 2 };
+      }
+    };
+
+    const qualitySettings = getQualitySettings();
+    const targetFrameRate = qualitySettings.frameRate;
+    const frameInterval = 1000 / targetFrameRate;
+    const frameRateMultiplier = 60 / targetFrameRate;
+
+    // Log hardware detection and quality settings
+    useEffect(() => {
+      if (!loading) {
+        console.table({
+          "🎨 AnimatedBackground - Hardware Detection": {
+            performanceTier,
+            blobCount: qualitySettings.blobCount,
+            frameRate: qualitySettings.frameRate,
+            blurAmount: qualitySettings.blurAmount,
+          },
+        });
+      }
+    }, [performanceTier, loading, qualitySettings]);
+
+    // Initialize blobs with appropriate count
+    useEffect(() => {
+      blobs.current = generateBlobs(qualitySettings.blobCount);
+    }, [qualitySettings.blobCount]);
 
     useMotionValueEvent(scrollYProgress, "change", (latest) => {
       const i = Math.floor(latest * (blobs.current[0].colors.length - 1));
@@ -185,7 +225,7 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
         });
 
         offCtx.translate(0, renderHeight * curY.current);
-        offCtx.filter = `blur(${2}px)`;
+        offCtx.filter = `blur(${qualitySettings.blurAmount}px)`;
 
         for (const blob of blobs.current) {
           blob.rotation.curSpeed = interp(
@@ -226,7 +266,7 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
 
       render(0);
       return () => window.removeEventListener("resize", resize);
-    }, []);
+    }, [frameInterval, frameRateMultiplier, qualitySettings.blurAmount]);
 
     return (
       <canvas
@@ -239,7 +279,7 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
           zIndex: -1,
           pointerEvents: "none",
           // filter: "blur(40px)",
-          background: blobs.current[0].colors[colorIndex.current].b,
+          background: blobs.current[0]?.colors[colorIndex.current]?.b || "#000",
         }}
       />
     );
