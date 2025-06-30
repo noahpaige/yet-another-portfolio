@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { spaceMono, ibmPlexMono, lexendDeca } from "./fonts";
+import { MagneticProvider } from "@/context/MagneticContext";
 
 export const metadata: Metadata = {
   title: "Noah Paige | Portfolio",
@@ -31,7 +32,7 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased font-lexend-deca overflow-hidden isolate">
-        {children}
+        <MagneticProvider>{children}</MagneticProvider>
       </body>
     </html>
   );

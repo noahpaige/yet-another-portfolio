@@ -7,9 +7,9 @@ interface ProjectCardProps {
   project: Project;
 }
 
-export function ProjectCard({ project }: ProjectCardProps) {
+export const ProjectCard = React.memo(({ project }: ProjectCardProps) => {
   return (
-    <Magnetic 
+    <Magnetic
       intensity={0.2}
       range={400}
       actionArea="self"
@@ -18,7 +18,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
       <Link href={`/projects/${project.id}`}>
         <div className="group relative overflow-hidden rounded-xl glass-layer-hoverable transition-all duration-300">
           <div className="relative h-24 xs:h-32 sm:h-40 md:h-48 lg:h-64 xl:h-80 rounded-lg overflow-hidden">
-            <Magnetic 
+            <Magnetic
               intensity={0.2}
               range={200}
               actionArea="global"
@@ -35,7 +35,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
               </div>
             </Magnetic>
             <div className="px-6 py-3 absolute bottom-0 left-0">
-              <Magnetic 
+              <Magnetic
                 intensity={0.1}
                 range={200}
                 actionArea="global"
@@ -45,12 +45,12 @@ export function ProjectCard({ project }: ProjectCardProps) {
                   {project.title}
                 </h3>
               </Magnetic>
-              
+
               {/* Tags */}
               <div className="flex flex-wrap gap-2">
                 {project.tags.map((tag, index) => (
-                  <Magnetic 
-                    key={tag} 
+                  <Magnetic
+                    key={tag}
                     intensity={0.1}
                     range={200}
                     actionArea="global"
@@ -60,7 +60,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
                       className="px-2 py-1 text-zinc-300 text-xs rounded-full glass-layer"
                       style={{
                         animationDelay: `${index * 100}ms`,
-                        animationDuration: '2s'
+                        animationDuration: "2s",
                       }}
                     >
                       {tag}
@@ -74,4 +74,6 @@ export function ProjectCard({ project }: ProjectCardProps) {
       </Link>
     </Magnetic>
   );
-} 
+});
+
+ProjectCard.displayName = "ProjectCard";
