@@ -180,7 +180,7 @@ const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
         blob.rotation.curSpeed = interp(
           blob.rotation.curSpeed,
           blob.rotation.baseSpeed * scrollDirection.current,
-          0.15,
+          0.08,
           { type: "ease-in" }
         );
         blob.rotation.angle += blob.rotation.curSpeed;
