@@ -1,10 +1,11 @@
 "use client";
 
+import React from "react";
 import { motion } from "framer-motion";
 import { TextLoop } from "@/components/ui/text-loop";
 import { Magnetic } from "@/components/ui/magnetic";
 
-export default function WelcomeSection() {
+const WelcomeSection = React.memo(() => {
   return (
     <div className="flex h-full w-full items-center justify-center px-6">
       <div className="flex flex-col text-left">
@@ -14,7 +15,7 @@ export default function WelcomeSection() {
           animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
           transition={{ duration: 0.2 }}
         >
-          Hey, I’m
+          Hey, I&apos;m
         </motion.h2>
         <motion.div
           className="text-[clamp(48px,12vw,400px)] font-extrabold leading-[1.1] text-white font-ibm-plex-mono font-extralight cursor-default select-none flex gap-1/2"
@@ -87,4 +88,8 @@ export default function WelcomeSection() {
       </div>
     </div>
   );
-}
+});
+
+WelcomeSection.displayName = "WelcomeSection";
+
+export default WelcomeSection;

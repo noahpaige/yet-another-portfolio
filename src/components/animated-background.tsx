@@ -110,140 +110,142 @@ const generateBlobs = (count: number): BlobData[] => {
   return blobs;
 };
 
-const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
-  scrollYProgress,
-}) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const blobs = useRef(generateBlobs(NUM_BLOBS));
-  const colorIndex = useRef(0);
-  const prevScrollY = useRef<number | null>(null);
-  const curY = useRef(0.5);
-  const desiredY = useRef(0.8);
-  const scrollDirection = useRef(1);
-  const lastFrameTime = useRef(0);
-  const targetFrameRate = 30; // Limit to 30fps instead of 60fps
-  const frameInterval = 1000 / targetFrameRate; // ~33ms between frames
-  const frameRateMultiplier = 60 / targetFrameRate; // 2x multiplier to compensate for 30fps
+const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
+  ({ scrollYProgress }) => {
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const blobs = useRef(generateBlobs(NUM_BLOBS));
+    const colorIndex = useRef(0);
+    const prevScrollY = useRef<number | null>(null);
+    const curY = useRef(0.5);
+    const desiredY = useRef(0.8);
+    const scrollDirection = useRef(1);
+    const lastFrameTime = useRef(0);
+    const targetFrameRate = 30; // Limit to 30fps instead of 60fps
+    const frameInterval = 1000 / targetFrameRate; // ~33ms between frames
+    const frameRateMultiplier = 60 / targetFrameRate; // 2x multiplier to compensate for 30fps
 
-  useMotionValueEvent(scrollYProgress, "change", (latest) => {
-    const i = Math.floor(latest * (blobs.current[0].colors.length - 1));
-    colorIndex.current = i;
+    useMotionValueEvent(scrollYProgress, "change", (latest) => {
+      const i = Math.floor(latest * (blobs.current[0].colors.length - 1));
+      colorIndex.current = i;
 
-    if (prevScrollY.current === null) prevScrollY.current = latest;
-    scrollDirection.current = latest > prevScrollY.current ? -1 : 1;
+      if (prevScrollY.current === null) prevScrollY.current = latest;
+      scrollDirection.current = latest > prevScrollY.current ? -1 : 1;
 
-    blobs.current.forEach((blob, index) => {
-      blob.rotation.curSpeed =
-        15 *
-        Math.pow((blobs.current.length - index) / blobs.current.length, 0.1) *
-        blob.rotation.baseSpeed *
-        scrollDirection.current;
-    });
-    prevScrollY.current = latest;
-
-    desiredY.current = 0.8 - latest * 0.6;
-  });
-
-  useEffect(() => {
-    // In useEffect
-    const canvas = canvasRef.current!;
-    const ctx = canvas.getContext("2d")!;
-    const offscreen = document.createElement("canvas");
-    const offCtx = offscreen.getContext("2d")!;
-
-    // Set your target resolution for offscreen rendering
-    const renderWidth = RENDER_SIZE;
-    const renderHeight = RENDER_SIZE;
-
-    offscreen.width = renderWidth;
-    offscreen.height = renderHeight;
-
-    const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-
-    window.addEventListener("resize", resize);
-    resize();
-
-    const render = (currentTime: number) => {
-      // Frame rate limiting - only render if enough time has passed
-      if (currentTime - lastFrameTime.current < frameInterval) {
-        requestAnimationFrame(render);
-        return;
-      }
-
-      lastFrameTime.current = currentTime;
-
-      // Clear and draw on offscreen canvas
-      offCtx.clearRect(0, 0, renderWidth, renderHeight);
-      offCtx.save();
-
-      curY.current = interp(curY.current, desiredY.current, 0.8, {
-        type: "spring",
-        stiffness: 0.02,
-        damping: 0.35,
+      blobs.current.forEach((blob, index) => {
+        blob.rotation.curSpeed =
+          15 *
+          Math.pow((blobs.current.length - index) / blobs.current.length, 0.1) *
+          blob.rotation.baseSpeed *
+          scrollDirection.current;
       });
+      prevScrollY.current = latest;
 
-      offCtx.translate(0, renderHeight * curY.current);
-      offCtx.filter = `blur(${2}px)`;
+      desiredY.current = 0.8 - latest * 0.6;
+    });
 
-      for (const blob of blobs.current) {
-        blob.rotation.curSpeed = interp(
-          blob.rotation.curSpeed,
-          blob.rotation.baseSpeed * scrollDirection.current,
-          0.08,
-          { type: "ease-in" }
-        );
-        // Compensate for reduced frame rate by multiplying rotation speed
-        blob.rotation.angle += blob.rotation.curSpeed * frameRateMultiplier;
-        const rotation = blob.rotation.angle;
+    useEffect(() => {
+      // In useEffect
+      const canvas = canvasRef.current!;
+      const ctx = canvas.getContext("2d")!;
+      const offscreen = document.createElement("canvas");
+      const offCtx = offscreen.getContext("2d")!;
+
+      // Set your target resolution for offscreen rendering
+      const renderWidth = RENDER_SIZE;
+      const renderHeight = RENDER_SIZE;
+
+      offscreen.width = renderWidth;
+      offscreen.height = renderHeight;
+
+      const resize = () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      };
+
+      window.addEventListener("resize", resize);
+      resize();
+
+      const render = (currentTime: number) => {
+        // Frame rate limiting - only render if enough time has passed
+        if (currentTime - lastFrameTime.current < frameInterval) {
+          requestAnimationFrame(render);
+          return;
+        }
+
+        lastFrameTime.current = currentTime;
+
+        // Clear and draw on offscreen canvas
+        offCtx.clearRect(0, 0, renderWidth, renderHeight);
         offCtx.save();
-        offCtx.translate(0, (curY.current * renderHeight) / 8);
-        offCtx.rotate((rotation * Math.PI) / 180);
-        offCtx.scale(blob.scale, blob.scale);
 
-        const grad = offCtx.createLinearGradient(
-          -(RENDER_SIZE / 2),
-          RENDER_SIZE / 2,
-          RENDER_SIZE / 8,
-          -(RENDER_SIZE / 8)
-        );
-        grad.addColorStop(0, blob.colors[colorIndex.current].a);
-        grad.addColorStop(1, blob.colors[colorIndex.current].b);
-        offCtx.fillStyle = grad;
-        offCtx.fill(blob.path);
+        curY.current = interp(curY.current, desiredY.current, 0.8, {
+          type: "spring",
+          stiffness: 0.02,
+          damping: 0.35,
+        });
+
+        offCtx.translate(0, renderHeight * curY.current);
+        offCtx.filter = `blur(${2}px)`;
+
+        for (const blob of blobs.current) {
+          blob.rotation.curSpeed = interp(
+            blob.rotation.curSpeed,
+            blob.rotation.baseSpeed * scrollDirection.current,
+            0.08,
+            { type: "ease-in" }
+          );
+          // Compensate for reduced frame rate by multiplying rotation speed
+          blob.rotation.angle += blob.rotation.curSpeed * frameRateMultiplier;
+          const rotation = blob.rotation.angle;
+          offCtx.save();
+          offCtx.translate(0, (curY.current * renderHeight) / 8);
+          offCtx.rotate((rotation * Math.PI) / 180);
+          offCtx.scale(blob.scale, blob.scale);
+
+          const grad = offCtx.createLinearGradient(
+            -(RENDER_SIZE / 2),
+            RENDER_SIZE / 2,
+            RENDER_SIZE / 8,
+            -(RENDER_SIZE / 8)
+          );
+          grad.addColorStop(0, blob.colors[colorIndex.current].a);
+          grad.addColorStop(1, blob.colors[colorIndex.current].b);
+          offCtx.fillStyle = grad;
+          offCtx.fill(blob.path);
+          offCtx.restore();
+        }
+
         offCtx.restore();
-      }
 
-      offCtx.restore();
+        // Scale up and draw on main canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(offscreen, 0, 0, canvas.width, canvas.height);
 
-      // Scale up and draw on main canvas
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(offscreen, 0, 0, canvas.width, canvas.height);
+        requestAnimationFrame(render);
+      };
 
-      requestAnimationFrame(render);
-    };
+      render(0);
+      return () => window.removeEventListener("resize", resize);
+    }, []);
 
-    render(0);
-    return () => window.removeEventListener("resize", resize);
-  }, []);
+    return (
+      <canvas
+        ref={canvasRef}
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100vw",
+          height: "100vh",
+          zIndex: -1,
+          pointerEvents: "none",
+          // filter: "blur(40px)",
+          background: blobs.current[0].colors[colorIndex.current].b,
+        }}
+      />
+    );
+  }
+);
 
-  return (
-    <canvas
-      ref={canvasRef}
-      style={{
-        position: "absolute",
-        inset: 0,
-        width: "100vw",
-        height: "100vh",
-        zIndex: -1,
-        pointerEvents: "none",
-        // filter: "blur(40px)",
-        background: blobs.current[0].colors[colorIndex.current].b,
-      }}
-    />
-  );
-};
+AnimatedBackground.displayName = "AnimatedBackground";
 
 export default AnimatedBackground;

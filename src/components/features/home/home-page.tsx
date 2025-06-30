@@ -55,11 +55,14 @@ export default function HomePage() {
         </div>
       </ClientOnly>
 
-      {Array.from(SECTIONS.entries()).map(([name, section]) => (
-        <HomePageSection key={name} id={`section-${name}`} sectionName={name}>
-          {section.component()}
-        </HomePageSection>
-      ))}
+      {Array.from(SECTIONS.entries()).map(([name, section]) => {
+        const SectionComponent = section.component;
+        return (
+          <HomePageSection key={name} id={`section-${name}`} sectionName={name}>
+            <SectionComponent />
+          </HomePageSection>
+        );
+      })}
 
       <BottomNav
         options={navOptions}

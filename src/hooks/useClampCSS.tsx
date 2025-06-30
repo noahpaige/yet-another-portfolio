@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 
 /**
  * Generates a responsive CSS `clamp()` expression (in pixels) that scales between
@@ -27,7 +27,7 @@ export function useClampCSS(
   minScreenWidthPx: number,
   maxScreenWidthPx: number
 ): string {
-  return useMemo(() => {
+  const calculateClamp = useCallback(() => {
     if (
       maxScreenHeightPx <= minScreenHeightPx &&
       maxScreenWidthPx <= minScreenWidthPx
@@ -74,4 +74,6 @@ export function useClampCSS(
     minScreenWidthPx,
     maxScreenWidthPx,
   ]);
+
+  return useMemo(() => calculateClamp(), [calculateClamp]);
 }

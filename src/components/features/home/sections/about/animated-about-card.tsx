@@ -84,7 +84,7 @@ interface AnimatedAboutCardProps {
   bodyAnimDelay?: number;
 }
 
-export default function AnimatedAboutCard({
+const AnimatedAboutCard = React.memo(function AnimatedAboutCard({
   show,
   header,
   body,
@@ -239,4 +239,8 @@ export default function AnimatedAboutCard({
       </div>
     </div>
   );
-}
+});
+
+AnimatedAboutCard.displayName = "AnimatedAboutCard";
+
+export default AnimatedAboutCard;

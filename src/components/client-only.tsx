@@ -1,12 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 
-export default function ClientOnly({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+const ClientOnly = React.memo(({ children }: { children: React.ReactNode }) => {
   const [hasMounted, setHasMounted] = useState(false);
 
   useEffect(() => {
@@ -16,4 +12,8 @@ export default function ClientOnly({
   if (!hasMounted) return null;
 
   return <>{children}</>;
-}
+});
+
+ClientOnly.displayName = "ClientOnly";
+
+export default ClientOnly;
