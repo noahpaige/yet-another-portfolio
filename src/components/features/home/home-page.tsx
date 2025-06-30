@@ -1,13 +1,9 @@
 "use client";
 
-import { RefObject, useRef } from "react";
+import { RefObject, useRef, lazy, Suspense } from "react";
 import { useScroll } from "framer-motion";
 
-import WelcomeSection from "@/components/features/home/sections/welcome/welcome-section";
-import AboutSection from "@/components/features/home/sections/about/about-section";
 import HomePageSection from "@/components/features/home/sections/home-page-section";
-import ProjectsSection from "@/components/features/home/sections/projects/projects-section";
-import { ContactSection } from "@/components/features/home/sections/contact/contact-section";
 import BottomNav from "@/components/features/home/bottom-nav";
 import AnimatedBackground from "@/components/animated-background";
 import ClientOnly from "@/components/client-only";
@@ -15,6 +11,26 @@ import { useScrollSections } from "@/hooks/use-scroll-sections";
 import { Home, Folder, Info, Mail } from "lucide-react";
 import { useSmoothWheelScroll } from "@/hooks/use-smooth-wheel-scroll";
 import NoiseOverlay from "@/components/noise-overlay";
+import LazySection from "@/components/features/home/lazy-section";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+
+// Lazy load section components
+const WelcomeSection = lazy(
+  () => import("@/components/features/home/sections/welcome/welcome-section")
+);
+const AboutSection = lazy(
+  () => import("@/components/features/home/sections/about/about-section")
+);
+const ProjectsSection = lazy(
+  () => import("@/components/features/home/sections/projects/projects-section")
+);
+const ContactSection = lazy(() =>
+  import("@/components/features/home/sections/contact/contact-section").then(
+    (module) => ({
+      default: module.ContactSection,
+    })
+  )
+);
 
 const SECTIONS = new Map([
   ["HOME", { component: WelcomeSection, icon: Home }],
@@ -22,6 +38,13 @@ const SECTIONS = new Map([
   ["PROJECTS", { component: ProjectsSection, icon: Folder }],
   ["CONTACT", { component: ContactSection, icon: Mail }],
 ]);
+
+// Loading fallback component
+const SectionFallback = () => (
+  <div className="h-full w-full flex items-center justify-center">
+    <LoadingSpinner size="lg" className="text-white" />
+  </div>
+);
 
 export default function HomePage() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -36,7 +59,7 @@ export default function HomePage() {
     sectionNames,
     scrollContainerRef as RefObject<HTMLDivElement>
   );
-  useSmoothWheelScroll(scrollContainerRef as RefObject<HTMLDivElement>); // Add this line
+  useSmoothWheelScroll(scrollContainerRef as RefObject<HTMLDivElement>);
 
   const { scrollYProgress } = useScroll({
     container: scrollContainerRef,
@@ -59,7 +82,11 @@ export default function HomePage() {
         const SectionComponent = section.component;
         return (
           <HomePageSection key={name} id={`section-${name}`} sectionName={name}>
-            <SectionComponent />
+            <LazySection fallback={<SectionFallback />}>
+              <Suspense fallback={<SectionFallback />}>
+                <SectionComponent />
+              </Suspense>
+            </LazySection>
           </HomePageSection>
         );
       })}
