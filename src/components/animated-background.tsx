@@ -120,6 +120,10 @@ const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
   const curY = useRef(0.5);
   const desiredY = useRef(0.8);
   const scrollDirection = useRef(1);
+  const lastFrameTime = useRef(0);
+  const targetFrameRate = 30; // Limit to 30fps instead of 60fps
+  const frameInterval = 1000 / targetFrameRate; // ~33ms between frames
+  const frameRateMultiplier = 60 / targetFrameRate; // 2x multiplier to compensate for 30fps
 
   useMotionValueEvent(scrollYProgress, "change", (latest) => {
     const i = Math.floor(latest * (blobs.current[0].colors.length - 1));
@@ -162,7 +166,15 @@ const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
     window.addEventListener("resize", resize);
     resize();
 
-    const render = () => {
+    const render = (currentTime: number) => {
+      // Frame rate limiting - only render if enough time has passed
+      if (currentTime - lastFrameTime.current < frameInterval) {
+        requestAnimationFrame(render);
+        return;
+      }
+
+      lastFrameTime.current = currentTime;
+
       // Clear and draw on offscreen canvas
       offCtx.clearRect(0, 0, renderWidth, renderHeight);
       offCtx.save();
@@ -183,7 +195,8 @@ const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
           0.08,
           { type: "ease-in" }
         );
-        blob.rotation.angle += blob.rotation.curSpeed;
+        // Compensate for reduced frame rate by multiplying rotation speed
+        blob.rotation.angle += blob.rotation.curSpeed * frameRateMultiplier;
         const rotation = blob.rotation.angle;
         offCtx.save();
         offCtx.translate(0, (curY.current * renderHeight) / 8);
@@ -212,7 +225,7 @@ const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
       requestAnimationFrame(render);
     };
 
-    render();
+    render(0);
     return () => window.removeEventListener("resize", resize);
   }, []);
 
