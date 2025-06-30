@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, Children } from "react";
+import React, { useState, useEffect, Children, useMemo } from "react";
 import { motion, AnimatePresence, type Variants } from "motion/react";
 import { cn } from "@/lib/utils";
 
@@ -32,7 +32,9 @@ export const TextLoop = React.memo(
     mode = "popLayout",
   }: TextLoopProps) => {
     const [currentIndex, setCurrentIndex] = useState(0);
-    const items = Children.toArray(children);
+
+    // Memoize the items array to prevent unnecessary re-creation
+    const items = useMemo(() => Children.toArray(children), [children]);
 
     useEffect(() => {
       if (!trigger) return;
