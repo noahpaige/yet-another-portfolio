@@ -11,9 +11,10 @@ const NUM_BLOBS = 12;
 const RENDER_SIZE = 32;
 const SPRING_DAMPING = 0.35;
 const SPRING_STIFFNESS = 0.02;
-const ROTATION_INTERP = 0.4;
+const ROTATION_INTERP = 0.3;
 const RESIZE_DEBOUNCE_DELAY_MS = 100;
-const ROTATION_SPEED_MULTIPLIER = 60;
+const ROTATION_SPEED_MULTIPLIER = 20;
+const ROTATION_SPEED_MULTIPLIER_HIGH = ROTATION_SPEED_MULTIPLIER * 40;
 const ROTATION_EXPONENT = 0.3;
 const CURY_INTERP = 0.8;
 const DESIREDY_BASE = 0.8;
@@ -24,6 +25,12 @@ const BLUR_AMOUNT_HIGH = 4;
 const FRAME_RATE_LOW = 20;
 const FRAME_RATE_MEDIUM = 30;
 const FRAME_RATE_HIGH = 60;
+
+// Cap for delta time to avoid large animation jumps
+const MAX_DELTA_SECONDS = 0.1; // 100ms
+
+// Minimum rotation speed for continuous animation (degrees per second)
+const MIN_ROTATION_SPEED = 10;
 
 interface AnimatedBackgroundProps {
   scrollYProgress: MotionValue<number>;
@@ -98,7 +105,7 @@ const generateBlobs = (
     const rawPath = paths[Math.floor(Math.random() * paths.length)];
     const path2D = new Path2D(rawPath);
 
-    const speed = 0.1 * ((count - 1 - i) / count) * (1 + Math.random() * 0.9);
+    const speed = 0.1 + 0.45 * ((count - 1 - i) / count) + 0.45 * Math.random();
     blobs.push({
       path: path2D,
       rotation: {
@@ -123,7 +130,7 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
     const curY = useRef(0.5);
     const desiredY = useRef(0.8);
     const scrollDirection = useRef(1);
-    const lastFrameTime = useRef(0);
+    const lastFrameTime = useRef(performance.now());
     const [canvasBlurSupported, setCanvasBlurSupported] = useState(true);
 
     // Debounced resize handler
@@ -181,9 +188,6 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
     const qualitySettings = getQualitySettings();
     const targetFrameRate = qualitySettings.frameRate;
     const frameInterval = 1000 / targetFrameRate;
-    // For 60fps, no multiplier needed since we're already at native frame rate
-    const frameRateMultiplier =
-      targetFrameRate === 60 ? 1 : 60 / targetFrameRate;
 
     // Log hardware detection and quality settings
     useEffect(() => {
@@ -219,7 +223,7 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
 
       blobs.current.forEach((blob, index) => {
         blob.rotation.curSpeed =
-          ROTATION_SPEED_MULTIPLIER *
+          ROTATION_SPEED_MULTIPLIER_HIGH *
           Math.pow(
             (blobs.current.length - index) / blobs.current.length,
             ROTATION_EXPONENT
@@ -283,6 +287,9 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
           return;
         }
 
+        // Calculate delta time in seconds, capped to avoid large jumps
+        let deltaSeconds = (currentTime - lastFrameTime.current) / 1000;
+        if (deltaSeconds > MAX_DELTA_SECONDS) deltaSeconds = MAX_DELTA_SECONDS;
         lastFrameTime.current = currentTime;
 
         // Clear and draw on offscreen canvas
@@ -303,14 +310,21 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
         }
 
         for (const blob of blobs.current) {
+          // Calculate target speed: minimum continuous speed + scroll influence
+          const targetSpeed =
+            Math.max(
+              MIN_ROTATION_SPEED,
+              blob.rotation.baseSpeed * ROTATION_SPEED_MULTIPLIER
+            ) * scrollDirection.current;
+
           blob.rotation.curSpeed = interp(
             blob.rotation.curSpeed,
-            blob.rotation.baseSpeed * scrollDirection.current,
+            targetSpeed,
             ROTATION_INTERP,
             { type: "ease-in" }
           );
-          // Compensate for reduced frame rate by multiplying rotation speed
-          blob.rotation.angle += blob.rotation.curSpeed * frameRateMultiplier;
+          // Use delta time for rotation update (degrees per second)
+          blob.rotation.angle += blob.rotation.curSpeed * deltaSeconds;
           const rotation = blob.rotation.angle;
           offCtx.save();
           offCtx.translate(0, (curY.current * renderHeight) / 8);
@@ -339,7 +353,7 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
         requestAnimationFrame(render);
       };
 
-      render(0);
+      render(performance.now());
       return () => {
         window.removeEventListener("resize", handleResize);
         if (debouncedResize.current) {
@@ -348,7 +362,6 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
       };
     }, [
       frameInterval,
-      frameRateMultiplier,
       qualitySettings.blurAmount,
       canvasBlurSupported,
       handleResize,
