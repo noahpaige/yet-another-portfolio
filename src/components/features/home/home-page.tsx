@@ -13,6 +13,7 @@ import { useSmoothWheelScroll } from "@/hooks/use-smooth-wheel-scroll";
 import NoiseOverlay from "@/components/noise-overlay";
 import LazySection from "@/components/features/home/lazy-section";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import type { HSLColor } from "@/components/animated-background";
 
 // Lazy load section components
 const WelcomeSection = lazy(
@@ -31,6 +32,25 @@ const ContactSection = lazy(() =>
     })
   )
 );
+
+const colorPairs: [HSLColor, HSLColor][] = [
+  [
+    { h: 145, s: 50, l: 30 },
+    { h: 290, s: 35, l: 10 },
+  ],
+  [
+    { h: 245, s: 30, l: 9 },
+    { h: 145, s: 60, l: 27 },
+  ],
+  [
+    { h: 145, s: 70, l: 23 },
+    { h: 195, s: 25, l: 8 },
+  ],
+  [
+    { h: 140, s: 20, l: 7 },
+    { h: 145, s: 80, l: 20 },
+  ],
+];
 
 const SECTIONS = new Map([
   ["HOME", { component: WelcomeSection, icon: Home }],
@@ -73,7 +93,10 @@ export default function HomePage() {
     >
       <ClientOnly>
         <div className="sticky inset-0">
-          <AnimatedBackground scrollYProgress={scrollYProgress} />
+          <AnimatedBackground
+            scrollYProgress={scrollYProgress}
+            colorPairs={colorPairs}
+          />
           <NoiseOverlay opacity={0.05} resolution={1} />
         </div>
       </ClientOnly>

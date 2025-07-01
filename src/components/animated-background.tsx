@@ -6,18 +6,36 @@ import { BlobData } from "@/app/types";
 import { interp } from "@/lib/interp";
 import { useHardwareCapability } from "@/context/HardwareCapabilityContext";
 
+// Magic numbers extracted as constants for clarity and maintainability
 const NUM_BLOBS = 12;
 const RENDER_SIZE = 32;
+const SPRING_DAMPING = 0.35;
+const SPRING_STIFFNESS = 0.02;
+const ROTATION_INTERP = 0.4;
+const RESIZE_DEBOUNCE_DELAY_MS = 100;
+const ROTATION_SPEED_MULTIPLIER = 60;
+const ROTATION_EXPONENT = 0.3;
+const CURY_INTERP = 0.8;
+const DESIREDY_BASE = 0.8;
+const DESIREDY_MULTIPLIER = 0.6;
+const BLUR_AMOUNT_LOW = 1;
+const BLUR_AMOUNT_MEDIUM = 2;
+const BLUR_AMOUNT_HIGH = 4;
+const FRAME_RATE_LOW = 20;
+const FRAME_RATE_MEDIUM = 30;
+const FRAME_RATE_HIGH = 60;
 
 interface AnimatedBackgroundProps {
   scrollYProgress: MotionValue<number>;
+  enableColorSwap?: boolean;
+  colorPairs: [HSLColor, HSLColor][];
 }
 
-interface HSLColor {
+export type HSLColor = {
   h: number;
   s: number;
   l: number;
-}
+};
 
 const interpolateHueShortestPath = (
   h1: number,
@@ -57,26 +75,10 @@ const paths = [
   "M23.1,-27.4C28.5,-23,30.4,-14.4,31,-6.1C31.6,2.1,31.1,9.8,27.6,16C24.1,22.1,17.7,26.5,10,30.9C2.3,35.2,-6.8,39.3,-14.7,37.6C-22.7,36,-29.5,28.5,-33.2,20.1C-36.9,11.8,-37.5,2.5,-36.1,-6.6C-34.8,-15.8,-31.7,-24.9,-25.3,-29.1C-19,-33.3,-9.5,-32.6,-0.3,-32.3C8.9,-31.9,17.7,-31.8,23.1,-27.4Z",
 ];
 
-const colorPairs: [HSLColor, HSLColor][] = [
-  [
-    { h: 145, s: 50, l: 30 },
-    { h: 290, s: 35, l: 10 },
-  ],
-  [
-    { h: 245, s: 30, l: 9 },
-    { h: 145, s: 60, l: 27 },
-  ],
-  [
-    { h: 145, s: 70, l: 23 },
-    { h: 195, s: 25, l: 8 },
-  ],
-  [
-    { h: 140, s: 20, l: 7 },
-    { h: 145, s: 80, l: 20 },
-  ],
-];
-
-const generateBlobs = (count: number): BlobData[] => {
+const generateBlobs = (
+  count: number,
+  colorPairs: [HSLColor, HSLColor][]
+): BlobData[] => {
   const blobs: BlobData[] = [];
   const numColors = 64;
   const colorsPerPair = Math.floor(numColors / (colorPairs.length - 1));
@@ -112,7 +114,7 @@ const generateBlobs = (count: number): BlobData[] => {
 };
 
 const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
-  ({ scrollYProgress }) => {
+  ({ scrollYProgress, enableColorSwap = false, colorPairs }) => {
     const { performanceTier, loading } = useHardwareCapability();
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const blobs = useRef<BlobData[]>([]);
@@ -135,23 +137,43 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
           canvas.width = window.innerWidth;
           canvas.height = window.innerHeight;
         }
-      }, 100); // 100ms debounce delay
+      }, RESIZE_DEBOUNCE_DELAY_MS);
     }, []);
 
     // Adjust quality based on device capabilities
     const getQualitySettings = () => {
       if (loading)
-        return { blobCount: NUM_BLOBS, frameRate: 30, blurAmount: 2 };
+        return {
+          blobCount: NUM_BLOBS,
+          frameRate: FRAME_RATE_MEDIUM,
+          blurAmount: BLUR_AMOUNT_MEDIUM,
+        };
 
       switch (performanceTier) {
         case "low":
-          return { blobCount: 6, frameRate: 20, blurAmount: 1 };
+          return {
+            blobCount: 6,
+            frameRate: FRAME_RATE_LOW,
+            blurAmount: BLUR_AMOUNT_LOW,
+          };
         case "medium":
-          return { blobCount: 9, frameRate: 30, blurAmount: 2 };
+          return {
+            blobCount: 9,
+            frameRate: FRAME_RATE_MEDIUM,
+            blurAmount: BLUR_AMOUNT_MEDIUM,
+          };
         case "high":
-          return { blobCount: NUM_BLOBS, frameRate: 60, blurAmount: 2 };
+          return {
+            blobCount: NUM_BLOBS,
+            frameRate: FRAME_RATE_HIGH,
+            blurAmount: BLUR_AMOUNT_HIGH,
+          };
         default:
-          return { blobCount: NUM_BLOBS, frameRate: 30, blurAmount: 2 };
+          return {
+            blobCount: NUM_BLOBS,
+            frameRate: FRAME_RATE_MEDIUM,
+            blurAmount: BLUR_AMOUNT_MEDIUM,
+          };
       }
     };
 
@@ -180,26 +202,33 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
 
     // Initialize blobs with appropriate count
     useEffect(() => {
-      blobs.current = generateBlobs(qualitySettings.blobCount);
-    }, [qualitySettings.blobCount]);
+      blobs.current = generateBlobs(qualitySettings.blobCount, colorPairs);
+    }, [qualitySettings.blobCount, colorPairs]);
 
     useMotionValueEvent(scrollYProgress, "change", (latest) => {
-      const i = Math.floor(latest * (blobs.current[0].colors.length - 1));
-      colorIndex.current = i;
+      if (enableColorSwap) {
+        const i = Math.floor(latest * (blobs.current[0].colors.length - 1));
+        colorIndex.current = i;
+      } else {
+        colorIndex.current = 0;
+      }
 
       if (prevScrollY.current === null) prevScrollY.current = latest;
       scrollDirection.current = latest > prevScrollY.current ? -1 : 1;
 
       blobs.current.forEach((blob, index) => {
         blob.rotation.curSpeed =
-          15 *
-          Math.pow((blobs.current.length - index) / blobs.current.length, 0.1) *
+          ROTATION_SPEED_MULTIPLIER *
+          Math.pow(
+            (blobs.current.length - index) / blobs.current.length,
+            ROTATION_EXPONENT
+          ) *
           blob.rotation.baseSpeed *
           scrollDirection.current;
       });
       prevScrollY.current = latest;
 
-      desiredY.current = 0.8 - latest * 0.6;
+      desiredY.current = DESIREDY_BASE - latest * DESIREDY_MULTIPLIER;
     });
 
     useEffect(() => {
@@ -232,10 +261,10 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
         offCtx.clearRect(0, 0, renderWidth, renderHeight);
         offCtx.save();
 
-        curY.current = interp(curY.current, desiredY.current, 0.8, {
+        curY.current = interp(curY.current, desiredY.current, CURY_INTERP, {
           type: "spring",
-          stiffness: 0.02,
-          damping: 0.35,
+          stiffness: SPRING_STIFFNESS,
+          damping: SPRING_DAMPING,
         });
 
         offCtx.translate(0, renderHeight * curY.current);
@@ -245,7 +274,7 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
           blob.rotation.curSpeed = interp(
             blob.rotation.curSpeed,
             blob.rotation.baseSpeed * scrollDirection.current,
-            0.08,
+            ROTATION_INTERP,
             { type: "ease-in" }
           );
           // Compensate for reduced frame rate by multiplying rotation speed
