@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useCallback } from "react";
 import { useHardwareCapability } from "@/context/HardwareCapabilityContext";
 
 interface NoiseOverlayProps {
@@ -32,6 +32,25 @@ const NoiseOverlay = React.memo<NoiseOverlayProps>(
     const qualitySettings = getQualitySettings();
     const effectiveResolution = resolution * qualitySettings.resolution;
     const effectiveOpacity = opacity * qualitySettings.opacity;
+
+    // Debounced resize handler
+    const debouncedResize = useRef<NodeJS.Timeout | null>(null);
+    const handleResize = useCallback(() => {
+      if (debouncedResize.current) {
+        clearTimeout(debouncedResize.current);
+      }
+      debouncedResize.current = setTimeout(() => {
+        const canvas = canvasRef.current;
+        if (canvas) {
+          const width = window.innerWidth * effectiveResolution;
+          const height = window.innerHeight * effectiveResolution;
+          canvas.width = width;
+          canvas.height = height;
+          canvas.style.width = "100%";
+          canvas.style.height = `${window.innerHeight}px`;
+        }
+      }, 100); // 100ms debounce delay
+    }, [effectiveResolution]);
 
     // Log hardware detection and quality settings
     useEffect(() => {
@@ -77,8 +96,13 @@ const NoiseOverlay = React.memo<NoiseOverlayProps>(
       };
 
       drawStaticNoise();
-      window.addEventListener("resize", drawStaticNoise);
-      return () => window.removeEventListener("resize", drawStaticNoise);
+      window.addEventListener("resize", handleResize);
+      return () => {
+        window.removeEventListener("resize", handleResize);
+        if (debouncedResize.current) {
+          clearTimeout(debouncedResize.current);
+        }
+      };
     }, [effectiveResolution]);
 
     return (

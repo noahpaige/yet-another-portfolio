@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useCallback } from "react";
 import { MotionValue, useMotionValueEvent } from "framer-motion";
 import { BlobData } from "@/app/types";
 import { interp } from "@/lib/interp";
@@ -123,6 +123,21 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
     const scrollDirection = useRef(1);
     const lastFrameTime = useRef(0);
 
+    // Debounced resize handler
+    const debouncedResize = useRef<NodeJS.Timeout | null>(null);
+    const handleResize = useCallback(() => {
+      if (debouncedResize.current) {
+        clearTimeout(debouncedResize.current);
+      }
+      debouncedResize.current = setTimeout(() => {
+        const canvas = canvasRef.current;
+        if (canvas) {
+          canvas.width = window.innerWidth;
+          canvas.height = window.innerHeight;
+        }
+      }, 100); // 100ms debounce delay
+    }, []);
+
     // Adjust quality based on device capabilities
     const getQualitySettings = () => {
       if (loading)
@@ -132,9 +147,9 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
         case "low":
           return { blobCount: 6, frameRate: 20, blurAmount: 1 };
         case "medium":
-          return { blobCount: 9, frameRate: 25, blurAmount: 2 };
+          return { blobCount: 9, frameRate: 30, blurAmount: 2 };
         case "high":
-          return { blobCount: NUM_BLOBS, frameRate: 30, blurAmount: 2 };
+          return { blobCount: NUM_BLOBS, frameRate: 60, blurAmount: 2 };
         default:
           return { blobCount: NUM_BLOBS, frameRate: 30, blurAmount: 2 };
       }
@@ -143,7 +158,9 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
     const qualitySettings = getQualitySettings();
     const targetFrameRate = qualitySettings.frameRate;
     const frameInterval = 1000 / targetFrameRate;
-    const frameRateMultiplier = 60 / targetFrameRate;
+    // For 60fps, no multiplier needed since we're already at native frame rate
+    const frameRateMultiplier =
+      targetFrameRate === 60 ? 1 : 60 / targetFrameRate;
 
     // Log hardware detection and quality settings
     useEffect(() => {
@@ -152,7 +169,9 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
           "🎨 AnimatedBackground - Hardware Detection": {
             performanceTier,
             blobCount: qualitySettings.blobCount,
-            frameRate: qualitySettings.frameRate,
+            frameRate: `${qualitySettings.frameRate}fps${
+              qualitySettings.frameRate === 60 ? " (High Performance)" : ""
+            }`,
             blurAmount: qualitySettings.blurAmount,
           },
         });
@@ -197,13 +216,8 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
       offscreen.width = renderWidth;
       offscreen.height = renderHeight;
 
-      const resize = () => {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-      };
-
-      window.addEventListener("resize", resize);
-      resize();
+      window.addEventListener("resize", handleResize);
+      handleResize(); // Initial setup
 
       const render = (currentTime: number) => {
         // Frame rate limiting - only render if enough time has passed
@@ -265,7 +279,12 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
       };
 
       render(0);
-      return () => window.removeEventListener("resize", resize);
+      return () => {
+        window.removeEventListener("resize", handleResize);
+        if (debouncedResize.current) {
+          clearTimeout(debouncedResize.current);
+        }
+      };
     }, [frameInterval, frameRateMultiplier, qualitySettings.blurAmount]);
 
     return (
