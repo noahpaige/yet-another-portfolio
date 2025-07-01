@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useCallback } from "react";
+import React, { useEffect, useRef, useCallback, useState } from "react";
 import { MotionValue, useMotionValueEvent } from "framer-motion";
 import { BlobData } from "@/app/types";
 import { interp } from "@/lib/interp";
@@ -124,6 +124,7 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
     const desiredY = useRef(0.8);
     const scrollDirection = useRef(1);
     const lastFrameTime = useRef(0);
+    const [canvasBlurSupported, setCanvasBlurSupported] = useState(true);
 
     // Debounced resize handler
     const debouncedResize = useRef<NodeJS.Timeout | null>(null);
@@ -231,6 +232,33 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
       desiredY.current = DESIREDY_BASE - latest * DESIREDY_MULTIPLIER;
     });
 
+    // Feature detection for canvas filter: blur support
+    useEffect(() => {
+      // Only run on client
+      if (typeof window === "undefined") return;
+      try {
+        const testCanvas = document.createElement("canvas");
+        testCanvas.width = testCanvas.height = 8;
+        const ctx = testCanvas.getContext("2d");
+        if (!ctx || typeof ctx.filter === "undefined") {
+          setCanvasBlurSupported(false);
+          return;
+        }
+        // Try to apply blur and see if it throws or is ignored
+        ctx.filter = "blur(2px)";
+        ctx.fillStyle = "#000";
+        ctx.fillRect(0, 0, 8, 8);
+        // If filter is ignored, it will be "none" or "" after setting
+        if (ctx.filter === "none" || ctx.filter === "") {
+          setCanvasBlurSupported(false);
+          return;
+        }
+        setCanvasBlurSupported(true);
+      } catch {
+        setCanvasBlurSupported(false);
+      }
+    }, []);
+
     useEffect(() => {
       // In useEffect
       const canvas = canvasRef.current!;
@@ -268,7 +296,11 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
         });
 
         offCtx.translate(0, renderHeight * curY.current);
-        offCtx.filter = `blur(${qualitySettings.blurAmount}px)`;
+        if (canvasBlurSupported) {
+          offCtx.filter = `blur(${qualitySettings.blurAmount}px)`;
+        } else {
+          offCtx.filter = "none";
+        }
 
         for (const blob of blobs.current) {
           blob.rotation.curSpeed = interp(
@@ -314,11 +346,16 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
           clearTimeout(debouncedResize.current);
         }
       };
-    }, [frameInterval, frameRateMultiplier, qualitySettings.blurAmount]);
+    }, [
+      frameInterval,
+      frameRateMultiplier,
+      qualitySettings.blurAmount,
+      canvasBlurSupported,
+      handleResize,
+    ]);
 
     return (
-      <canvas
-        ref={canvasRef}
+      <div
         style={{
           position: "absolute",
           inset: 0,
@@ -326,10 +363,39 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
           height: "100vh",
           zIndex: -1,
           pointerEvents: "none",
-          // filter: "blur(40px)",
-          background: blobs.current[0]?.colors[colorIndex.current]?.b || "#000",
         }}
-      />
+      >
+        <canvas
+          ref={canvasRef}
+          style={{
+            width: "100vw",
+            height: "100vh",
+            display: "block",
+            background:
+              blobs.current[0]?.colors[colorIndex.current]?.b || "#000",
+          }}
+        />
+        {!canvasBlurSupported && (
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100vw",
+              height: "100vh",
+              pointerEvents: "none",
+              zIndex: 1,
+              backdropFilter: `blur(${qualitySettings.blurAmount * 20}px)`,
+              WebkitBackdropFilter: `blur(${
+                qualitySettings.blurAmount * 20
+              }px)`,
+              // fallback for browsers that don't support backdrop-filter
+              filter: `blur(${qualitySettings.blurAmount * 20}px)`,
+              background: "transparent",
+              transition: "backdrop-filter 0.3s, filter 0.3s",
+            }}
+          />
+        )}
+      </div>
     );
   }
 );
