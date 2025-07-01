@@ -48,7 +48,16 @@ export const ContactSection = () => {
               rel="noopener noreferrer"
               className="inline-flex items-center size-30 justify-center glass-layer-hoverable text-neutral-400 hover:text-white"
             >
-              {button.icon}
+              <Magnetic
+                key={button.name}
+                intensity={0.4}
+                range={500}
+                actionArea="parent"
+                springOptions={{ stiffness: 500, damping: 50 }}
+                className="w-full h-full"
+              >
+                {button.icon}
+              </Magnetic>
             </a>
           </Magnetic>
         ))}
