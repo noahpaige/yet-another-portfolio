@@ -24,7 +24,7 @@ interface MagneticContextType {
   mousePosition: MousePosition;
   registerMagnetic: (
     id: string,
-    ref: React.RefObject<HTMLDivElement | null>,
+    ref: React.RefObject<HTMLDivElement>,
     config: MagneticConfig
   ) => void;
   unregisterMagnetic: (id: string) => void;
@@ -55,7 +55,7 @@ export const MagneticProvider: React.FC<{ children: React.ReactNode }> = ({
     Map<
       string,
       {
-        ref: React.RefObject<HTMLDivElement | null>;
+        ref: React.RefObject<HTMLDivElement>;
         config: MagneticConfig;
         isHovered: boolean;
         offset: { x: number; y: number };
@@ -78,7 +78,7 @@ export const MagneticProvider: React.FC<{ children: React.ReactNode }> = ({
   const registerMagnetic = useCallback(
     (
       id: string,
-      ref: React.RefObject<HTMLDivElement | null>,
+      ref: React.RefObject<HTMLDivElement>,
       config: MagneticConfig
     ) => {
       magneticRefs.current.set(id, {

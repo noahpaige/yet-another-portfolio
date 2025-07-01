@@ -11,20 +11,66 @@ import { useMagneticContext } from "@/context/MagneticContext";
 
 const SPRING_CONFIG = { stiffness: 26.7, damping: 4.1, mass: 0.2 };
 
+export type ActionArea =
+  | { type: "self" }
+  | { type: "parent" }
+  | { type: "global" }
+  | { type: "element"; element: HTMLElement }
+  | { type: "ref"; ref: React.RefObject<HTMLElement> };
+
 export type MagneticProps = {
   children: React.ReactNode;
   intensity?: number;
   range?: number;
-  actionArea?: "self" | "parent" | "global";
+  actionArea?: ActionArea;
   springOptions?: SpringOptions;
   className?: string;
 };
+
+function useActionAreaListeners(
+  actionArea: ActionArea,
+  setIsHovered: (hovered: boolean) => void,
+  ref: React.RefObject<HTMLDivElement>
+) {
+  useEffect(() => {
+    let target: HTMLElement | null = null;
+    if (!actionArea || actionArea.type === "self") {
+      target = ref.current;
+    } else if (actionArea.type === "parent") {
+      target = ref.current?.parentElement ?? null;
+    } else if (actionArea.type === "element") {
+      target = actionArea.element;
+    } else if (actionArea.type === "ref") {
+      target = actionArea.ref.current;
+    } else if (actionArea.type === "global") {
+      setIsHovered(true);
+      return;
+    }
+
+    if (!target) {
+      if (process.env.NODE_ENV !== "production") {
+        console.warn("[Magnetic] actionArea target not found.", actionArea);
+      }
+      return;
+    }
+
+    const handleEnter = () => setIsHovered(true);
+    const handleLeave = () => setIsHovered(false);
+    target.addEventListener("mouseenter", handleEnter);
+    target.addEventListener("mouseleave", handleLeave);
+
+    return () => {
+      target?.removeEventListener("mouseenter", handleEnter);
+      target?.removeEventListener("mouseleave", handleLeave);
+    };
+  }, [actionArea, setIsHovered, ref]);
+}
 
 export function Magnetic({
   children,
   intensity = 0.6,
   range = 100,
-  actionArea = "self",
+  actionArea = { type: "self" },
   springOptions = SPRING_CONFIG,
   className,
 }: MagneticProps) {
@@ -50,11 +96,21 @@ export function Magnetic({
   // Register with the magnetic context
   useEffect(() => {
     if (ref.current) {
-      registerMagnetic(magneticId.current, ref, {
-        intensity,
-        range,
-        actionArea,
-      });
+      // Only pass the string type for actionArea to registerMagnetic
+      const actionAreaType = !actionArea
+        ? "self"
+        : actionArea.type === "element" || actionArea.type === "ref"
+        ? "self"
+        : actionArea.type;
+      registerMagnetic(
+        magneticId.current,
+        ref as React.RefObject<HTMLDivElement>,
+        {
+          intensity,
+          range,
+          actionArea: actionAreaType,
+        }
+      );
     }
 
     return () => {
@@ -79,33 +135,20 @@ export function Magnetic({
     setMagneticHovered(magneticId.current, isHovered);
   }, [isHovered, setMagneticHovered]);
 
-  useEffect(() => {
-    if (actionArea === "parent" && ref.current?.parentElement) {
-      const parent = ref.current.parentElement;
-
-      const handleParentEnter = () => setIsHovered(true);
-      const handleParentLeave = () => setIsHovered(false);
-
-      parent.addEventListener("mouseenter", handleParentEnter);
-      parent.addEventListener("mouseleave", handleParentLeave);
-
-      return () => {
-        parent.removeEventListener("mouseenter", handleParentEnter);
-        parent.removeEventListener("mouseleave", handleParentLeave);
-      };
-    } else if (actionArea === "global") {
-      setIsHovered(true);
-    }
-  }, [actionArea]);
+  useActionAreaListeners(
+    actionArea,
+    setIsHovered,
+    ref as React.RefObject<HTMLDivElement>
+  );
 
   const handleMouseEnter = () => {
-    if (actionArea === "self") {
+    if (!actionArea || actionArea.type === "self") {
       setIsHovered(true);
     }
   };
 
   const handleMouseLeave = () => {
-    if (actionArea === "self") {
+    if (!actionArea || actionArea.type === "self") {
       setIsHovered(false);
     }
   };
@@ -113,8 +156,12 @@ export function Magnetic({
   return (
     <motion.div
       ref={ref}
-      onMouseEnter={actionArea === "self" ? handleMouseEnter : undefined}
-      onMouseLeave={actionArea === "self" ? handleMouseLeave : undefined}
+      onMouseEnter={
+        !actionArea || actionArea.type === "self" ? handleMouseEnter : undefined
+      }
+      onMouseLeave={
+        !actionArea || actionArea.type === "self" ? handleMouseLeave : undefined
+      }
       style={{
         x: springX,
         y: springY,

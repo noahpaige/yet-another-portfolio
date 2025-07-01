@@ -39,7 +39,7 @@ export const ContactSection = () => {
             key={button.name}
             intensity={0.4}
             range={500}
-            actionArea="self"
+            actionArea={{ type: "self" }}
             springOptions={{ stiffness: 500, damping: 50 }}
           >
             <a
@@ -52,7 +52,7 @@ export const ContactSection = () => {
                 key={button.name}
                 intensity={0.4}
                 range={500}
-                actionArea="parent"
+                actionArea={{ type: "parent" }}
                 springOptions={{ stiffness: 500, damping: 50 }}
                 className="w-full h-full"
               >

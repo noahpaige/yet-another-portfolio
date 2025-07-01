@@ -34,7 +34,7 @@ const WelcomeSection = React.memo(() => {
                 key={index}
                 intensity={-0.4}
                 range={200}
-                actionArea="global"
+                actionArea={{ type: "global" }}
                 springOptions={{ stiffness: 500, damping: 50 }}
               >
                 {char}

@@ -36,7 +36,7 @@ export default function HoverText({
           <Magnetic
             intensity={0.2}
             range={200}
-            actionArea="self"
+            actionArea={{ type: "self" }}
             springOptions={{ stiffness: 500, damping: 50 }}
           >
             <span

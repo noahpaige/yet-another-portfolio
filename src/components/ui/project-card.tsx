@@ -1,4 +1,5 @@
-import React from "react";
+"use client";
+import React, { useRef } from "react";
 import Link from "next/link";
 import { Magnetic } from "@/components/ui/magnetic";
 import { Project } from "@/generated/project-index";
@@ -8,20 +9,29 @@ interface ProjectCardProps {
 }
 
 export const ProjectCard = React.memo(({ project }: ProjectCardProps) => {
+  // Create a ref for the Link element
+  const linkRef = useRef<HTMLAnchorElement>(null);
+
   return (
+    // Outermost Magnetic uses 'self' (default)
     <Magnetic
-      intensity={0.2}
+      intensity={0.1}
+      actionArea={{ type: "self" }}
       range={400}
-      actionArea="self"
       springOptions={{ stiffness: 500, damping: 50 }}
     >
-      <Link href={`/projects/${project.id}`}>
+      {/* Attach the ref to the Link */}
+      <Link href={`/projects/${project.id}`} ref={linkRef}>
         <div className="group relative overflow-hidden rounded-xl glass-layer-hoverable transition-all duration-300">
           <div className="relative h-24 xs:h-32 sm:h-40 md:h-48 lg:h-64 xl:h-80 rounded-lg overflow-hidden">
+            {/* Use the Link as the action area for inner Magnetics */}
             <Magnetic
               intensity={0.2}
-              range={200}
-              actionArea="global"
+              range={1000}
+              actionArea={{
+                type: "ref",
+                ref: linkRef as React.RefObject<HTMLElement>,
+              }}
               springOptions={{ stiffness: 300, damping: 30 }}
             >
               <div className="w-full h-24 xs:h-32 sm:h-40 md:h-48 lg:h-64 xl:h-80 scale-115">
@@ -37,8 +47,11 @@ export const ProjectCard = React.memo(({ project }: ProjectCardProps) => {
             <div className="px-6 py-3 absolute bottom-0 left-0">
               <Magnetic
                 intensity={0.1}
-                range={200}
-                actionArea="global"
+                range={1000}
+                actionArea={{
+                  type: "ref",
+                  ref: linkRef as React.RefObject<HTMLElement>,
+                }}
                 springOptions={{ stiffness: 300, damping: 30 }}
               >
                 <h3 className="text-xl font-bold mb-3 text-zinc-100 transition-colors">
@@ -52,8 +65,11 @@ export const ProjectCard = React.memo(({ project }: ProjectCardProps) => {
                   <Magnetic
                     key={tag}
                     intensity={0.1}
-                    range={200}
-                    actionArea="global"
+                    range={1000}
+                    actionArea={{
+                      type: "ref",
+                      ref: linkRef as React.RefObject<HTMLElement>,
+                    }}
                     springOptions={{ stiffness: 300, damping: 30 }}
                   >
                     <span
