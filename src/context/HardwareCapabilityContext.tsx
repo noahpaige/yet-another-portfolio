@@ -3,6 +3,13 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 
 export type PerformanceTier = "low" | "medium" | "high";
 
+export type BrowserInfo = {
+  name: string;
+  version: string;
+  userAgent: string;
+  os: string;
+};
+
 export type HardwareCapability = {
   gpuTier: number | null;
   ram: number;
@@ -10,6 +17,14 @@ export type HardwareCapability = {
   loading: boolean;
   performanceTier: PerformanceTier;
   isMobile: boolean;
+  browser: BrowserInfo;
+};
+
+const defaultBrowserInfo: BrowserInfo = {
+  name: "Unknown",
+  version: "",
+  userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "",
+  os: "Unknown",
 };
 
 const HardwareCapabilityContext = createContext<HardwareCapability>({
@@ -19,6 +34,7 @@ const HardwareCapabilityContext = createContext<HardwareCapability>({
   loading: true,
   performanceTier: "medium",
   isMobile: false,
+  browser: defaultBrowserInfo,
 });
 
 // Helper function to determine performance tier
@@ -76,6 +92,53 @@ const detectGPUSimple = async (): Promise<number | null> => {
   }
 };
 
+// Browser detection helper
+const detectBrowser = (): BrowserInfo => {
+  if (typeof navigator === "undefined") return defaultBrowserInfo;
+  const ua = navigator.userAgent;
+  let name = "Unknown";
+  let version = "";
+  let os = "Unknown";
+
+  // Detect browser name and version
+  if (/firefox|fxios/i.test(ua)) {
+    name = "Firefox";
+    version = (ua.match(/Firefox\/([\d.]+)/) || [])[1] || "";
+  } else if (/edg/i.test(ua)) {
+    name = "Edge";
+    version = (ua.match(/Edg\/([\d.]+)/) || [])[1] || "";
+  } else if (/opr\//i.test(ua)) {
+    name = "Opera";
+    version = (ua.match(/OPR\/([\d.]+)/) || [])[1] || "";
+  } else if (/chrome|crios/i.test(ua)) {
+    name = "Chrome";
+    version = (ua.match(/(?:Chrome|CriOS)\/([\d.]+)/) || [])[1] || "";
+  } else if (/safari/i.test(ua)) {
+    name = "Safari";
+    version = (ua.match(/Version\/([\d.]+)/) || [])[1] || "";
+  }
+
+  // Detect OS
+  if (/windows nt/i.test(ua)) {
+    os = "Windows";
+  } else if (/android/i.test(ua)) {
+    os = "Android";
+  } else if (/iphone|ipad|ipod/i.test(ua)) {
+    os = "iOS";
+  } else if (/macintosh|mac os x/i.test(ua)) {
+    os = "macOS";
+  } else if (/linux/i.test(ua)) {
+    os = "Linux";
+  }
+
+  return {
+    name,
+    version,
+    userAgent: ua,
+    os,
+  };
+};
+
 export const HardwareCapabilityProvider: React.FC<{
   children: React.ReactNode;
 }> = ({ children }) => {
@@ -86,6 +149,7 @@ export const HardwareCapabilityProvider: React.FC<{
     loading: true,
     performanceTier: "medium",
     isMobile: false,
+    browser: defaultBrowserInfo,
   });
 
   useEffect(() => {
@@ -101,7 +165,7 @@ export const HardwareCapabilityProvider: React.FC<{
 
         // Try to detect GPU tier
         const gpuTier = await detectGPUSimple();
-
+        const browser = detectBrowser();
         const performanceTier = getPerformanceTier(gpuTier, ram, cores);
 
         const finalCapability = {
@@ -111,6 +175,7 @@ export const HardwareCapabilityProvider: React.FC<{
           loading: false,
           performanceTier,
           isMobile,
+          browser,
         };
 
         // Log overall hardware detection results
@@ -122,6 +187,8 @@ export const HardwareCapabilityProvider: React.FC<{
             isMobile,
             performanceTier,
             detectionMethod: gpuTier !== null ? "WebGL" : "Fallback",
+            browser: `${browser.name} ${browser.version}`,
+            os: browser.os,
           },
         });
 
@@ -136,6 +203,7 @@ export const HardwareCapabilityProvider: React.FC<{
           loading: false,
           performanceTier: "medium",
           isMobile: false,
+          browser: defaultBrowserInfo,
         });
       }
     }
