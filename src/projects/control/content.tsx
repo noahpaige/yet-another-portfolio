@@ -20,8 +20,7 @@ export default function ControlContent() {
       <p className="text-md text-zinc-500 border-t border-zinc-700 pt-4">
         Armed with the Service Weapon and haunted by shifting truths, Jesse
         navigates a web of psychic resonance, bureaucratic horror, and
-        impossible geometry. There are no answers here — only deeper
-        questions.
+        impossible geometry. There are no answers here — only deeper questions.
       </p>
 
       <div className="flex justify-end">
@@ -32,4 +31,4 @@ export default function ControlContent() {
       </div>
     </div>
   );
-} 
+}

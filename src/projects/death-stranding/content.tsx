@@ -15,19 +15,21 @@ export default function DeathStrandingContent() {
       </p>
 
       <p className="text-lg text-zinc-400 italic">
-        "Keep on keeping on."
+        &ldquo;Keep on keeping on.&rdquo;
       </p>
 
       <p className="text-md text-zinc-500 border-t border-zinc-700 pt-4">
-        In a world where the boundaries between life and death have blurred,
-        Sam Porter Bridges must reconnect a fractured America, one delivery at
-        a time. Through rain, snow, and the ever-present threat of BTs, the
+        In a world where the boundaries between life and death have blurred, Sam
+        Porter Bridges must reconnect a fractured America, one delivery at a
+        time. Through rain, snow, and the ever-present threat of BTs, the
         journey is as much about human connection as it is about survival.
       </p>
 
       <div className="flex justify-end">
-        <span className="text-sm text-zinc-600">✦ Bridges connects us all.</span>
+        <span className="text-sm text-zinc-600">
+          ✦ Bridges connects us all.
+        </span>
       </div>
     </div>
   );
-} 
+}

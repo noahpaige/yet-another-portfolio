@@ -14,19 +14,21 @@ export default function GhostOfTsushimaContent() {
       </p>
 
       <p className="text-lg text-zinc-400 italic">
-        "The way of the samurai is found in death."
+        &ldquo;The way of the samurai is found in death.&rdquo;
       </p>
 
       <p className="text-md text-zinc-500 border-t border-zinc-700 pt-4">
-        Through the windswept fields and misty mountains of Tsushima, Jin's
+        Through the windswept fields and misty mountains of Tsushima, Jin&apos;s
         journey becomes one of transformation. From honorable samurai to
         stealthy ghost, he learns that sometimes the greatest honor lies in
         protecting what you love, even if it means forsaking tradition.
       </p>
 
       <div className="flex justify-end">
-        <span className="text-sm text-zinc-600">✦ Honor died on the beach.</span>
+        <span className="text-sm text-zinc-600">
+          ✦ Honor died on the beach.
+        </span>
       </div>
     </div>
   );
-} 
+}

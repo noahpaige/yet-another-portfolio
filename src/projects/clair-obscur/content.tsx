@@ -10,11 +10,13 @@ export default function ClairObscurContent() {
       <p className="text-lg leading-relaxed text-slate-300">
         A world painted in despair and beauty — where brushstrokes shape fate
         and dreams are as fragile as canvas. *Expedition 33* is more than a
-        battle for survival... it&apos;s an elegy whispered through oil and shadow.
+        battle for survival... it&apos;s an elegy whispered through oil and
+        shadow.
       </p>
 
       <p className="text-lg text-slate-400 italic">
-        &ldquo;She chooses a number. They vanish. We march to unmake her memory.&rdquo;
+        &ldquo;She chooses a number. They vanish. We march to unmake her
+        memory.&rdquo;
       </p>
 
       <p className="text-md text-slate-400 border-t border-slate-600 pt-4">
@@ -31,4 +33,4 @@ export default function ClairObscurContent() {
       </div>
     </div>
   );
-} 
+}

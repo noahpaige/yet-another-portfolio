@@ -8,15 +8,15 @@ export default function Cyberpunk2077Content() {
       </h1>
 
       <p className="text-lg leading-relaxed text-zinc-300">
-        He was more than muscle, more than chrome — Jackie was heart. In a
-        world where loyalty is rare and trust even rarer, he gave both freely.
-        He didn&apos;t just ride shotgun — he had your back, every edgerun, every
+        He was more than muscle, more than chrome — Jackie was heart. In a world
+        where loyalty is rare and trust even rarer, he gave both freely. He
+        didn&apos;t just ride shotgun — he had your back, every edgerun, every
         firefight, every fragging second.
       </p>
 
       <p className="text-lg leading-relaxed text-zinc-400 italic">
-        &ldquo;You gotta live life to the fullest. From now on... I only live for
-        the chooms who got my back.&rdquo;
+        &ldquo;You gotta live life to the fullest. From now on... I only live
+        for the chooms who got my back.&rdquo;
       </p>
 
       <p className="text-md text-zinc-500 border-t border-zinc-700 pt-4">
@@ -30,4 +30,4 @@ export default function Cyberpunk2077Content() {
       </div>
     </div>
   );
-} 
+}
