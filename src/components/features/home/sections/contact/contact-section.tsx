@@ -107,7 +107,7 @@ export const ContactSection = () => {
         </AnimatePresence>
 
         <motion.div
-          className="grid auto-rows-auto grid-cols-2 gap-4"
+          className="grid auto-rows-auto grid-cols-2 gap-4 z-10"
           variants={containerVariants}
           initial="hidden"
           animate={show ? "show" : "hidden"}
