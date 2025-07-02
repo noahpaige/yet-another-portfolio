@@ -38,14 +38,14 @@ export default function ProjectsSection() {
 
   return (
     <div
-      className="h-full w-full flex flex-col items-center justify-center px-12"
+      className="h-full w-full flex flex-col items-center justify-center px-2 sm:px-12"
       ref={ref}
     >
       <AnimatePresence>
         {show && (
           <motion.div
             key="projects-grid"
-            className="grid auto-rows-auto grid-cols-1 sm:grid-cols-3 gap-4"
+            className="grid auto-rows-auto grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-4"
             style={{ width: "calc(min(100%, 1536px))" }}
             variants={containerVariants}
             initial="hidden"
@@ -67,7 +67,7 @@ export default function ProjectsSection() {
         )}
       </AnimatePresence>
       <motion.div
-        className="z-1 w-full flex pt-4 justify-end"
+        className="z-1 w-full flex pt-2 sm:pt-4 justify-end"
         style={{ width: "calc(min(100%, 1536px))" }}
         variants={itemVariants}
         initial="hidden"

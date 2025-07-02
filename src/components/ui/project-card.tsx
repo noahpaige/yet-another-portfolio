@@ -24,8 +24,9 @@ export const ProjectCard = React.memo(({ project }: ProjectCardProps) => {
     1280 // max screen width
   );
 
+  const heightClasses = "h-32 xs:h-44 sm:h-48 md:h-56 lg:h-64 xl:h-80";
+
   return (
-    // Outermost Magnetic uses 'self' (default)
     <Magnetic
       intensity={0.1}
       actionArea={{ type: "self" }}
@@ -35,7 +36,9 @@ export const ProjectCard = React.memo(({ project }: ProjectCardProps) => {
       {/* Attach the ref to the Link */}
       <Link href={`/projects/${project.id}`} ref={linkRef}>
         <div className="group relative overflow-hidden rounded-xl glass-layer-hoverable transition-all duration-300">
-          <div className="relative h-24 xs:h-32 sm:h-40 md:h-48 lg:h-64 xl:h-80 rounded-lg overflow-hidden">
+          <div
+            className={`relative ${heightClasses} rounded-lg overflow-hidden`}
+          >
             {/* Use the Link as the action area for inner Magnetics */}
             <Magnetic
               intensity={0.2}
@@ -46,17 +49,17 @@ export const ProjectCard = React.memo(({ project }: ProjectCardProps) => {
               }}
               springOptions={{ stiffness: 300, damping: 30 }}
             >
-              <div className="w-full h-24 xs:h-32 sm:h-40 md:h-48 lg:h-64 xl:h-80 scale-115">
+              <div className={`w-full ${heightClasses} scale-115`}>
                 {/* Project Image */}
                 <img
                   src={project.image}
                   alt={project.imageAltText}
-                  className="w-full h-24 xs:h-32 sm:h-40 md:h-48 lg:h-64 xl:h-80 object-cover rounded-lg"
+                  className={`w-full ${heightClasses} object-cover rounded-lg`}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
               </div>
             </Magnetic>
-            <div className="px-6 py-3 absolute bottom-0 left-0">
+            <div className="px-2 py-1 sm:px-3 sm:py-[calc(1.5*var(--spacing))] md:px-6 md:py-3 absolute bottom-0 left-0">
               <Magnetic
                 intensity={0.1}
                 range={1000}
