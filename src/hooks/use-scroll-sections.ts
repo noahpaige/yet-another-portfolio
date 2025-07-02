@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 const SCROLL_TIMEOUTS = {
   FALLBACK: 5000, // 5 seconds for very slow devices
   WHEEL_DETECTION: 100, // 100ms for wheel event detection
+  IOS_FALLBACK: 1000, // 1 second for iOS Safari
 } as const;
 
 const SCROLL_THRESHOLDS = {
@@ -13,6 +14,16 @@ const SCROLL_THRESHOLDS = {
   VISIBILITY_TOP: 0.1, // 10% from top
   VISIBILITY_BOTTOM: 0.9, // 90% from bottom
 } as const;
+
+// Detect iOS Safari
+const isIOSSafari = () => {
+  if (typeof window === "undefined") return false;
+  return (
+    /iPad|iPhone|iPod/.test(navigator.userAgent) &&
+    /Safari/.test(navigator.userAgent) &&
+    !/Chrome/.test(navigator.userAgent)
+  );
+};
 
 export function useScrollSections(
   sectionIds: string[],
@@ -138,7 +149,7 @@ export function useScrollSections(
       }, SCROLL_TIMEOUTS.WHEEL_DETECTION);
     };
 
-    // Handle wheel events to detect manual interruption
+    // Handle wheel events to detect manual interruption (desktop)
     const handleWheel = () => {
       if (scrollingManually) {
         // User is manually scrolling, reset programmatic scroll state
@@ -149,48 +160,140 @@ export function useScrollSections(
       }
     };
 
+    // Handle touch events to detect manual interruption (mobile/iOS)
+    const handleTouchStart = () => {
+      if (scrollingManually) {
+        // User is manually scrolling, reset programmatic scroll state
+        setScrollingManually(false);
+        setIsScrolling(false);
+        targetSectionRef.current = null;
+        clearScrollTimeout();
+      }
+    };
+
+    // iOS Safari specific: More aggressive fallback
+    const handleIOSFallback = () => {
+      if (isIOSSafari() && scrollingManually) {
+        // Force reset after a shorter timeout on iOS Safari
+        setTimeout(() => {
+          if (scrollingManually) {
+            setScrollingManually(false);
+            setIsScrolling(false);
+            targetSectionRef.current = null;
+            clearScrollTimeout();
+          }
+        }, SCROLL_TIMEOUTS.IOS_FALLBACK);
+      }
+    };
+
     container.addEventListener("scroll", handleScroll, { passive: true });
     container.addEventListener("wheel", handleWheel, { passive: true });
+    container.addEventListener("touchstart", handleTouchStart, {
+      passive: true,
+    });
+
+    // Add iOS Safari specific handling
+    if (isIOSSafari()) {
+      handleIOSFallback();
+    }
 
     return () => {
       container.removeEventListener("scroll", handleScroll);
       container.removeEventListener("wheel", handleWheel);
+      container.removeEventListener("touchstart", handleTouchStart);
       if (scrollEndTimeout) clearTimeout(scrollEndTimeout);
     };
   }, [scrollingManually, isScrolling, scrollRef]);
 
-  // 📦 Efficient intersection-based scroll tracking
+  // 📦 Enhanced intersection-based scroll tracking for iOS Safari
   useEffect(() => {
     const container = scrollRef.current;
     if (!container) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (scrollingManually) return;
-
+        // Allow IntersectionObserver to work even during programmatic scrolling
+        // This helps with iOS Safari momentum scrolling
         const visible = entries.find((entry) => entry.isIntersecting);
         if (!visible) return;
 
         const section = visible.target.getAttribute("data-section");
         if (section && section !== activeSection) {
-          setActiveSection(section);
-          const params = new URLSearchParams(window.location.search);
-          params.set("section", section);
-          router.replace(`?${params.toString()}`);
+          // Only update if we're not in the middle of a programmatic scroll to a different section
+          if (!scrollingManually || targetSectionRef.current === section) {
+            setActiveSection(section);
+            const params = new URLSearchParams(window.location.search);
+            params.set("section", section);
+            router.replace(`?${params.toString()}`);
+          }
         }
       },
       {
         root: container,
         threshold: 0.5, // Adjust based on how much of section must be visible
+        rootMargin: "0px 0px -10% 0px", // Slightly more lenient for iOS Safari
       }
     );
 
     const children = Array.from(container.children);
     children.forEach((el) => observer.observe(el));
 
+    // iOS Safari specific: Additional scroll position-based detection
+    const handleIOSScrollDetection = () => {
+      if (!isIOSSafari() || scrollingManually) return;
+
+      const containerHeight = container.clientHeight;
+
+      // Find which section is most visible
+      let bestSection = activeSection;
+      let bestVisibility = 0;
+
+      children.forEach((child) => {
+        const sectionName = child.getAttribute("data-section");
+        if (!sectionName) return;
+
+        const rect = child.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+
+        // Calculate visibility
+        const top = rect.top - containerRect.top;
+        const bottom = rect.bottom - containerRect.top;
+        const visibleHeight =
+          Math.min(bottom, containerHeight) - Math.max(top, 0);
+        const visibility = Math.max(0, visibleHeight / containerHeight);
+
+        if (visibility > bestVisibility) {
+          bestVisibility = visibility;
+          bestSection = sectionName;
+        }
+      });
+
+      // Update if we found a better section
+      if (
+        bestSection &&
+        bestSection !== activeSection &&
+        bestVisibility > 0.3
+      ) {
+        setActiveSection(bestSection);
+        const params = new URLSearchParams(window.location.search);
+        params.set("section", bestSection);
+        router.replace(`?${params.toString()}`);
+      }
+    };
+
+    // Add scroll listener for iOS Safari position-based detection
+    if (isIOSSafari()) {
+      container.addEventListener("scroll", handleIOSScrollDetection, {
+        passive: true,
+      });
+    }
+
     return () => {
       children.forEach((el) => observer.unobserve(el));
       observer.disconnect();
+      if (isIOSSafari()) {
+        container.removeEventListener("scroll", handleIOSScrollDetection);
+      }
     };
   }, [scrollingManually, activeSection, router, scrollRef]);
 
