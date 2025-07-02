@@ -3,6 +3,7 @@ import React, { useRef } from "react";
 import Link from "next/link";
 import { Magnetic } from "@/components/ui/magnetic";
 import { Project } from "@/generated/project-index";
+import { useClampCSS } from "@/hooks/useClampCSS";
 
 interface ProjectCardProps {
   project: Project;
@@ -11,6 +12,17 @@ interface ProjectCardProps {
 export const ProjectCard = React.memo(({ project }: ProjectCardProps) => {
   // Create a ref for the Link element
   const linkRef = useRef<HTMLAnchorElement>(null);
+
+  // Generate responsive font size based on container height
+  // Using the same breakpoints as the container: 24, 32, 40, 48, 64, 80 (in rem, converted to px)
+  const titleFontSize = useClampCSS(
+    16, // min font size (1rem)
+    32, // max font size (2rem)
+    96, // min screen height (24 * 4px = 96px)
+    320, // max screen height (80 * 4px = 320px)
+    375, // min screen width
+    1280 // max screen width
+  );
 
   return (
     // Outermost Magnetic uses 'self' (default)
@@ -54,13 +66,16 @@ export const ProjectCard = React.memo(({ project }: ProjectCardProps) => {
                 }}
                 springOptions={{ stiffness: 300, damping: 30 }}
               >
-                <h3 className="text-xl font-bold mb-3 text-zinc-100 transition-colors">
+                <h3
+                  className="font-space-mono font-bold text-zinc-100 transition-colors"
+                  style={{ fontSize: titleFontSize }}
+                >
                   {project.title}
                 </h3>
               </Magnetic>
 
               {/* Tags */}
-              <div className="flex flex-wrap gap-2">
+              <div className="hidden md:flex flex-wrap gap-2 mt-1">
                 {project.tags.map((tag, index) => (
                   <Magnetic
                     key={tag}
