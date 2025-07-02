@@ -41,7 +41,7 @@ const myAnimations = {
     hidden: { styles: { filter: "blur(10px)", opacity: 0 }, properties: {} },
     show: {
       styles: { filter: "blur(0px)", opacity: 1 },
-      properties: { duration: 0.2, staggerDelay: 80 },
+      properties: { duration: 0.2, staggerDelay: 40 },
     },
     exit: {
       styles: { opacity: 0, filter: "blur(10px)" },
@@ -219,7 +219,7 @@ const AnimatedAboutCard = React.memo(function AnimatedAboutCard({
       >
         <span
           ref={scopeHeader}
-          className="font-space-mono text-slate-100 text-nowrap pr-3 [word-spacing:-0.25em]"
+          className="font-space-mono text-slate-100 text-nowrap pr-[0.2em] [word-spacing:-0.25em]"
           style={{ fontSize: headerFontSize, transformOrigin: "left" }}
         >
           {header}
