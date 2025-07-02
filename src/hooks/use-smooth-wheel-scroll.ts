@@ -2,29 +2,25 @@ import { RefObject, useEffect } from "react";
 
 export function useSmoothWheelScroll(
   scrollRef: RefObject<HTMLElement>,
-  scrollingManually?: boolean
+  scrollingManually?: boolean,
+  isScrolling?: boolean
 ) {
   useEffect(() => {
     const container = scrollRef.current;
     if (!container) return;
 
-    let isScrolling = false;
+    let isWheelScrolling = false;
     let scrollTimeout: NodeJS.Timeout | null = null;
 
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
 
-      // If we're programmatically scrolling, allow wheel to take over immediately
-      if (scrollingManually) {
-        // Don't block wheel events during programmatic scrolling
-        // The scroll sections hook will handle the coordination
-        return;
-      }
-
       // If we're already scrolling from a previous wheel event, block
-      if (isScrolling) return;
+      if (isWheelScrolling) return;
 
-      isScrolling = true;
+      // Always allow wheel events to proceed, even during programmatic scrolling
+      // This allows wheel to interrupt programmatic scrolling
+      isWheelScrolling = true;
 
       const direction = e.deltaY > 0 ? 1 : -1;
       const scrollAmount = container.clientHeight;
@@ -34,10 +30,10 @@ export function useSmoothWheelScroll(
         behavior: "smooth",
       });
 
-      // Reduced timeout for better responsiveness
+      // Shorter timeout since we now have better scroll detection
       scrollTimeout = setTimeout(() => {
-        isScrolling = false;
-      }, 800); // Reduced from 1500ms to 800ms for better responsiveness
+        isWheelScrolling = false;
+      }, 600); // Reduced further since we have better coordination
     };
 
     container.addEventListener("wheel", handleWheel, { passive: false });
@@ -46,5 +42,5 @@ export function useSmoothWheelScroll(
       container.removeEventListener("wheel", handleWheel);
       if (scrollTimeout) clearTimeout(scrollTimeout);
     };
-  }, [scrollingManually]); // Add scrollingManually to dependencies
+  }, [scrollingManually, isScrolling]); // Add isScrolling to dependencies
 }
