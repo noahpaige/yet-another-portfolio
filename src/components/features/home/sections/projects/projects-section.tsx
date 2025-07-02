@@ -37,8 +37,9 @@ export default function ProjectsSection() {
   useEffect(() => setShow(isInView), [isInView]);
   return (
     <div
-      className="h-screen w-full flex items-center justify-center px-4 sm:px-12"
       ref={ref}
+      style={{ height: "var(--real-vh)" }}
+      className="w-full flex items-center justify-center px-4 sm:px-12"
     >
       <div className="h-full w-full flex flex-col items-center justify-center">
         <AnimatePresence>

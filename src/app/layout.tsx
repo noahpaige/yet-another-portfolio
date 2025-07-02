@@ -3,6 +3,7 @@ import "./globals.css";
 import { spaceMono, ibmPlexMono, lexendDeca } from "./fonts";
 import { MagneticProvider } from "@/context/MagneticContext";
 import { HardwareCapabilityProvider } from "@/context/HardwareCapabilityContext";
+import { ViewportHeightFix } from "@/components/viewport-fix";
 
 export const metadata: Metadata = {
   title: "Noah Paige | Portfolio",
@@ -33,6 +34,7 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased font-lexend-deca overflow-hidden isolate">
+        <ViewportHeightFix />
         <HardwareCapabilityProvider>
           <MagneticProvider>{children}</MagneticProvider>
         </HardwareCapabilityProvider>

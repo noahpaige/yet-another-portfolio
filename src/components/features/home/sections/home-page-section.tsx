@@ -12,7 +12,12 @@ export default function HomePageSection({ children, id, sectionName }: Props) {
     <div
       id={id}
       data-section={sectionName}
-      className="min-h-screen h-screen w-screen flex flex-col overflow-hidden snap-start"
+      style={{
+        minHeight: "var(--real-vh)",
+        height: "var(--real-vh)",
+        width: "100vw",
+      }}
+      className="flex flex-col overflow-hidden snap-start"
     >
       <div className="CONTENT flex-1 h-full w-full overflow-hidden">
         {children}
