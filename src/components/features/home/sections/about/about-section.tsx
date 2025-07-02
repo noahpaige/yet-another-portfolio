@@ -44,7 +44,7 @@ export default function AboutSection() {
                 bodyMinPx={16}
                 bodyMaxPx={64}
                 delay={blockIndex * 200}
-                bodyAnimDelay={500}
+                bodyAnimDelay={200}
               />
             </div>
           );
