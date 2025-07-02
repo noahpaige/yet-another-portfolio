@@ -38,8 +38,7 @@ export default function ProjectsSection() {
   return (
     <div
       ref={ref}
-      style={{ height: "var(--real-vh)" }}
-      className="w-full flex items-center justify-center px-4 sm:px-12"
+      className="w-full h-full flex items-center justify-center px-4 sm:px-12"
     >
       <div className="h-full w-full flex flex-col items-center justify-center">
         <AnimatePresence>
