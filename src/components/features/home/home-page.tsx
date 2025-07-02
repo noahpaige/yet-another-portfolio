@@ -91,39 +91,44 @@ export default function HomePage() {
   });
 
   return (
-    <main
-      ref={scrollContainerRef}
-      className="relative z-0 h-screen overflow-y-scroll overflow-x-hidden snap-y snap-mandatory scroll-smooth bg-slate-900 text-zinc-200 @container"
-    >
-      <ClientOnly>
-        <div className="sticky inset-0">
-          <AnimatedBackground
-            scrollYProgress={scrollYProgress}
-            colorPairs={colorPairs}
-            enableColorSwap={false}
-          />
-          <NoiseOverlay opacity={0.04} resolution={1} />
-        </div>
-      </ClientOnly>
+    <>
+      <main
+        ref={scrollContainerRef}
+        className="relative z-0 h-screen overflow-y-scroll overflow-x-hidden snap-y snap-mandatory scroll-smooth bg-slate-900 text-zinc-200 @container"
+      >
+        <ClientOnly>
+          <div className="sticky inset-0">
+            <AnimatedBackground
+              scrollYProgress={scrollYProgress}
+              colorPairs={colorPairs}
+              enableColorSwap={false}
+            />
+            <NoiseOverlay opacity={0.04} resolution={1} />
+          </div>
+        </ClientOnly>
 
-      {Array.from(SECTIONS.entries()).map(([name, section]) => {
-        const SectionComponent = section.component;
-        return (
-          <HomePageSection key={name} id={`section-${name}`} sectionName={name}>
-            <LazySection fallback={<SectionFallback />}>
-              <Suspense fallback={<SectionFallback />}>
-                <SectionComponent />
-              </Suspense>
-            </LazySection>
-          </HomePageSection>
-        );
-      })}
-
+        {Array.from(SECTIONS.entries()).map(([name, section]) => {
+          const SectionComponent = section.component;
+          return (
+            <HomePageSection
+              key={name}
+              id={`section-${name}`}
+              sectionName={name}
+            >
+              <LazySection fallback={<SectionFallback />}>
+                <Suspense fallback={<SectionFallback />}>
+                  <SectionComponent />
+                </Suspense>
+              </LazySection>
+            </HomePageSection>
+          );
+        })}
+      </main>
       <BottomNav
         options={navOptions}
         current={activeSection}
         onSelect={scrollToSection}
       />
-    </main>
+    </>
   );
 }
