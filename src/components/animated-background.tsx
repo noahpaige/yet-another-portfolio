@@ -431,7 +431,7 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
               height: "100vh",
               pointerEvents: "none",
               zIndex: 1,
-              backdropFilter: `blur(${qualitySettings.blurAmount * 20}px)`,
+              backdropFilter: `blur(${qualitySettings.blurAmount * 30}px)`,
               WebkitBackdropFilter: `blur(${
                 qualitySettings.blurAmount * 20
               }px)`,
