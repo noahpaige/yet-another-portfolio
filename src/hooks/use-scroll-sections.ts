@@ -81,7 +81,8 @@ export function useScrollSections(
 
   const scrollToSection = (section: string) => {
     const el = document.getElementById(`section-${section}`);
-    if (el) {
+    const container = scrollRef.current;
+    if (el && container) {
       setScrollingManually(true);
       setIsScrolling(true);
       setActiveSection(section);
@@ -92,12 +93,16 @@ export function useScrollSections(
       params.set("section", section);
       router.replace(`?${params.toString()}`);
 
-      el.scrollIntoView({ behavior: "smooth" });
+      // Smooth scroll first
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
 
-      // Clear any existing timeout
+      // Force snap after smooth scroll (Chromium workaround)
+      setTimeout(() => {
+        el.scrollIntoView({ behavior: "auto", block: "start" });
+      }, 600);
+
       clearScrollTimeout();
 
-      // Set a fallback timeout (much longer for slow devices)
       scrollTimeoutRef.current = setTimeout(() => {
         setScrollingManually(false);
         setIsScrolling(false);

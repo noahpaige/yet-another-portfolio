@@ -35,51 +35,54 @@ export default function ProjectsSection() {
   const router = useRouter();
 
   useEffect(() => setShow(isInView), [isInView]);
-
   return (
     <div
-      className="h-full w-full flex flex-col items-center justify-center px-2 sm:px-12"
+      className="h-screen w-full flex items-center justify-center px-4 sm:px-12"
       ref={ref}
     >
-      <AnimatePresence>
-        {show && (
-          <motion.div
-            key="projects-grid"
-            className="grid auto-rows-auto grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-4"
-            style={{ width: "calc(min(100%, 1536px))" }}
-            variants={containerVariants}
-            initial="hidden"
-            animate="show"
-            exit="exit"
-          >
-            {projects.map((project, i) => (
-              <motion.div
-                key={i}
-                variants={itemVariants}
-                className={`row-span-1 ${
-                  i === 0 || i === 3 || i === 4 ? "sm:col-span-2" : "col-span-1"
-                }`}
-              >
-                <ProjectCard project={project} />
-              </motion.div>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
-      <motion.div
-        className="z-1 w-full flex pt-2 sm:pt-4 justify-end"
-        style={{ width: "calc(min(100%, 1536px))" }}
-        variants={itemVariants}
-        initial="hidden"
-        animate={show ? "show" : "hidden"}
-        exit="exit"
-        transition={{ delay: 0.4 }}
-      >
-        <MagneticButton onClick={() => router.push("/projects")}>
-          <span className="whitespace-nowrap pr-1">More Projects</span>
-          <ArrowRight className="h-4 w-4" />
-        </MagneticButton>
-      </motion.div>
+      <div className="h-full w-full flex flex-col items-center justify-center">
+        <AnimatePresence>
+          {show && (
+            <motion.div
+              key="projects-grid"
+              className="grid auto-rows-auto grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-4"
+              style={{ width: "calc(min(100%, 1536px))" }}
+              variants={containerVariants}
+              initial="hidden"
+              animate="show"
+              exit="exit"
+            >
+              {projects.map((project, i) => (
+                <motion.div
+                  key={i}
+                  variants={itemVariants}
+                  className={`row-span-1 ${
+                    i === 0 || i === 3 || i === 4
+                      ? "sm:col-span-2"
+                      : "col-span-1"
+                  }`}
+                >
+                  <ProjectCard project={project} />
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
+        <motion.div
+          className="z-1 w-full flex pt-2 sm:pt-4 justify-end"
+          style={{ width: "calc(min(100%, 1536px))" }}
+          variants={itemVariants}
+          initial="hidden"
+          animate={show ? "show" : "hidden"}
+          exit="exit"
+          transition={{ delay: 0.4 }}
+        >
+          <MagneticButton onClick={() => router.push("/projects")}>
+            <span className="whitespace-nowrap pr-1">More Projects</span>
+            <ArrowRight className="h-4 w-4" />
+          </MagneticButton>
+        </motion.div>
+      </div>
     </div>
   );
 }
