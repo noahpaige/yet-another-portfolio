@@ -16,6 +16,13 @@ export function useScrollSections(
     const el = document.getElementById(`section-${section}`);
     if (el) {
       setScrollingManually(true);
+      setActiveSection(section);
+
+      // Update URL query parameters
+      const params = new URLSearchParams(window.location.search);
+      params.set("section", section);
+      router.replace(`?${params.toString()}`);
+
       el.scrollIntoView({ behavior: "smooth" });
 
       // Just wait a moment, then resume listening to IntersectionObserver
