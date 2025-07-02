@@ -19,9 +19,9 @@ const NoiseOverlay = React.memo<NoiseOverlayProps>(
 
       switch (performanceTier) {
         case "low":
-          return { resolution: 0.5, opacity: 0.6 };
-        case "medium":
           return { resolution: 0.75, opacity: 0.8 };
+        case "medium":
+          return { resolution: 1, opacity: 1 };
         case "high":
           return { resolution: 1, opacity: 1 };
         default:
@@ -42,12 +42,22 @@ const NoiseOverlay = React.memo<NoiseOverlayProps>(
       debouncedResize.current = setTimeout(() => {
         const canvas = canvasRef.current;
         if (canvas) {
+          const ctx = canvas.getContext("2d")!;
           const width = window.innerWidth * effectiveResolution;
           const height = window.innerHeight * effectiveResolution;
+
           canvas.width = width;
           canvas.height = height;
           canvas.style.width = "100%";
           canvas.style.height = `${window.innerHeight}px`;
+
+          // Redraw the noise pattern after resize
+          const imageData = ctx.createImageData(width, height);
+          const buffer = new Uint32Array(imageData.data.buffer);
+          for (let i = 0; i < buffer.length; i++) {
+            buffer[i] = Math.random() < 0.5 ? 0xffffffff : 0xff000000;
+          }
+          ctx.putImageData(imageData, 0, 0);
         }
       }, 100); // 100ms debounce delay
     }, [effectiveResolution]);
