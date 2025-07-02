@@ -1,7 +1,8 @@
 import React from "react";
 import { projects } from "@/generated/project-index";
-import Link from "next/link";
 import { ProjectCard } from "@/components/ui/project-card";
+import { MagneticButton } from "@/components/ui/magnetic-button";
+import { ArrowLeft } from "lucide-react";
 
 export default function ProjectsPage() {
   return (
@@ -24,15 +25,16 @@ export default function ProjectsPage() {
 
           {/* Back to Home */}
           <div className="text-center mt-16">
-            <Link 
+            <MagneticButton
               href="/"
-              className="inline-flex items-center px-6 py-3 bg-zinc-800/50 hover:bg-zinc-700/50 border border-zinc-700/50 hover:border-zinc-600/50 rounded-lg transition-all duration-300 text-zinc-300 hover:text-zinc-100"
+              className="px-6 py-3 bg-zinc-800/50 hover:bg-zinc-700/50 border border-zinc-700/50 hover:border-zinc-600/50 rounded-lg"
             >
-              ← Back to Home
-            </Link>
+              <ArrowLeft className="h-4 w-4" />
+              <span>Back to Home</span>
+            </MagneticButton>
           </div>
         </div>
       </div>
     </div>
   );
-} 
+}

@@ -1,7 +1,8 @@
-import { Magnetic } from "@/components/ui/magnetic";
+import { MagneticButton } from "@/components/ui/magnetic-button";
 import { MailIcon, Github, Linkedin, FileText } from "lucide-react";
+import { useClampCSS } from "@/hooks/useClampCSS";
 
-const iconClasses = "h-full w-full p-4";
+const iconClasses = "h-6 w-6 flex-shrink-0";
 
 const contactButtons = [
   {
@@ -31,36 +32,40 @@ const contactButtons = [
 ];
 
 export const ContactSection = () => {
+  // Responsive text scaling
+  const h1FontSize = useClampCSS(48, 128, 320, 1200, 375, 1920);
+  const pFontSize = useClampCSS(16, 32, 320, 1200, 375, 1920);
+
   return (
-    <section className="flex h-screen items-center justify-center">
-      <div className="flex gap-4">
-        {contactButtons.map((button) => (
-          <Magnetic
-            key={button.name}
-            intensity={0.4}
-            range={500}
-            actionArea={{ type: "self" }}
-            springOptions={{ stiffness: 500, damping: 50 }}
-          >
-            <a
+    <section className="flex h-screen items-center justify-center px-12">
+      <div className="flex flex-col gap-20 h-screen items-center justify-center px-12 ">
+        <div className="flex flex-col justify-start w-full gap-3">
+          <h1 className="font-bold z-10" style={{ fontSize: h1FontSize }}>
+            Get in touch!
+          </h1>
+          <div className="flex flex-col gap-1 pl-4">
+            <p className="z-10" style={{ fontSize: pFontSize }}>
+              I&apos;m open to new opportunities.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid auto-rows-auto grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+          {contactButtons.map((button) => (
+            <MagneticButton
+              key={button.name}
               href={button.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center size-30 justify-center glass-layer-hoverable text-neutral-400 hover:text-white"
+              className="w-full h-14"
             >
-              <Magnetic
-                key={button.name}
-                intensity={0.4}
-                range={500}
-                actionArea={{ type: "parent" }}
-                springOptions={{ stiffness: 500, damping: 50 }}
-                className="w-full h-full"
-              >
-                {button.icon}
-              </Magnetic>
-            </a>
-          </Magnetic>
-        ))}
+              {button.icon}
+              <span className="whitespace-nowrap text-2xl flex-1 text-left">
+                {button.name}
+              </span>
+            </MagneticButton>
+          ))}
+        </div>
       </div>
     </section>
   );
