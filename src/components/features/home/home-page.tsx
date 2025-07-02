@@ -75,11 +75,15 @@ export default function HomePage() {
     icon: section.icon,
   }));
 
-  const { activeSection, scrollToSection } = useScrollSections(
-    sectionNames,
-    scrollContainerRef as RefObject<HTMLDivElement>
+  const { activeSection, scrollToSection, scrollingManually } =
+    useScrollSections(
+      sectionNames,
+      scrollContainerRef as RefObject<HTMLDivElement>
+    );
+  useSmoothWheelScroll(
+    scrollContainerRef as RefObject<HTMLDivElement>,
+    scrollingManually
   );
-  useSmoothWheelScroll(scrollContainerRef as RefObject<HTMLDivElement>);
 
   const { scrollYProgress } = useScroll({
     container: scrollContainerRef,

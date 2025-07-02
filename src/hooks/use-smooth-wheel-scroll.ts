@@ -1,6 +1,9 @@
 import { RefObject, useEffect } from "react";
 
-export function useSmoothWheelScroll(scrollRef: RefObject<HTMLElement>) {
+export function useSmoothWheelScroll(
+  scrollRef: RefObject<HTMLElement>,
+  scrollingManually?: boolean
+) {
   useEffect(() => {
     const container = scrollRef.current;
     if (!container) return;
@@ -11,7 +14,16 @@ export function useSmoothWheelScroll(scrollRef: RefObject<HTMLElement>) {
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
 
+      // If we're programmatically scrolling, allow wheel to take over immediately
+      if (scrollingManually) {
+        // Don't block wheel events during programmatic scrolling
+        // The scroll sections hook will handle the coordination
+        return;
+      }
+
+      // If we're already scrolling from a previous wheel event, block
       if (isScrolling) return;
+
       isScrolling = true;
 
       const direction = e.deltaY > 0 ? 1 : -1;
@@ -22,9 +34,10 @@ export function useSmoothWheelScroll(scrollRef: RefObject<HTMLElement>) {
         behavior: "smooth",
       });
 
+      // Reduced timeout for better responsiveness
       scrollTimeout = setTimeout(() => {
         isScrolling = false;
-      }, 500); // Allow time for scroll animation to finish
+      }, 800); // Reduced from 1500ms to 800ms for better responsiveness
     };
 
     container.addEventListener("wheel", handleWheel, { passive: false });
@@ -33,5 +46,5 @@ export function useSmoothWheelScroll(scrollRef: RefObject<HTMLElement>) {
       container.removeEventListener("wheel", handleWheel);
       if (scrollTimeout) clearTimeout(scrollTimeout);
     };
-  }, []); // ✅ `scrollRef` does not need to be in deps
+  }, [scrollingManually]); // Add scrollingManually to dependencies
 }
