@@ -98,7 +98,7 @@ export default function HomePage() {
             colorPairs={colorPairs}
             enableColorSwap={false}
           />
-          <NoiseOverlay opacity={0.05} resolution={1} />
+          <NoiseOverlay opacity={0.04} resolution={1} />
         </div>
       </ClientOnly>
 
