@@ -3,7 +3,8 @@ import { RefObject, useEffect, useRef } from "react";
 export function useSmoothWheelScroll(
   scrollRef: RefObject<HTMLElement>,
   scrollingManually?: boolean,
-  isScrolling?: boolean
+  isScrolling?: boolean,
+  onProgrammaticScroll?: (targetSection: number) => void
 ) {
   const accumulatedScrollRef = useRef(0);
 
@@ -52,6 +53,11 @@ export function useSmoothWheelScroll(
             Math.min(maxScrollTop, targetScrollTop)
           );
 
+          // Call the callback to update navbar and query params
+          if (onProgrammaticScroll) {
+            onProgrammaticScroll(targetSection);
+          }
+
           container.scrollTo({
             top: clampedTargetScrollTop,
             behavior: "smooth",
@@ -67,7 +73,16 @@ export function useSmoothWheelScroll(
       } else {
         // For mouse wheel, use the original behavior (one section at a time)
         isWheelScrolling = true;
-        const scrollAmount = container.clientHeight;
+        const sectionHeight = container.clientHeight;
+        const scrollAmount = sectionHeight;
+        const currentScrollTop = container.scrollTop;
+        const currentSection = Math.round(currentScrollTop / sectionHeight);
+        const targetSection = currentSection + direction;
+
+        // Call the callback to update navbar and query params
+        if (onProgrammaticScroll) {
+          onProgrammaticScroll(targetSection);
+        }
 
         container.scrollBy({
           top: direction * scrollAmount,
@@ -89,5 +104,5 @@ export function useSmoothWheelScroll(
       container.removeEventListener("wheel", handleWheel);
       if (scrollTimeout) clearTimeout(scrollTimeout);
     };
-  }, [scrollingManually, isScrolling]);
+  }, [scrollingManually, isScrolling, onProgrammaticScroll]);
 }

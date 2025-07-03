@@ -46,6 +46,19 @@ export function useScrollSections(
     }
   };
 
+  const handleProgrammaticScroll = (targetSectionIndex: number) => {
+    // Ensure the target section index is within bounds
+    if (targetSectionIndex >= 0 && targetSectionIndex < sectionIds.length) {
+      const targetSection = sectionIds[targetSectionIndex];
+      setActiveSection(targetSection);
+
+      // Update URL query parameters
+      const params = new URLSearchParams(window.location.search);
+      params.set("section", targetSection);
+      router.replace(`?${params.toString()}`);
+    }
+  };
+
   const checkIfScrollingFinished = () => {
     if (!targetSectionRef.current || !scrollingManually) return;
 
@@ -339,5 +352,6 @@ export function useScrollSections(
     scrollToSection,
     scrollingManually,
     isScrolling,
+    handleProgrammaticScroll,
   };
 }
