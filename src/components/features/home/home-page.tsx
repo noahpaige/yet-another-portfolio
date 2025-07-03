@@ -104,7 +104,11 @@ export default function HomePage() {
               colorPairs={colorPairs}
               enableColorSwap={false}
             />
-            <NoiseOverlay opacity={0.04} resolution={1} />
+            <NoiseOverlay
+              opacity={0.04}
+              resolution={1}
+              scrollContainerRef={scrollContainerRef}
+            />
           </div>
         </ClientOnly>
 
