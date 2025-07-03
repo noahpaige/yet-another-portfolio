@@ -32,7 +32,6 @@ const MIN_ROTATION_SPEED = 10;
 
 interface AnimatedBackgroundProps {
   scrollYProgress: MotionValue<number>;
-  enableColorSwap?: boolean;
   scrollSpeedDamping?: number;
   colorPairs: [HSLColor, HSLColor][];
   // Animation constants
@@ -136,7 +135,6 @@ const generateBlobs = (
 const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
   ({
     scrollYProgress,
-    enableColorSwap = false,
     colorPairs,
     scrollSpeedDamping = 1.25,
     numBlobs = NUM_BLOBS,
@@ -238,12 +236,7 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
     }, [qualitySettings.blobCount, colorPairs]);
 
     useMotionValueEvent(scrollYProgress, "change", (latest) => {
-      if (enableColorSwap) {
-        const i = Math.floor(latest * (blobs.current[0].colors.length - 1));
-        colorIndex.current = i;
-      } else {
-        colorIndex.current = 0;
-      }
+      colorIndex.current = 0;
 
       if (prevScrollY.current === null) prevScrollY.current = latest;
       scrollDirection.current = latest > prevScrollY.current ? -1 : 1;
