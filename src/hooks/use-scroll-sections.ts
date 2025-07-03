@@ -154,16 +154,8 @@ export function useScrollSections(
       }, SCROLL_TIMEOUTS.WHEEL_DETECTION);
     };
 
-    // Handle wheel events to detect manual interruption (desktop)
-    const handleWheel = () => {
-      if (scrollingManually) {
-        // User is manually scrolling, reset programmatic scroll state
-        setScrollingManually(false);
-        setIsScrolling(false);
-        targetSectionRef.current = null;
-        clearScrollTimeout();
-      }
-    };
+    // Note: Wheel events are now handled by useSmoothWheelScroll hook
+    // This prevents conflicts between the two wheel event handlers
 
     // Handle touch events to detect manual interruption (mobile/iOS)
     const handleTouchStart = () => {
@@ -192,7 +184,6 @@ export function useScrollSections(
     };
 
     container.addEventListener("scroll", handleScroll, { passive: true });
-    container.addEventListener("wheel", handleWheel, { passive: true });
     container.addEventListener("touchstart", handleTouchStart, {
       passive: true,
     });
@@ -204,7 +195,6 @@ export function useScrollSections(
 
     return () => {
       container.removeEventListener("scroll", handleScroll);
-      container.removeEventListener("wheel", handleWheel);
       container.removeEventListener("touchstart", handleTouchStart);
       if (scrollEndTimeout) clearTimeout(scrollEndTimeout);
     };

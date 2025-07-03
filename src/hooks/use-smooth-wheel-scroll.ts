@@ -1,10 +1,12 @@
-import { RefObject, useEffect } from "react";
+import { RefObject, useEffect, useRef } from "react";
 
 export function useSmoothWheelScroll(
   scrollRef: RefObject<HTMLElement>,
   scrollingManually?: boolean,
   isScrolling?: boolean
 ) {
+  const accumulatedScrollRef = useRef(0);
+
   useEffect(() => {
     const container = scrollRef.current;
     if (!container) return;
@@ -18,22 +20,67 @@ export function useSmoothWheelScroll(
       // If we're already scrolling from a previous wheel event, block
       if (isWheelScrolling) return;
 
-      // Always allow wheel events to proceed, even during programmatic scrolling
-      // This allows wheel to interrupt programmatic scrolling
-      isWheelScrolling = true;
-
       const direction = e.deltaY > 0 ? 1 : -1;
-      const scrollAmount = container.clientHeight;
 
-      container.scrollBy({
-        top: direction * scrollAmount,
-        behavior: "smooth",
-      });
+      // Detect if this is likely a trackpad event
+      // Trackpad events typically have smaller deltaY values and often have deltaX
+      const isTrackpad = Math.abs(e.deltaY) < 50 || Math.abs(e.deltaX) > 0;
 
-      // Shorter timeout since we now have better scroll detection
-      scrollTimeout = setTimeout(() => {
-        isWheelScrolling = false;
-      }, 600); // Reduced further since we have better coordination
+      if (isTrackpad) {
+        // For trackpad, accumulate scroll amounts
+        accumulatedScrollRef.current += e.deltaY;
+
+        // Only trigger scroll when we've accumulated enough to move to next section
+        const sectionHeight = container.clientHeight;
+        const currentScrollTop = container.scrollTop;
+        const currentSection = Math.round(currentScrollTop / sectionHeight);
+
+        // Check if we've accumulated enough to move to the next/previous section
+        const accumulatedThreshold = sectionHeight * 0.25; // 25% of section height
+
+        if (Math.abs(accumulatedScrollRef.current) >= accumulatedThreshold) {
+          isWheelScrolling = true;
+
+          const targetSection =
+            currentSection + Math.sign(accumulatedScrollRef.current);
+          const targetScrollTop = targetSection * sectionHeight;
+
+          // Ensure we don't scroll beyond boundaries
+          const maxScrollTop = container.scrollHeight - container.clientHeight;
+          const clampedTargetScrollTop = Math.max(
+            0,
+            Math.min(maxScrollTop, targetScrollTop)
+          );
+
+          container.scrollTo({
+            top: clampedTargetScrollTop,
+            behavior: "smooth",
+          });
+
+          // Reset accumulated scroll
+          accumulatedScrollRef.current = 0;
+
+          scrollTimeout = setTimeout(() => {
+            isWheelScrolling = false;
+          }, 600);
+        }
+      } else {
+        // For mouse wheel, use the original behavior (one section at a time)
+        isWheelScrolling = true;
+        const scrollAmount = container.clientHeight;
+
+        container.scrollBy({
+          top: direction * scrollAmount,
+          behavior: "smooth",
+        });
+
+        // Reset accumulated scroll for mouse wheel
+        accumulatedScrollRef.current = 0;
+
+        scrollTimeout = setTimeout(() => {
+          isWheelScrolling = false;
+        }, 600);
+      }
     };
 
     container.addEventListener("wheel", handleWheel, { passive: false });
@@ -42,5 +89,5 @@ export function useSmoothWheelScroll(
       container.removeEventListener("wheel", handleWheel);
       if (scrollTimeout) clearTimeout(scrollTimeout);
     };
-  }, [scrollingManually, isScrolling]); // Add isScrolling to dependencies
+  }, [scrollingManually, isScrolling]);
 }
