@@ -6,29 +6,78 @@ import { BlobData } from "@/app/types";
 import { interp } from "@/lib/interp";
 import { useHardwareCapability } from "@/context/HardwareCapabilityContext";
 
-// Magic numbers extracted as constants for clarity and maintainability
+// Configuration objects for better maintainability and performance tuning
 
-const NUM_BLOBS = 12;
-const RENDER_SIZE = 32;
-const SPRING_DAMPING = 0.35;
-const SPRING_STIFFNESS = 0.02;
-const RESIZE_DEBOUNCE_DELAY_MS = 100;
-const ROTATION_SPEED = 10;
-const SCROLL_SPEED_MULTIPLIER = 30;
-const RELATIVE_BLOB_ROTATION = 0.3;
-const CURY_INTERP = 0.8;
-const DESIREDY_BASE = 0.8;
-const DESIREDY_MULTIPLIER = 0.6;
+const ANIMATION_CONFIG = {
+  // Blob generation
+  blobCount: {
+    default: 12,
+    low: 6,
+    medium: 9,
+    high: 12,
+  },
 
-const BLUR_AMOUNT_LOW = 2;
-const BLUR_AMOUNT_MEDIUM = 3;
-const BLUR_AMOUNT_HIGH = 4;
-const FRAME_RATE_LOW = 20;
-const FRAME_RATE_MEDIUM = 30;
-const FRAME_RATE_HIGH = 60;
+  // Rendering quality
+  renderSize: 32,
+  frameRates: {
+    low: 20,
+    medium: 30,
+    high: 60,
+  },
 
-// Minimum rotation speed for continuous animation (degrees per second)
-const MIN_ROTATION_SPEED = 10;
+  // Blur effects
+  blurAmounts: {
+    low: 2,
+    medium: 3,
+    high: 4,
+  },
+
+  // Animation physics
+  spring: {
+    damping: 0.35,
+    stiffness: 0.02,
+  },
+
+  // Timing
+  resizeDebounceDelayMs: 100,
+  minRotationSpeed: 10, // degrees per second
+
+  // Scroll interaction
+  rotationSpeed: 10,
+  scrollSpeedMultiplier: 30,
+  relativeBlobRotation: 0.3,
+
+  // Position interpolation
+  curYInterp: 0.8,
+  desiredYBase: 0.8,
+  desiredYMultiplier: 0.6,
+
+  // Color generation
+  colorSteps: 64,
+  speedRange: {
+    min: 0.1,
+    max: 0.55,
+  },
+  scaleRange: {
+    min: 0.2,
+    max: 1.7,
+  },
+} as const;
+
+const DEFAULT_PROPS = {
+  scrollSpeedDamping: 1.25,
+  numBlobs: ANIMATION_CONFIG.blobCount.default,
+  renderSize: ANIMATION_CONFIG.renderSize,
+  springDamping: ANIMATION_CONFIG.spring.damping,
+  springStiffness: ANIMATION_CONFIG.spring.stiffness,
+  resizeDebounceDelayMs: ANIMATION_CONFIG.resizeDebounceDelayMs,
+  rotationSpeed: ANIMATION_CONFIG.rotationSpeed,
+  scrollSpeedMultiplier: ANIMATION_CONFIG.scrollSpeedMultiplier,
+  relativeBlobRotation: ANIMATION_CONFIG.relativeBlobRotation,
+  curYInterp: ANIMATION_CONFIG.curYInterp,
+  desiredYBase: ANIMATION_CONFIG.desiredYBase,
+  desiredYMultiplier: ANIMATION_CONFIG.desiredYMultiplier,
+} as const;
 
 interface AnimatedBackgroundProps {
   scrollYProgress: MotionValue<number>;
@@ -97,7 +146,7 @@ const generateBlobs = (
   colorPairs: [HSLColor, HSLColor][]
 ): BlobData[] => {
   const blobs: BlobData[] = [];
-  const numColors = 64;
+  const numColors = ANIMATION_CONFIG.colorSteps;
   const colorsPerPair = Math.floor(numColors / (colorPairs.length - 1));
   for (let i = 0; i < count; i++) {
     const colorSteps: { a: string; b: string }[] = [];
@@ -117,7 +166,13 @@ const generateBlobs = (
     const rawPath = paths[Math.floor(Math.random() * paths.length)];
     const path2D = new Path2D(rawPath);
 
-    const speed = 0.1 + 0.45 * ((count - 1 - i) / count) + 0.45 * Math.random();
+    const speed =
+      ANIMATION_CONFIG.speedRange.min +
+      (ANIMATION_CONFIG.speedRange.max - ANIMATION_CONFIG.speedRange.min) *
+        ((count - 1 - i) / count) +
+      (ANIMATION_CONFIG.speedRange.max - ANIMATION_CONFIG.speedRange.min) *
+        Math.random();
+
     blobs.push({
       path: path2D,
       rotation: {
@@ -125,7 +180,10 @@ const generateBlobs = (
         curSpeed: speed,
         baseSpeed: speed,
       },
-      scale: 0.2 + (1 - i / (count - 1)) * 1.5,
+      scale:
+        ANIMATION_CONFIG.scaleRange.min +
+        (1 - i / (count - 1)) *
+          (ANIMATION_CONFIG.scaleRange.max - ANIMATION_CONFIG.scaleRange.min),
       colors: colorSteps,
     });
   }
@@ -136,18 +194,18 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
   ({
     scrollYProgress,
     colorPairs,
-    scrollSpeedDamping = 1.25,
-    numBlobs = NUM_BLOBS,
-    renderSize = RENDER_SIZE,
-    springDamping = SPRING_DAMPING,
-    springStiffness = SPRING_STIFFNESS,
-    resizeDebounceDelayMs = RESIZE_DEBOUNCE_DELAY_MS,
-    rotationSpeed = ROTATION_SPEED,
-    scrollSpeedMultiplier = SCROLL_SPEED_MULTIPLIER,
-    relativeBlobRotation = RELATIVE_BLOB_ROTATION,
-    curYInterp = CURY_INTERP,
-    desiredYBase = DESIREDY_BASE,
-    desiredYMultiplier = DESIREDY_MULTIPLIER,
+    scrollSpeedDamping = DEFAULT_PROPS.scrollSpeedDamping,
+    numBlobs = DEFAULT_PROPS.numBlobs,
+    renderSize = DEFAULT_PROPS.renderSize,
+    springDamping = DEFAULT_PROPS.springDamping,
+    springStiffness = DEFAULT_PROPS.springStiffness,
+    resizeDebounceDelayMs = DEFAULT_PROPS.resizeDebounceDelayMs,
+    rotationSpeed = DEFAULT_PROPS.rotationSpeed,
+    scrollSpeedMultiplier = DEFAULT_PROPS.scrollSpeedMultiplier,
+    relativeBlobRotation = DEFAULT_PROPS.relativeBlobRotation,
+    curYInterp = DEFAULT_PROPS.curYInterp,
+    desiredYBase = DEFAULT_PROPS.desiredYBase,
+    desiredYMultiplier = DEFAULT_PROPS.desiredYMultiplier,
   }) => {
     const { performanceTier, loading } = useHardwareCapability();
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -180,34 +238,34 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
       if (loading)
         return {
           blobCount: numBlobs,
-          frameRate: FRAME_RATE_MEDIUM,
-          blurAmount: BLUR_AMOUNT_MEDIUM,
+          frameRate: ANIMATION_CONFIG.frameRates.medium,
+          blurAmount: ANIMATION_CONFIG.blurAmounts.medium,
         };
 
       switch (performanceTier) {
         case "low":
           return {
-            blobCount: 6,
-            frameRate: FRAME_RATE_LOW,
-            blurAmount: BLUR_AMOUNT_LOW,
+            blobCount: ANIMATION_CONFIG.blobCount.low,
+            frameRate: ANIMATION_CONFIG.frameRates.low,
+            blurAmount: ANIMATION_CONFIG.blurAmounts.low,
           };
         case "medium":
           return {
-            blobCount: 9,
-            frameRate: FRAME_RATE_MEDIUM,
-            blurAmount: BLUR_AMOUNT_MEDIUM,
+            blobCount: ANIMATION_CONFIG.blobCount.medium,
+            frameRate: ANIMATION_CONFIG.frameRates.medium,
+            blurAmount: ANIMATION_CONFIG.blurAmounts.medium,
           };
         case "high":
           return {
             blobCount: numBlobs,
-            frameRate: FRAME_RATE_HIGH,
-            blurAmount: BLUR_AMOUNT_HIGH,
+            frameRate: ANIMATION_CONFIG.frameRates.high,
+            blurAmount: ANIMATION_CONFIG.blurAmounts.high,
           };
         default:
           return {
             blobCount: numBlobs,
-            frameRate: FRAME_RATE_MEDIUM,
-            blurAmount: BLUR_AMOUNT_MEDIUM,
+            frameRate: ANIMATION_CONFIG.frameRates.medium,
+            blurAmount: ANIMATION_CONFIG.blurAmounts.medium,
           };
       }
     };
@@ -327,7 +385,7 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
           // Calculate target speed: minimum continuous speed + scroll influence
           const targetSpeed =
             Math.max(
-              MIN_ROTATION_SPEED,
+              ANIMATION_CONFIG.minRotationSpeed,
               blob.rotation.baseSpeed * rotationSpeed
             ) * scrollDirection.current;
 
