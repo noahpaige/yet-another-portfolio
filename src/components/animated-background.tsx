@@ -135,11 +135,54 @@ const interpolateHSL = (
 
 const hslToString = (hsl: HSLColor) => `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`;
 
-const paths = [
+const BLOB_PATHS = [
   "M25.7,-30.2C32.4,-25.1,36.2,-16.1,38.3,-6.4C40.3,3.2,40.6,13.4,36.8,22.3C32.9,31.3,25,39,15.5,42.2C6.1,45.4,-4.8,44.2,-13.5,39.8C-22.3,35.5,-29,28,-33.3,19.7C-37.6,11.3,-39.6,2,-38.7,-7.5C-37.8,-17,-34.1,-26.6,-27.2,-31.7C-20.3,-36.7,-10.1,-37.3,-0.3,-36.9C9.5,-36.6,19.1,-35.3,25.7,-30.2Z",
   "M22.4,-27.2C29.7,-20.7,36.6,-14.2,37.9,-6.7C39.1,0.7,34.7,9.1,29.7,16.4C24.6,23.8,18.9,30,11.9,32.5C4.9,35,-3.5,33.7,-11.7,31.1C-19.9,28.5,-28,24.7,-33.6,17.9C-39.2,11.2,-42.3,1.6,-40.4,-6.8C-38.5,-15.2,-31.6,-22.3,-24.1,-28.8C-16.5,-35.3,-8.2,-41.1,-0.3,-40.7C7.6,-40.3,15.2,-33.8,22.4,-27.2Z",
   "M23.1,-27.4C28.5,-23,30.4,-14.4,31,-6.1C31.6,2.1,31.1,9.8,27.6,16C24.1,22.1,17.7,26.5,10,30.9C2.3,35.2,-6.8,39.3,-14.7,37.6C-22.7,36,-29.5,28.5,-33.2,20.1C-36.9,11.8,-37.5,2.5,-36.1,-6.6C-34.8,-15.8,-31.7,-24.9,-25.3,-29.1C-19,-33.3,-9.5,-32.6,-0.3,-32.3C8.9,-31.9,17.7,-31.8,23.1,-27.4Z",
-];
+] as const;
+
+// Path2D object pool for better memory management
+class Path2DPool {
+  private pool = new Map<string, Path2D>();
+
+  getPath(rawPath: string): Path2D {
+    if (!this.pool.has(rawPath)) {
+      this.pool.set(rawPath, new Path2D(rawPath));
+    }
+    return this.pool.get(rawPath)!;
+  }
+
+  clear(): void {
+    this.pool.clear();
+  }
+}
+
+// Global pool instance
+const path2DPool = new Path2DPool();
+
+// Gradient cache for better performance
+class GradientCache {
+  private cache = new Map<string, CanvasGradient>();
+  private canvas: HTMLCanvasElement | null = null;
+
+  setCanvas(canvas: HTMLCanvasElement) {
+    this.canvas = canvas;
+    this.clear(); // Clear cache when canvas changes
+  }
+
+  getGradient(key: string, createFn: () => CanvasGradient): CanvasGradient {
+    if (!this.cache.has(key)) {
+      this.cache.set(key, createFn());
+    }
+    return this.cache.get(key)!;
+  }
+
+  clear(): void {
+    this.cache.clear();
+  }
+}
+
+const gradientCache = new GradientCache();
 
 const generateBlobs = (
   count: number,
@@ -165,8 +208,8 @@ const generateBlobs = (
       }
     }
 
-    const rawPath = paths[Math.floor(Math.random() * paths.length)];
-    const path2D = new Path2D(rawPath);
+    const rawPath = BLOB_PATHS[Math.floor(Math.random() * BLOB_PATHS.length)];
+    const path2D = path2DPool.getPath(rawPath);
 
     const speed =
       ANIMATION_CONFIG.speedRange.min +
@@ -435,6 +478,9 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
         return;
       }
 
+      // Set up gradient cache for offscreen canvas
+      gradientCache.setCanvas(offscreen);
+
       // Set your target resolution for offscreen rendering
       const renderWidth = renderSize;
       const renderHeight = renderSize;
@@ -494,13 +540,6 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
             offCtx.rotate((rotation * Math.PI) / 180);
             offCtx.scale(blob.scale, blob.scale);
 
-            const grad = offCtx.createLinearGradient(
-              -(renderSize / 2),
-              renderSize / 2,
-              renderSize / 8,
-              -(renderSize / 8)
-            );
-
             // Validate color index and colors
             const colorIndexSafe = Math.max(
               0,
@@ -508,8 +547,21 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
             );
             const colors = blob.colors[colorIndexSafe];
             if (colors && colors.a && colors.b) {
-              grad.addColorStop(0, colors.a);
-              grad.addColorStop(1, colors.b);
+              // Create gradient cache key
+              const gradientKey = `${colors.a}-${colors.b}-${renderSize}`;
+
+              const grad = gradientCache.getGradient(gradientKey, () => {
+                const gradient = offCtx.createLinearGradient(
+                  -(renderSize / 2),
+                  renderSize / 2,
+                  renderSize / 8,
+                  -(renderSize / 8)
+                );
+                gradient.addColorStop(0, colors.a);
+                gradient.addColorStop(1, colors.b);
+                return gradient;
+              });
+
               offCtx.fillStyle = grad;
               offCtx.fill(blob.path);
             }
@@ -535,6 +587,9 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
         if (debouncedResize.current) {
           clearTimeout(debouncedResize.current);
         }
+        // Clean up pools to prevent memory leaks
+        path2DPool.clear();
+        gradientCache.clear();
       };
     }, [
       qualitySettings.blurAmount,
