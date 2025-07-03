@@ -148,6 +148,7 @@ const generateBlobs = (
   const blobs: BlobData[] = [];
   const numColors = ANIMATION_CONFIG.colorSteps;
   const colorsPerPair = Math.floor(numColors / (colorPairs.length - 1));
+
   for (let i = 0; i < count; i++) {
     const colorSteps: { a: string; b: string }[] = [];
     for (let j = 0; j < colorPairs.length - 1; j++) {
@@ -163,6 +164,7 @@ const generateBlobs = (
         });
       }
     }
+
     const rawPath = paths[Math.floor(Math.random() * paths.length)];
     const path2D = new Path2D(rawPath);
 
@@ -219,7 +221,77 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
     const [canvasBlurSupported, setCanvasBlurSupported] = useState(true);
 
     // Debounced resize handler
-    const debouncedResize = useRef<NodeJS.Timeout | null>(null);
+    const debouncedResize = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    // Comprehensive prop validation for NPM package robustness
+    const validateProps = () => {
+      const errors: string[] = [];
+      const warnings: string[] = [];
+
+      // Critical errors that could cause crashes
+      if (!colorPairs || !Array.isArray(colorPairs) || colorPairs.length < 2) {
+        errors.push("colorPairs must be an array with at least 2 color pairs");
+      } else {
+        // Validate color structure
+        colorPairs.forEach((pair, index) => {
+          if (!Array.isArray(pair) || pair.length !== 2) {
+            errors.push(
+              `colorPairs[${index}] must be an array with exactly 2 HSL colors`
+            );
+            return;
+          }
+          pair.forEach((color, colorIndex) => {
+            if (
+              !color ||
+              typeof color.h !== "number" ||
+              typeof color.s !== "number" ||
+              typeof color.l !== "number"
+            ) {
+              errors.push(
+                `colorPairs[${index}][${colorIndex}] must be a valid HSL color object`
+              );
+            }
+          });
+        });
+      }
+
+      if (!scrollYProgress || typeof scrollYProgress.get !== "function") {
+        errors.push("scrollYProgress must be a valid MotionValue");
+      }
+
+      // Performance warnings
+      if (numBlobs < 1 || numBlobs > 50) {
+        warnings.push(
+          "numBlobs should be between 1 and 50 for optimal performance"
+        );
+      }
+
+      if (renderSize < 16 || renderSize > 128) {
+        warnings.push(
+          "renderSize should be between 16 and 128 for optimal quality"
+        );
+      }
+
+      if (scrollSpeedDamping <= 0) {
+        warnings.push(
+          "scrollSpeedDamping should be positive for smooth animation"
+        );
+      }
+
+      // Log errors (always) and warnings (development only)
+      if (errors.length > 0) {
+        console.error("AnimatedBackground validation errors:", errors);
+      }
+
+      if (warnings.length > 0 && process.env.NODE_ENV === "development") {
+        console.warn("AnimatedBackground validation warnings:", warnings);
+      }
+
+      return { errors, warnings };
+    };
+
+    // Run validation
+    const { errors } = validateProps();
     const handleResize = useCallback(() => {
       if (debouncedResize.current) {
         clearTimeout(debouncedResize.current);
@@ -343,11 +415,25 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
     }, []);
 
     useEffect(() => {
-      // In useEffect
-      const canvas = canvasRef.current!;
-      const ctx = canvas.getContext("2d")!;
+      // Validate canvas and context availability
+      const canvas = canvasRef.current;
+      if (!canvas) {
+        console.error("Canvas ref not available");
+        return;
+      }
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        console.error("2D context not supported");
+        return;
+      }
+
       const offscreen = document.createElement("canvas");
-      const offCtx = offscreen.getContext("2d")!;
+      const offCtx = offscreen.getContext("2d");
+      if (!offCtx) {
+        console.error("Offscreen 2D context not supported");
+        return;
+      }
 
       // Set your target resolution for offscreen rendering
       const renderWidth = renderSize;
@@ -382,42 +468,56 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
         }
 
         for (const blob of blobs.current) {
-          // Calculate target speed: minimum continuous speed + scroll influence
-          const targetSpeed =
-            Math.max(
-              ANIMATION_CONFIG.minRotationSpeed,
-              blob.rotation.baseSpeed * rotationSpeed
-            ) * scrollDirection.current;
+          try {
+            // Calculate target speed: minimum continuous speed + scroll influence
+            const targetSpeed =
+              Math.max(
+                ANIMATION_CONFIG.minRotationSpeed,
+                blob.rotation.baseSpeed * rotationSpeed
+              ) * scrollDirection.current;
 
-          // Convert frame-based interpolation to time-based interpolation
-          // scrollSpeedDamping is "per second" instead of "per frame"
-          const interpAmount =
-            1 - Math.pow(1 - 1 / scrollSpeedDamping, deltaSeconds);
-          blob.rotation.curSpeed = interp(
-            blob.rotation.curSpeed,
-            targetSpeed,
-            interpAmount,
-            { type: "linear" }
-          );
-          // Use delta time for rotation update (degrees per second)
-          blob.rotation.angle += blob.rotation.curSpeed * deltaSeconds;
-          const rotation = blob.rotation.angle;
-          offCtx.save();
-          offCtx.translate(0, (curY.current * renderHeight) / 8);
-          offCtx.rotate((rotation * Math.PI) / 180);
-          offCtx.scale(blob.scale, blob.scale);
+            // Convert frame-based interpolation to time-based interpolation
+            // scrollSpeedDamping is "per second" instead of "per frame"
+            const interpAmount =
+              1 - Math.pow(1 - 1 / scrollSpeedDamping, deltaSeconds);
+            blob.rotation.curSpeed = interp(
+              blob.rotation.curSpeed,
+              targetSpeed,
+              interpAmount,
+              { type: "linear" }
+            );
+            // Use delta time for rotation update (degrees per second)
+            blob.rotation.angle += blob.rotation.curSpeed * deltaSeconds;
+            const rotation = blob.rotation.angle;
+            offCtx.save();
+            offCtx.translate(0, (curY.current * renderHeight) / 8);
+            offCtx.rotate((rotation * Math.PI) / 180);
+            offCtx.scale(blob.scale, blob.scale);
 
-          const grad = offCtx.createLinearGradient(
-            -(renderSize / 2),
-            renderSize / 2,
-            renderSize / 8,
-            -(renderSize / 8)
-          );
-          grad.addColorStop(0, blob.colors[colorIndex.current].a);
-          grad.addColorStop(1, blob.colors[colorIndex.current].b);
-          offCtx.fillStyle = grad;
-          offCtx.fill(blob.path);
-          offCtx.restore();
+            const grad = offCtx.createLinearGradient(
+              -(renderSize / 2),
+              renderSize / 2,
+              renderSize / 8,
+              -(renderSize / 8)
+            );
+
+            // Validate color index and colors
+            const colorIndexSafe = Math.max(
+              0,
+              Math.min(colorIndex.current, blob.colors.length - 1)
+            );
+            const colors = blob.colors[colorIndexSafe];
+            if (colors && colors.a && colors.b) {
+              grad.addColorStop(0, colors.a);
+              grad.addColorStop(1, colors.b);
+              offCtx.fillStyle = grad;
+              offCtx.fill(blob.path);
+            }
+            offCtx.restore();
+          } catch (error) {
+            console.error("Error rendering blob:", error);
+            offCtx.restore();
+          }
         }
 
         offCtx.restore();
@@ -452,6 +552,23 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
       desiredYMultiplier,
     ]);
 
+    // Don't render if there are critical validation errors
+    if (errors.length > 0) {
+      return (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100vw",
+            height: "100vh",
+            zIndex: -1,
+            pointerEvents: "none",
+            background: "#000",
+          }}
+        />
+      );
+    }
+
     return (
       <div
         style={{
@@ -470,7 +587,9 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
             height: "100vh",
             display: "block",
             background:
-              blobs.current[0]?.colors[colorIndex.current]?.b || "#000",
+              blobs.current[0]?.colors[colorIndex.current]?.b ||
+              blobs.current[0]?.colors[0]?.b ||
+              "#000",
           }}
         />
         {!canvasBlurSupported && (
