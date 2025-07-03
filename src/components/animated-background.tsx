@@ -267,6 +267,8 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
     const desiredY = useRef(0.8);
     const scrollDirection = useRef(1);
     const lastFrameTime = useRef(performance.now());
+    const frameCount = useRef(0);
+    const lastFpsUpdate = useRef(performance.now());
     const [canvasBlurSupported, setCanvasBlurSupported] = useState(true);
 
     // Debounced resize handler
@@ -420,6 +422,30 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
       }
     }, [loading, performanceTier, numBlobs]);
 
+    // Adaptive frame rate adjustment
+    const [adaptiveFrameRate, setAdaptiveFrameRate] = useState(
+      qualitySettings.frameRate
+    );
+
+    useEffect(() => {
+      setAdaptiveFrameRate(qualitySettings.frameRate);
+    }, [qualitySettings.frameRate]);
+
+    // Performance monitoring and adaptive frame rate adjustment
+    useEffect(() => {
+      if (process.env.NODE_ENV !== "development") return;
+
+      const performanceCheckInterval = setInterval(() => {
+        // This would be implemented with actual performance metrics
+        // For now, we'll just log the current frame rate
+        console.log(
+          `🎨 Performance Check: Current frame rate target: ${adaptiveFrameRate}fps`
+        );
+      }, 5000); // Check every 5 seconds
+
+      return () => clearInterval(performanceCheckInterval);
+    }, [adaptiveFrameRate]);
+
     // Log hardware detection and quality settings
     useEffect(() => {
       if (!loading) {
@@ -527,7 +553,35 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
       const render = (currentTime: number) => {
         // Calculate delta time in seconds
         const deltaSeconds = (currentTime - lastFrameTime.current) / 1000;
+
+        // Frame rate limiting based on adaptive quality settings
+        const targetFrameTime = 1000 / adaptiveFrameRate; // Convert fps to milliseconds
+        const timeSinceLastFrame = currentTime - lastFrameTime.current;
+
+        if (timeSinceLastFrame < targetFrameTime) {
+          // Skip frame to maintain target frame rate
+          requestAnimationFrame(render);
+          return;
+        }
+
         lastFrameTime.current = currentTime;
+
+        // Track frame rate for performance monitoring
+        frameCount.current++;
+        const timeSinceFpsUpdate = currentTime - lastFpsUpdate.current;
+        if (timeSinceFpsUpdate >= 1000) {
+          // Update FPS every second
+          const actualFps = Math.round(
+            (frameCount.current * 1000) / timeSinceFpsUpdate
+          );
+          if (process.env.NODE_ENV === "development") {
+            console.log(
+              `🎨 AnimatedBackground FPS: ${actualFps}/${adaptiveFrameRate} target`
+            );
+          }
+          frameCount.current = 0;
+          lastFpsUpdate.current = currentTime;
+        }
 
         // Clear and draw on offscreen canvas
         offCtx.clearRect(0, 0, renderWidth, renderHeight);
@@ -636,6 +690,8 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
     }, [
       // Quality settings (changes when performance tier changes)
       qualitySettings,
+      // Adaptive frame rate (changes based on performance)
+      adaptiveFrameRate,
       // Canvas support (changes once on mount)
       canvasBlurSupported,
       // Resize handler (stable callback)
