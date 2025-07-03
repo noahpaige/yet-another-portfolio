@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useEffect, useRef, useCallback, useState } from "react";
+import React, {
+  useEffect,
+  useRef,
+  useCallback,
+  useState,
+  useMemo,
+} from "react";
 import { MotionValue, useMotionValueEvent } from "framer-motion";
 import { BlobData } from "@/app/types";
 import { interp } from "@/lib/interp";
@@ -335,6 +341,35 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
 
     // Run validation
     const { errors } = validateProps();
+
+    // Memoize animation constants to reduce dependency changes
+    const animationConstants = useMemo(
+      () => ({
+        renderSize,
+        curYInterp,
+        springStiffness,
+        springDamping,
+        rotationSpeed,
+        scrollSpeedDamping,
+        scrollSpeedMultiplier,
+        relativeBlobRotation,
+        desiredYBase,
+        desiredYMultiplier,
+      }),
+      [
+        renderSize,
+        curYInterp,
+        springStiffness,
+        springDamping,
+        rotationSpeed,
+        scrollSpeedDamping,
+        scrollSpeedMultiplier,
+        relativeBlobRotation,
+        desiredYBase,
+        desiredYMultiplier,
+      ]
+    );
+
     const handleResize = useCallback(() => {
       if (debouncedResize.current) {
         clearTimeout(debouncedResize.current);
@@ -349,7 +384,7 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
     }, [resizeDebounceDelayMs]);
 
     // Adjust quality based on device capabilities
-    const getQualitySettings = () => {
+    const qualitySettings = useMemo(() => {
       if (loading)
         return {
           blobCount: numBlobs,
@@ -383,9 +418,7 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
             blurAmount: ANIMATION_CONFIG.blurAmounts.medium,
           };
       }
-    };
-
-    const qualitySettings = getQualitySettings();
+    }, [loading, performanceTier, numBlobs]);
 
     // Log hardware detection and quality settings
     useEffect(() => {
@@ -482,8 +515,8 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
       gradientCache.setCanvas(offscreen);
 
       // Set your target resolution for offscreen rendering
-      const renderWidth = renderSize;
-      const renderHeight = renderSize;
+      const renderWidth = animationConstants.renderSize;
+      const renderHeight = animationConstants.renderSize;
 
       offscreen.width = renderWidth;
       offscreen.height = renderHeight;
@@ -500,11 +533,16 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
         offCtx.clearRect(0, 0, renderWidth, renderHeight);
         offCtx.save();
 
-        curY.current = interp(curY.current, desiredY.current, curYInterp, {
-          type: "spring",
-          stiffness: springStiffness,
-          damping: springDamping,
-        });
+        curY.current = interp(
+          curY.current,
+          desiredY.current,
+          animationConstants.curYInterp,
+          {
+            type: "spring",
+            stiffness: animationConstants.springStiffness,
+            damping: animationConstants.springDamping,
+          }
+        );
 
         offCtx.translate(0, renderHeight * curY.current);
         if (canvasBlurSupported) {
@@ -519,13 +557,17 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
             const targetSpeed =
               Math.max(
                 ANIMATION_CONFIG.minRotationSpeed,
-                blob.rotation.baseSpeed * rotationSpeed
+                blob.rotation.baseSpeed * animationConstants.rotationSpeed
               ) * scrollDirection.current;
 
             // Convert frame-based interpolation to time-based interpolation
             // scrollSpeedDamping is "per second" instead of "per frame"
             const interpAmount =
-              1 - Math.pow(1 - 1 / scrollSpeedDamping, deltaSeconds);
+              1 -
+              Math.pow(
+                1 - 1 / animationConstants.scrollSpeedDamping,
+                deltaSeconds
+              );
             blob.rotation.curSpeed = interp(
               blob.rotation.curSpeed,
               targetSpeed,
@@ -548,14 +590,14 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
             const colors = blob.colors[colorIndexSafe];
             if (colors && colors.a && colors.b) {
               // Create gradient cache key
-              const gradientKey = `${colors.a}-${colors.b}-${renderSize}`;
+              const gradientKey = `${colors.a}-${colors.b}-${animationConstants.renderSize}`;
 
               const grad = gradientCache.getGradient(gradientKey, () => {
                 const gradient = offCtx.createLinearGradient(
-                  -(renderSize / 2),
-                  renderSize / 2,
-                  renderSize / 8,
-                  -(renderSize / 8)
+                  -(animationConstants.renderSize / 2),
+                  animationConstants.renderSize / 2,
+                  animationConstants.renderSize / 8,
+                  -(animationConstants.renderSize / 8)
                 );
                 gradient.addColorStop(0, colors.a);
                 gradient.addColorStop(1, colors.b);
@@ -592,19 +634,14 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
         gradientCache.clear();
       };
     }, [
-      qualitySettings.blurAmount,
+      // Quality settings (changes when performance tier changes)
+      qualitySettings,
+      // Canvas support (changes once on mount)
       canvasBlurSupported,
+      // Resize handler (stable callback)
       handleResize,
-      renderSize,
-      curYInterp,
-      springStiffness,
-      springDamping,
-      rotationSpeed,
-      scrollSpeedDamping,
-      scrollSpeedMultiplier,
-      relativeBlobRotation,
-      desiredYBase,
-      desiredYMultiplier,
+      // Animation constants (memoized to reduce changes)
+      animationConstants,
     ]);
 
     // Don't render if there are critical validation errors
