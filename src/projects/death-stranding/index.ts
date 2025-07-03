@@ -4,4 +4,7 @@ export default {
   tags: ["Survival", "Horror", "Post-apocalyptic"],
   image: "/death_stranding.png",
   imageAltText: "Troy Baker babysitting.",
-}; 
+  template: {
+    templateId: "minimal",
+  },
+};

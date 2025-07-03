@@ -4,4 +4,7 @@ export default {
   tags: ["Adventure", "Action", "Archaeology"],
   image: "/indiana_jones.png",
   imageAltText: "Gotcha!",
-}; 
+  template: {
+    templateId: "minimal",
+  },
+};

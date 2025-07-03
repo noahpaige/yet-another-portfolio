@@ -4,4 +4,7 @@ export default {
   tags: ["RPG", "Cyberpunk", "Open World"],
   image: "/choom.png",
   imageAltText: "My Number 1 Choom",
-}; 
+  template: {
+    templateId: "custom",
+  },
+};

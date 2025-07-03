@@ -1,6 +1,11 @@
 import React from "react";
 import { getProjectById } from "@/generated/project-index";
+import {
+  getTemplateById,
+  getDefaultTemplate,
+} from "@/components/project-templates/template-registry";
 import { notFound } from "next/navigation";
+import type { HSLColor } from "@/components/animated-background";
 
 interface ProjectPageProps {
   params: Promise<{
@@ -11,7 +16,7 @@ interface ProjectPageProps {
 export default async function ProjectPage({ params }: ProjectPageProps) {
   const { id } = await params;
   const project = getProjectById(id);
-  
+
   if (!project) {
     notFound();
   }
@@ -26,41 +31,33 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
     notFound();
   }
 
+  // Get template configuration
+  const templateConfig = project.template;
+  const templateId = templateConfig?.templateId || "default";
+  const template = getTemplateById(templateId) || getDefaultTemplate();
+  const TemplateComponent = template.component;
+
+  // Default color pairs if none provided
+  const defaultColorPairs: [HSLColor, HSLColor][] = [
+    [
+      { h: 145, s: 50, l: 30 },
+      { h: 290, s: 35, l: 10 },
+    ],
+    [
+      { h: 245, s: 30, l: 9 },
+      { h: 145, s: 60, l: 27 },
+    ],
+  ];
+
+  const colorPairs = templateConfig?.colorPairs || defaultColorPairs;
+
   return (
-    <div className="min-h-screen bg-slate-900 text-zinc-200">
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          {/* Project Header */}
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold mb-4">{project.title}</h1>
-            <div className="flex flex-wrap gap-2">
-              {project.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="px-3 py-1 bg-zinc-800 text-zinc-300 rounded-full text-sm"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {/* Project Image */}
-          <div className="mb-8">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={project.image}
-              alt={project.imageAltText}
-              className="w-full h-64 object-cover rounded-lg"
-            />
-          </div>
-
-          {/* Project Content */}
-          <div className="prose prose-invert max-w-none">
-            <ProjectContent />
-          </div>
-        </div>
-      </div>
-    </div>
+    <TemplateComponent
+      header={project.title}
+      tags={project.tags}
+      colorPairs={colorPairs}
+    >
+      <ProjectContent />
+    </TemplateComponent>
   );
-} 
+}

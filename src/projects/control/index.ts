@@ -4,4 +4,7 @@ export default {
   tags: ["Action", "Supernatural", "Thriller"],
   image: "/control.jpg",
   imageAltText: "How does the director even get over there?",
-}; 
+  template: {
+    templateId: "minimal",
+  },
+};
