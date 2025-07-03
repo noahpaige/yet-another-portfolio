@@ -19,19 +19,12 @@ export default function ProjectsPage() {
           {/* Projects Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {projects.map((project) => (
-              <ProjectCard key={project.id} project={project} />
+              <ProjectCard
+                key={project.id}
+                project={project}
+                hideTags={false}
+              />
             ))}
-          </div>
-
-          {/* Back to Home */}
-          <div className="text-center mt-16">
-            <MagneticButton
-              href="/"
-              className="px-6 py-3 bg-zinc-800/50 hover:bg-zinc-700/50 border border-zinc-700/50 hover:border-zinc-600/50 rounded-lg"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span>Back to Home</span>
-            </MagneticButton>
           </div>
         </div>
       </div>
