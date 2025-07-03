@@ -95,7 +95,7 @@ export default function HomePage() {
     <>
       <main
         ref={scrollContainerRef}
-        className="relative z-0 h-screen overflow-y-scroll overflow-x-hidden snap-y snap-mandatory scroll-smooth bg-slate-900 text-zinc-200 @container"
+        className="relative z-0 h-screen overflow-y-scroll overflow-x-hidden snap-y snap-mandatory scroll-smooth bg-black text-zinc-200 @container"
       >
         <ClientOnly>
           <div className="sticky inset-0">
