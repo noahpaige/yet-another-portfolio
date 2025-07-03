@@ -172,33 +172,14 @@ const interpolateHueShortestPath = (
 };
 
 /**
- * Interpolates between two HSL colors with separate factors for each component
- * @param color1 - Starting HSL color
- * @param color2 - Ending HSL color
- * @param hFactor - Hue interpolation factor (0-1)
- * @param sFactor - Saturation interpolation factor (0-1)
- * @param lFactor - Lightness interpolation factor (0-1)
- * @returns Interpolated HSL color
- */
-const interpolateHSL = (
-  color1: HSLColor,
-  color2: HSLColor,
-  hFactor: number,
-  sFactor: number,
-  lFactor: number
-): HSLColor => {
-  const h = interpolateHueShortestPath(color1.h, color2.h, hFactor);
-  const s = interp(color1.s, color2.s, sFactor, { type: "linear" });
-  const l = interp(color1.l, color2.l, lFactor, { type: "linear" });
-  return { h: Math.round(h), s: Math.round(s), l: Math.round(l) };
-};
-
-/**
- * Converts HSL color object to CSS string format
+ * Converts HSL color object to CSS string format with caching
  * @param hsl - HSL color object
  * @returns CSS HSL string (e.g., "hsl(180, 50%, 50%)")
  */
-const hslToString = (hsl: HSLColor) => `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`;
+const hslToString = (hsl: HSLColor) => {
+  const key = `${hsl.h},${hsl.s},${hsl.l}`;
+  return colorCache.getColor(key, () => `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`);
+};
 
 const BLOB_PATHS = [
   "M25.7,-30.2C32.4,-25.1,36.2,-16.1,38.3,-6.4C40.3,3.2,40.6,13.4,36.8,22.3C32.9,31.3,25,39,15.5,42.2C6.1,45.4,-4.8,44.2,-13.5,39.8C-22.3,35.5,-29,28,-33.3,19.7C-37.6,11.3,-39.6,2,-38.7,-7.5C-37.8,-17,-34.1,-26.6,-27.2,-31.7C-20.3,-36.7,-10.1,-37.3,-0.3,-36.9C9.5,-36.6,19.1,-35.3,25.7,-30.2Z",
@@ -352,7 +333,36 @@ class GradientCache {
   }
 }
 
+/**
+ * Color string cache for better performance
+ * Avoids repeated HSL string conversions during rendering
+ */
+class ColorCache {
+  private cache = new Map<string, string>();
+
+  /**
+   * Gets a color string from cache, creating it if it doesn't exist
+   * @param key - Cache key (HSL values)
+   * @param createFn - Function to create the color string if not cached
+   * @returns Color string
+   */
+  getColor(key: string, createFn: () => string): string {
+    if (!this.cache.has(key)) {
+      this.cache.set(key, createFn());
+    }
+    return this.cache.get(key)!;
+  }
+
+  /**
+   * Clears all cached colors to prevent memory leaks
+   */
+  clear(): void {
+    this.cache.clear();
+  }
+}
+
 const gradientCache = new GradientCache();
+const colorCache = new ColorCache();
 
 /**
  * Generates blob data with colors, paths, and animation properties
@@ -360,30 +370,86 @@ const gradientCache = new GradientCache();
  * @param colorPairs - Array of HSL color pairs for gradient interpolation
  * @returns Array of BlobData objects ready for rendering
  */
+/**
+ * Simplified color interpolation using linear interpolation for better performance
+ *
+ * This optimization reduces computational overhead by:
+ * 1. Using simple linear interpolation instead of complex mathematical operations
+ * 2. Removing separate interpolation factors for each HSL component
+ * 3. Eliminating expensive power operations and complex formulas
+ *
+ * @param color1 - Starting HSL color
+ * @param color2 - Ending HSL color
+ * @param t - Interpolation factor (0-1)
+ * @returns Interpolated HSL color
+ */
+const interpolateHSLSimple = (
+  color1: HSLColor,
+  color2: HSLColor,
+  t: number
+): HSLColor => {
+  const h = interpolateHueShortestPath(color1.h, color2.h, t);
+  const s = color1.s + (color2.s - color1.s) * t;
+  const l = color1.l + (color2.l - color1.l) * t;
+  return { h: Math.round(h), s: Math.round(s), l: Math.round(l) };
+};
+
+/**
+ * Pre-calculates all color steps for better performance
+ * @param colorPairs - Array of HSL color pairs
+ * @returns Array of pre-calculated color strings
+ */
+const generateColorSteps = (
+  colorPairs: [HSLColor, HSLColor][]
+): { a: string; b: string }[] => {
+  const colorSteps: { a: string; b: string }[] = [];
+  const numColors = ANIMATION_CONFIG.colorSteps;
+  const colorsPerPair = Math.floor(numColors / (colorPairs.length - 1));
+
+  const startTime = performance.now();
+
+  for (let j = 0; j < colorPairs.length - 1; j++) {
+    const [c1, c2] = colorPairs[j];
+    const [n1, n2] = colorPairs[j + 1];
+
+    for (let k = 0; k < colorsPerPair; k++) {
+      const mix = k / colorsPerPair;
+
+      // Simplified interpolation without complex mathematical operations
+      const interpolatedA = interpolateHSLSimple(c1, n1, mix);
+      const interpolatedB = interpolateHSLSimple(c2, n2, mix);
+
+      colorSteps.push({
+        a: hslToString(interpolatedA),
+        b: hslToString(interpolatedB),
+      });
+    }
+  }
+
+  const endTime = performance.now();
+
+  // Log color generation performance in development
+  if (process.env.NODE_ENV === "development") {
+    console.log(
+      `🎨 Color Generation: ${colorSteps.length} colors in ${(
+        endTime - startTime
+      ).toFixed(2)}ms`
+    );
+  }
+
+  return colorSteps;
+};
+
 const generateBlobs = (
   count: number,
   colorPairs: [HSLColor, HSLColor][]
 ): BlobData[] => {
   const blobs: BlobData[] = [];
-  const numColors = ANIMATION_CONFIG.colorSteps;
-  const colorsPerPair = Math.floor(numColors / (colorPairs.length - 1));
+
+  // Pre-calculate all color steps once for all blobs
+  const colorSteps = generateColorSteps(colorPairs);
 
   for (let i = 0; i < count; i++) {
-    const colorSteps: { a: string; b: string }[] = [];
-    for (let j = 0; j < colorPairs.length - 1; j++) {
-      const [c1, c2] = colorPairs[j];
-      const [n1, n2] = colorPairs[j + 1];
-      for (let k = 0; k < colorsPerPair; k++) {
-        const mix = k / colorsPerPair;
-        const f = (2 * mix - 1) ** 8;
-        // const sMix = 1 / (-100 * mix) + 1;
-        colorSteps.push({
-          a: hslToString(interpolateHSL(c1, n1, mix, mix * f, mix)),
-          b: hslToString(interpolateHSL(c2, n2, mix, mix * f, mix)),
-        });
-      }
-    }
-
     const rawPath = BLOB_PATHS[Math.floor(Math.random() * BLOB_PATHS.length)];
     const path2D = path2DPool.getPath(rawPath);
 
@@ -405,7 +471,7 @@ const generateBlobs = (
         ANIMATION_CONFIG.scaleRange.min +
         (1 - i / (count - 1)) *
           (ANIMATION_CONFIG.scaleRange.max - ANIMATION_CONFIG.scaleRange.min),
-      colors: colorSteps,
+      colors: colorSteps, // All blobs share the same pre-calculated colors
     });
   }
   return blobs;
@@ -1046,6 +1112,7 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
         // Clean up pools to prevent memory leaks
         path2DPool.clear();
         gradientCache.clear();
+        colorCache.clear();
       };
     }, [
       // Quality settings (changes when performance tier changes)
