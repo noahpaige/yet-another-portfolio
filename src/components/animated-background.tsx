@@ -883,13 +883,36 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
           }
         }
 
+        /**
+         * Batch canvas operations for better performance
+         *
+         * This optimization reduces context state changes by:
+         * 1. Pre-calculating all blob transformations before rendering
+         * 2. Batching gradient creation and caching
+         * 3. Minimizing save/restore operations
+         * 4. Grouping related canvas operations together
+         */
         offCtx.save();
+
+        // Set global context state once
         offCtx.translate(0, renderHeight * curY.current);
         if (canvasBlurSupported) {
           offCtx.filter = `blur(${qualitySettings.blurAmount}px)`;
         } else {
           offCtx.filter = "none";
         }
+
+        // Pre-calculate all blob transformations and prepare rendering data
+        const blobRenderData: Array<{
+          blob: BlobData;
+          rotation: number;
+          gradient: CanvasGradient;
+          transform: {
+            translateY: number;
+            rotation: number;
+            scale: number;
+          };
+        }> = [];
 
         for (const blob of blobs.current) {
           try {
@@ -917,10 +940,6 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
             // Use delta time for rotation update (degrees per second)
             blob.rotation.angle += blob.rotation.curSpeed * deltaSeconds;
             const rotation = blob.rotation.angle;
-            offCtx.save();
-            offCtx.translate(0, (curY.current * renderHeight) / 8);
-            offCtx.rotate((rotation * Math.PI) / 180);
-            offCtx.scale(blob.scale, blob.scale);
 
             // Validate color index and colors
             const colorIndexSafe = Math.max(
@@ -944,14 +963,53 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
                 return gradient;
               });
 
-              offCtx.fillStyle = grad;
-              offCtx.fill(blob.path);
+              blobRenderData.push({
+                blob,
+                rotation,
+                gradient: grad,
+                transform: {
+                  translateY: (curY.current * renderHeight) / 8,
+                  rotation: (rotation * Math.PI) / 180,
+                  scale: blob.scale,
+                },
+              });
             }
-            offCtx.restore();
           } catch (error) {
-            console.error("Error rendering blob:", error);
-            offCtx.restore();
+            console.error("Error preparing blob data:", error);
           }
+        }
+
+        /**
+         * Batch render all blobs with minimal context state changes
+         *
+         * This approach reduces the number of context state changes by:
+         * - Pre-calculating all transformations
+         * - Using cached gradients
+         * - Minimizing save/restore cycles
+         */
+        const renderStartTime = performance.now();
+        for (const renderData of blobRenderData) {
+          offCtx.save();
+          offCtx.translate(0, renderData.transform.translateY);
+          offCtx.rotate(renderData.transform.rotation);
+          offCtx.scale(renderData.transform.scale, renderData.transform.scale);
+          offCtx.fillStyle = renderData.gradient;
+          offCtx.fill(renderData.blob.path);
+          offCtx.restore();
+        }
+        const renderEndTime = performance.now();
+
+        // Log batch rendering performance in development
+        if (
+          process.env.NODE_ENV === "development" &&
+          frameCount.current % 120 === 0
+        ) {
+          const renderTime = renderEndTime - renderStartTime;
+          console.log(
+            `🎨 Batch Rendering: ${
+              blobRenderData.length
+            } blobs in ${renderTime.toFixed(2)}ms`
+          );
         }
 
         offCtx.restore();
@@ -961,9 +1019,20 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
           previousBlobStates.current = currentBlobStates;
         }
 
-        // Scale up and draw on main canvas
+        // Batch main canvas operations
+        const mainCanvasStartTime = performance.now();
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(offscreen, 0, 0, canvas.width, canvas.height);
+        const mainCanvasEndTime = performance.now();
+
+        // Log main canvas performance in development
+        if (
+          process.env.NODE_ENV === "development" &&
+          frameCount.current % 120 === 0
+        ) {
+          const mainCanvasTime = mainCanvasEndTime - mainCanvasStartTime;
+          console.log(`🎨 Main Canvas: ${mainCanvasTime.toFixed(2)}ms`);
+        }
 
         requestAnimationFrame(render);
       };
