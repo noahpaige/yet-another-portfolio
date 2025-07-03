@@ -103,27 +103,57 @@ interface AnimatedBackgroundProps {
   desiredYMultiplier?: number;
 }
 
+/**
+ * HSL color representation for blob gradients
+ */
 export type HSLColor = {
+  /** Hue value (0-360 degrees) */
   h: number;
+  /** Saturation percentage (0-100) */
   s: number;
+  /** Lightness percentage (0-100) */
   l: number;
 };
 
-// Types for dirty region tracking
+/**
+ * Types for dirty region tracking optimization
+ */
+
+/**
+ * Represents the state of a blob for change detection
+ */
 interface BlobState {
+  /** Current position of the blob on canvas */
   position: { x: number; y: number };
+  /** Current rotation angle in degrees */
   rotation: number;
+  /** Current scale factor */
   scale: number;
+  /** Current color index in the color array */
   colorIndex: number;
 }
 
+/**
+ * Represents a rectangular region that needs to be redrawn
+ */
 interface DirtyRegion {
+  /** X coordinate of the region */
   x: number;
+  /** Y coordinate of the region */
   y: number;
+  /** Width of the region */
   width: number;
+  /** Height of the region */
   height: number;
 }
 
+/**
+ * Interpolates between two hue values using the shortest path around the color wheel
+ * @param h1 - Starting hue value (0-360)
+ * @param h2 - Ending hue value (0-360)
+ * @param t - Interpolation factor (0-1)
+ * @returns Interpolated hue value (0-360)
+ */
 const interpolateHueShortestPath = (
   h1: number,
   h2: number,
@@ -141,6 +171,15 @@ const interpolateHueShortestPath = (
   return (h1 + t * delta + 360) % 360;
 };
 
+/**
+ * Interpolates between two HSL colors with separate factors for each component
+ * @param color1 - Starting HSL color
+ * @param color2 - Ending HSL color
+ * @param hFactor - Hue interpolation factor (0-1)
+ * @param sFactor - Saturation interpolation factor (0-1)
+ * @param lFactor - Lightness interpolation factor (0-1)
+ * @returns Interpolated HSL color
+ */
 const interpolateHSL = (
   color1: HSLColor,
   color2: HSLColor,
@@ -154,6 +193,11 @@ const interpolateHSL = (
   return { h: Math.round(h), s: Math.round(s), l: Math.round(l) };
 };
 
+/**
+ * Converts HSL color object to CSS string format
+ * @param hsl - HSL color object
+ * @returns CSS HSL string (e.g., "hsl(180, 50%, 50%)")
+ */
 const hslToString = (hsl: HSLColor) => `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`;
 
 const BLOB_PATHS = [
@@ -162,10 +206,18 @@ const BLOB_PATHS = [
   "M23.1,-27.4C28.5,-23,30.4,-14.4,31,-6.1C31.6,2.1,31.1,9.8,27.6,16C24.1,22.1,17.7,26.5,10,30.9C2.3,35.2,-6.8,39.3,-14.7,37.6C-22.7,36,-29.5,28.5,-33.2,20.1C-36.9,11.8,-37.5,2.5,-36.1,-6.6C-34.8,-15.8,-31.7,-24.9,-25.3,-29.1C-19,-33.3,-9.5,-32.6,-0.3,-32.3C8.9,-31.9,17.7,-31.8,23.1,-27.4Z",
 ] as const;
 
-// Path2D object pool for better memory management
+/**
+ * Path2D object pool for better memory management and performance
+ * Reuses Path2D objects instead of creating new ones for each blob
+ */
 class Path2DPool {
   private pool = new Map<string, Path2D>();
 
+  /**
+   * Gets a Path2D object from the pool, creating it if it doesn't exist
+   * @param rawPath - SVG path string
+   * @returns Path2D object
+   */
   getPath(rawPath: string): Path2D {
     if (!this.pool.has(rawPath)) {
       this.pool.set(rawPath, new Path2D(rawPath));
@@ -173,6 +225,9 @@ class Path2DPool {
     return this.pool.get(rawPath)!;
   }
 
+  /**
+   * Clears all cached Path2D objects to prevent memory leaks
+   */
   clear(): void {
     this.pool.clear();
   }
@@ -181,7 +236,13 @@ class Path2DPool {
 // Global pool instance
 const path2DPool = new Path2DPool();
 
-// Dirty region tracking utilities
+/**
+ * Calculates the bounding box for a blob including padding for smooth transitions
+ * @param blob - Blob data containing scale information
+ * @param position - Current position of the blob
+ * @param scale - Additional scale factor
+ * @returns DirtyRegion representing the area the blob occupies
+ */
 const calculateBlobBounds = (
   blob: BlobData,
   position: { x: number; y: number },
@@ -198,6 +259,11 @@ const calculateBlobBounds = (
   };
 };
 
+/**
+ * Merges overlapping dirty regions to minimize the number of clear operations
+ * @param regions - Array of dirty regions to merge
+ * @returns Array of merged regions with reduced overlap
+ */
 const mergeDirtyRegions = (regions: DirtyRegion[]): DirtyRegion[] => {
   if (regions.length <= 1) return regions;
 
@@ -248,16 +314,29 @@ const mergeDirtyRegions = (regions: DirtyRegion[]): DirtyRegion[] => {
   return merged;
 };
 
-// Gradient cache for better performance
+/**
+ * Gradient cache for better performance
+ * Reuses CanvasGradient objects instead of creating new ones for each frame
+ */
 class GradientCache {
   private cache = new Map<string, CanvasGradient>();
   private canvas: HTMLCanvasElement | null = null;
 
+  /**
+   * Sets the canvas context and clears the cache
+   * @param canvas - HTMLCanvasElement to use for gradient creation
+   */
   setCanvas(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
     this.clear(); // Clear cache when canvas changes
   }
 
+  /**
+   * Gets a gradient from the cache, creating it if it doesn't exist
+   * @param key - Unique key for the gradient
+   * @param createFn - Function to create the gradient if not cached
+   * @returns CanvasGradient object
+   */
   getGradient(key: string, createFn: () => CanvasGradient): CanvasGradient {
     if (!this.cache.has(key)) {
       this.cache.set(key, createFn());
@@ -265,6 +344,9 @@ class GradientCache {
     return this.cache.get(key)!;
   }
 
+  /**
+   * Clears all cached gradients to prevent memory leaks
+   */
   clear(): void {
     this.cache.clear();
   }
@@ -272,6 +354,12 @@ class GradientCache {
 
 const gradientCache = new GradientCache();
 
+/**
+ * Generates blob data with colors, paths, and animation properties
+ * @param count - Number of blobs to generate
+ * @param colorPairs - Array of HSL color pairs for gradient interpolation
+ * @returns Array of BlobData objects ready for rendering
+ */
 const generateBlobs = (
   count: number,
   colorPairs: [HSLColor, HSLColor][]
@@ -323,6 +411,29 @@ const generateBlobs = (
   return blobs;
 };
 
+/**
+ * AnimatedBackground - A high-performance animated background component
+ *
+ * Features:
+ * - Hardware-adaptive quality settings
+ * - Frame rate limiting for consistent performance
+ * - Dirty region tracking for optimized rendering
+ * - Path2D and gradient caching for memory efficiency
+ * - Comprehensive error handling and validation
+ *
+ * @example
+ * ```tsx
+ * <AnimatedBackground
+ *   scrollYProgress={scrollYProgress}
+ *   colorPairs={[
+ *     [{ h: 0, s: 50, l: 50 }, { h: 180, s: 50, l: 50 }],
+ *     [{ h: 360, s: 50, l: 50 }, { h: 180, s: 50, l: 50 }]
+ *   ]}
+ *   numBlobs={12}
+ *   renderSize={32}
+ * />
+ * ```
+ */
 const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
   ({
     scrollYProgress,
@@ -360,7 +471,10 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
     // Debounced resize handler
     const debouncedResize = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    // Comprehensive prop validation for NPM package robustness
+    /**
+     * Validates component props and logs warnings for invalid values
+     * @returns Object containing validation errors and warnings
+     */
     const validateProps = () => {
       const errors: string[] = [];
       const warnings: string[] = [];
@@ -430,7 +544,10 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
     // Run validation
     const { errors } = validateProps();
 
-    // Memoize animation constants to reduce dependency changes
+    /**
+     * Memoizes animation constants to reduce dependency changes and improve performance
+     * @returns Object containing all animation-related constants
+     */
     const animationConstants = useMemo(
       () => ({
         renderSize,
@@ -471,7 +588,10 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
       }, resizeDebounceDelayMs);
     }, [resizeDebounceDelayMs]);
 
-    // Adjust quality based on device capabilities
+    /**
+     * Adjusts quality settings based on device performance capabilities
+     * @returns Quality settings object with blob count, frame rate, and blur amount
+     */
     const qualitySettings = useMemo(() => {
       if (loading)
         return {
