@@ -73,10 +73,10 @@ export const ContactSection = () => {
 
   return (
     <section
-      className="flex h-screen items-center justify-center px-12"
+      className="flex h-full items-center justify-center px-12"
       ref={ref}
     >
-      <div className="flex flex-col gap-20 h-screen items-center justify-center ">
+      <div className="flex flex-col gap-20 h-full items-center justify-center ">
         <AnimatePresence>
           {show && (
             <motion.div
