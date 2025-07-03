@@ -24,7 +24,16 @@ export const ProjectCard = React.memo(({ project }: ProjectCardProps) => {
     1280 // max screen width
   );
 
-  const heightClasses = "h-32 xs:h-44 sm:h-48 md:h-56 lg:h-64 xl:h-80";
+  // Generate dynamic height based on screen height only
+  // Converting the height classes to pixel values: h-32(128px), h-44(176px), h-48(192px), h-56(224px), h-64(256px), h-80(320px)
+  const cardHeight = useClampCSS(
+    64, // min height (h-32 = 128px)
+    320, // max height (h-80 = 320px)
+    500, // min screen height where scaling starts
+    1200, // max screen height where scaling stops
+    0, // min screen width (ignored)
+    0 // max screen width (ignored)
+  );
 
   return (
     <Magnetic
@@ -37,7 +46,8 @@ export const ProjectCard = React.memo(({ project }: ProjectCardProps) => {
       <Link href={`/projects/${project.id}`} ref={linkRef}>
         <div className="group relative overflow-hidden rounded-xl glass-layer-hoverable transition-all duration-300">
           <div
-            className={`relative ${heightClasses} rounded-lg overflow-hidden`}
+            className="relative rounded-lg overflow-hidden"
+            style={{ height: cardHeight }}
           >
             {/* Use the Link as the action area for inner Magnetics */}
             <Magnetic
@@ -49,12 +59,13 @@ export const ProjectCard = React.memo(({ project }: ProjectCardProps) => {
               }}
               springOptions={{ stiffness: 300, damping: 30 }}
             >
-              <div className={`w-full ${heightClasses} scale-115`}>
+              <div className="w-full scale-115" style={{ height: cardHeight }}>
                 {/* Project Image */}
                 <img
                   src={project.image}
                   alt={project.imageAltText}
-                  className={`w-full ${heightClasses} object-cover rounded-lg`}
+                  className="w-full object-cover rounded-lg"
+                  style={{ height: cardHeight }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
               </div>
