@@ -232,7 +232,9 @@ const AnimatedAboutCard = React.memo(function AnimatedAboutCard({
                 .split(" ")
                 .map((word, j) => <span key={`${i}-${j}`}>{word + " "}</span>)
             ) : (
-              <span key={`el-${i}`}>{segment}</span>
+              <span key={`el-${i}`} className="leading-8">
+                {segment}
+              </span>
             )
           )}
         </span>
