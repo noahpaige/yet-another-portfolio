@@ -50,12 +50,29 @@ export function useScrollSections(
     // Ensure the target section index is within bounds
     if (targetSectionIndex >= 0 && targetSectionIndex < sectionIds.length) {
       const targetSection = sectionIds[targetSectionIndex];
+
+      // Immediately update active section and URL, regardless of current state
       setActiveSection(targetSection);
 
       // Update URL query parameters
       const params = new URLSearchParams(window.location.search);
       params.set("section", targetSection);
       router.replace(`?${params.toString()}`);
+
+      // Set scrolling manually to prevent IntersectionObserver interference
+      setScrollingManually(true);
+      setIsScrolling(true);
+      targetSectionRef.current = targetSection;
+
+      // Clear any existing timeout
+      clearScrollTimeout();
+
+      // Set a timeout to reset the manual scrolling state
+      scrollTimeoutRef.current = setTimeout(() => {
+        setScrollingManually(false);
+        setIsScrolling(false);
+        targetSectionRef.current = null;
+      }, 700); // Slightly longer than scroll animation
     }
   };
 
