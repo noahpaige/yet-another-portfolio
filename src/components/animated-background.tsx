@@ -109,6 +109,21 @@ export type HSLColor = {
   l: number;
 };
 
+// Types for dirty region tracking
+interface BlobState {
+  position: { x: number; y: number };
+  rotation: number;
+  scale: number;
+  colorIndex: number;
+}
+
+interface DirtyRegion {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 const interpolateHueShortestPath = (
   h1: number,
   h2: number,
@@ -165,6 +180,73 @@ class Path2DPool {
 
 // Global pool instance
 const path2DPool = new Path2DPool();
+
+// Dirty region tracking utilities
+const calculateBlobBounds = (
+  blob: BlobData,
+  position: { x: number; y: number },
+  scale: number
+): DirtyRegion => {
+  const padding = 10; // Extra padding for smooth transitions
+  const size = Math.max(blob.scale * scale * 50, 20); // Approximate blob size
+
+  return {
+    x: Math.max(0, position.x - size - padding),
+    y: Math.max(0, position.y - size - padding),
+    width: Math.min(size * 2 + padding * 2, 100),
+    height: Math.min(size * 2 + padding * 2, 100),
+  };
+};
+
+const mergeDirtyRegions = (regions: DirtyRegion[]): DirtyRegion[] => {
+  if (regions.length <= 1) return regions;
+
+  // Simple merging: if regions overlap significantly, combine them
+  const merged: DirtyRegion[] = [];
+
+  for (const region of regions) {
+    let mergedWithExisting = false;
+
+    for (let i = 0; i < merged.length; i++) {
+      const existing = merged[i];
+      const overlapX = Math.max(
+        0,
+        Math.min(region.x + region.width, existing.x + existing.width) -
+          Math.max(region.x, existing.x)
+      );
+      const overlapY = Math.max(
+        0,
+        Math.min(region.y + region.height, existing.y + existing.height) -
+          Math.max(region.y, existing.y)
+      );
+      const overlapArea = overlapX * overlapY;
+      const regionArea = region.width * region.height;
+      const existingArea = existing.width * existing.height;
+
+      // If overlap is more than 50% of either region, merge them
+      if (overlapArea > regionArea * 0.5 || overlapArea > existingArea * 0.5) {
+        merged[i] = {
+          x: Math.min(region.x, existing.x),
+          y: Math.min(region.y, existing.y),
+          width:
+            Math.max(region.x + region.width, existing.x + existing.width) -
+            Math.min(region.x, existing.x),
+          height:
+            Math.max(region.y + region.height, existing.y + existing.height) -
+            Math.min(region.y, existing.y),
+        };
+        mergedWithExisting = true;
+        break;
+      }
+    }
+
+    if (!mergedWithExisting) {
+      merged.push(region);
+    }
+  }
+
+  return merged;
+};
 
 // Gradient cache for better performance
 class GradientCache {
@@ -270,6 +352,10 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
     const frameCount = useRef(0);
     const lastFpsUpdate = useRef(performance.now());
     const [canvasBlurSupported, setCanvasBlurSupported] = useState(true);
+
+    // Dirty region tracking state
+    const previousBlobStates = useRef<BlobState[]>([]);
+    const isFirstFrame = useRef(true);
 
     // Debounced resize handler
     const debouncedResize = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -583,10 +669,11 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
           lastFpsUpdate.current = currentTime;
         }
 
-        // Clear and draw on offscreen canvas
-        offCtx.clearRect(0, 0, renderWidth, renderHeight);
-        offCtx.save();
+        // Calculate current blob states for dirty region tracking
+        const currentBlobStates: BlobState[] = [];
+        const dirtyRegions: DirtyRegion[] = [];
 
+        // Calculate Y position for all blobs
         curY.current = interp(
           curY.current,
           desiredY.current,
@@ -598,6 +685,85 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
           }
         );
 
+        // Determine which regions need to be redrawn
+        if (!isFirstFrame.current) {
+          for (let i = 0; i < blobs.current.length; i++) {
+            const blob = blobs.current[i];
+            const prevState = previousBlobStates.current[i];
+
+            // Calculate current blob position and state
+            const currentPosition = {
+              x: renderWidth / 2,
+              y: (curY.current * renderHeight) / 8,
+            };
+
+            const currentState: BlobState = {
+              position: currentPosition,
+              rotation: blob.rotation.angle,
+              scale: blob.scale,
+              colorIndex: colorIndex.current,
+            };
+
+            currentBlobStates.push(currentState);
+
+            // Check if blob has changed significantly
+            if (prevState) {
+              const rotationChanged =
+                Math.abs(currentState.rotation - prevState.rotation) > 5;
+              const positionChanged =
+                Math.abs(currentState.position.y - prevState.position.y) > 2;
+              const colorChanged =
+                currentState.colorIndex !== prevState.colorIndex;
+
+              if (rotationChanged || positionChanged || colorChanged) {
+                // Add both old and new regions to dirty regions
+                dirtyRegions.push(
+                  calculateBlobBounds(blob, prevState.position, prevState.scale)
+                );
+                dirtyRegions.push(
+                  calculateBlobBounds(
+                    blob,
+                    currentState.position,
+                    currentState.scale
+                  )
+                );
+              }
+            }
+          }
+        } else {
+          // First frame: redraw everything
+          isFirstFrame.current = false;
+          offCtx.clearRect(0, 0, renderWidth, renderHeight);
+        }
+
+        // Clear only dirty regions (or entire canvas on first frame)
+        if (dirtyRegions.length > 0) {
+          const mergedRegions = mergeDirtyRegions(dirtyRegions);
+          mergedRegions.forEach((region) => {
+            offCtx.clearRect(region.x, region.y, region.width, region.height);
+          });
+
+          // Log dirty region performance in development
+          if (
+            process.env.NODE_ENV === "development" &&
+            frameCount.current % 60 === 0
+          ) {
+            const totalCanvasArea = renderWidth * renderHeight;
+            const dirtyArea = mergedRegions.reduce(
+              (sum, region) => sum + region.width * region.height,
+              0
+            );
+            const efficiency = (
+              ((totalCanvasArea - dirtyArea) / totalCanvasArea) *
+              100
+            ).toFixed(1);
+            console.log(
+              `🎨 Dirty Regions: ${mergedRegions.length} regions, ${efficiency}% efficiency`
+            );
+          }
+        }
+
+        offCtx.save();
         offCtx.translate(0, renderHeight * curY.current);
         if (canvasBlurSupported) {
           offCtx.filter = `blur(${qualitySettings.blurAmount}px)`;
@@ -669,6 +835,11 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
         }
 
         offCtx.restore();
+
+        // Update previous blob states for next frame
+        if (currentBlobStates.length > 0) {
+          previousBlobStates.current = currentBlobStates;
+        }
 
         // Scale up and draw on main canvas
         ctx.clearRect(0, 0, canvas.width, canvas.height);
