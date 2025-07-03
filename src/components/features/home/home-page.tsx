@@ -102,7 +102,6 @@ export default function HomePage() {
             <AnimatedBackground
               scrollYProgress={scrollYProgress}
               colorPairs={colorPairs}
-              enableColorSwap={false}
             />
             <NoiseOverlay
               opacity={0.04}
