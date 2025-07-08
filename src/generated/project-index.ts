@@ -55,17 +55,7 @@ export const projects: Project[] = [
   image: "/choom.png",
   imageAltText: "My Number 1 Choom",
   template: {
-    templateId: "default",
-    colorPairs: [
-      [
-        { h: 300, s: 80, l: 25 },
-        { h: 200, s: 60, l: 15 },
-      ],
-      [
-        { h: 200, s: 70, l: 20 },
-        { h: 300, s: 90, l: 30 },
-      ],
-    ],
+    templateId: "custom",
   },
 },
   {
