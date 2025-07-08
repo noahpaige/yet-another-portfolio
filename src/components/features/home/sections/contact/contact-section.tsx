@@ -50,7 +50,7 @@ const contactButtons = [
   },
   {
     name: "Resume",
-    href: "TODO",
+    href: "/Noah Paige Resume 25.pdf",
     hoverText: "view my resume",
     icon: FileText,
   },

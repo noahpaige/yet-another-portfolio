@@ -62,7 +62,7 @@ const blocks = [
       "to the ",
       <HoverText
         key="surf"
-        imageSrc="/kojima.jpg"
+        imageSrc="/surf.jpeg"
         imageAlt="Surfing"
         text={<p className="text-nowrap font-normal">surf</p>}
       />,
