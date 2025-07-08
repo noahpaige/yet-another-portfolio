@@ -83,19 +83,39 @@
 
 @layer components {
   .glass-layer {
-    @apply bg-slate-900/50 p-[4px] rounded-xl shadow-soft-light backdrop-blur-[30px];
+    @apply bg-slate-900/50 p-[4px] rounded-xl shadow-soft-light backdrop-blur-[15px];
+    -webkit-backdrop-filter: blur(15px);
+    transform: translateZ(0);
+    will-change: backdrop-filter;
+    isolation: isolate;
   }
   .glass-layer-hoverable {
-    @apply bg-slate-900/50 p-[4px] rounded-xl shadow-soft-light hover:shadow-soft-light-hovered hover:bg-slate-900/80 backdrop-blur-[30px] transition-shadow duration-300 ease-in-out;
+    @apply bg-slate-900/50 p-[4px] rounded-xl shadow-soft-light hover:shadow-soft-light-hovered hover:bg-slate-900/80 backdrop-blur-[15px] transition-shadow duration-300 ease-in-out;
+    -webkit-backdrop-filter: blur(15px);
+    transform: translateZ(0);
+    will-change: backdrop-filter;
+    isolation: isolate;
   }
   .glass-layer-light {
-    @apply bg-slate-200/10 p-[4px] rounded-md shadow-soft-light backdrop-blur-[30px];
+    @apply bg-slate-200/10 p-[4px] rounded-md shadow-soft-light backdrop-blur-[15px];
+    -webkit-backdrop-filter: blur(15px);
+    transform: translateZ(0);
+    will-change: backdrop-filter;
+    isolation: isolate;
   }
   .glass-layer-light-hoverable {
-    @apply bg-slate-200/10 p-[4px] hover:p-[6px] rounded-md shadow-soft-light hover:shadow-soft-light-hovered hover:bg-slate-200/30 backdrop-blur-[30px] transition-shadow duration-300 ease-in-out;
+    @apply bg-slate-200/10 p-[4px] hover:p-[6px] rounded-md shadow-soft-light hover:shadow-soft-light-hovered hover:bg-slate-200/30 backdrop-blur-[15px] transition-shadow duration-300 ease-in-out;
+    -webkit-backdrop-filter: blur(15px);
+    transform: translateZ(0);
+    will-change: backdrop-filter;
+    isolation: isolate;
   }
   .glass-hover-card {
-    @apply !bg-slate-900/50 !rounded-xl !shadow-soft-light !backdrop-blur-[30px] !border-none;
+    @apply !bg-slate-900/50 !rounded-xl !shadow-soft-light !backdrop-blur-[15px] !border-none;
+    -webkit-backdrop-filter: blur(15px) !important;
+    transform: translateZ(0);
+    will-change: backdrop-filter;
+    isolation: isolate;
   }
 }
 
@@ -183,5 +203,29 @@
     padding: 0;
     height: 100%;
     @apply bg-background text-foreground;
+  }
+}
+
+/* Safari-specific backdrop-filter fixes */
+@supports not (backdrop-filter: blur(1px)) {
+  .glass-layer,
+  .glass-layer-hoverable,
+  .glass-layer-light,
+  .glass-layer-light-hoverable,
+  .glass-hover-card {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: rgba(15, 23, 42, 0.8) !important;
+  }
+}
+
+/* Ensure backdrop-filter works in Safari */
+@supports (-webkit-backdrop-filter: blur(1px)) {
+  .glass-layer,
+  .glass-layer-hoverable,
+  .glass-layer-light,
+  .glass-layer-light-hoverable,
+  .glass-hover-card {
+    -webkit-backdrop-filter: blur(15px);
   }
 }
