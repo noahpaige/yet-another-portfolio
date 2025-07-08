@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 // Centralized config for scroll and section behavior
 export const SCROLL_CONFIG = {
   // Timeouts (ms)
-  FALLBACK: 5000, // Fallback for very slow devices
+  FALLBACK: 2000, // Fallback for very slow devices
   WHEEL_DETECTION: 100, // For wheel event detection
   IOS_FALLBACK: 1000, // iOS Safari fallback
   ANIMATION_DURATION: 700, // Duration of smooth scroll animation
@@ -12,10 +12,10 @@ export const SCROLL_CONFIG = {
   // Thresholds
   STOPPED_COUNT: 3, // Consecutive checks to consider scroll stopped
   POSITION_CHANGE: 1, // Minimum px change to consider scrolling
-  VISIBILITY_TOP: 0.1, // 10% from top
-  VISIBILITY_BOTTOM: 0.9, // 90% from bottom
+  VISIBILITY_TOP: 0.1, // % from top as a fraction (0.05 = 5%)
+  VISIBILITY_BOTTOM: 0.9, // % from bottom as a fraction (0.05 = 5%)
   // Wheel scroll specific
-  ACCUMULATED_THRESHOLD_FRAC: 0.05, // 40% of section height
+  ACCUMULATED_THRESHOLD_FRAC: 0.01, // % of section height as a fraction (0.05 = 5%)
   WHEEL_DEBOUNCE_MS: 50, // Debounce time between wheel events
 } as const;
 
