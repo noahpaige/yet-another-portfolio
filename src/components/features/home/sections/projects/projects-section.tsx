@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useInView } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { ProjectCard } from "@/components/ui/project-card";
-import { projects } from "@/generated/project-index";
+import { featuredProjects } from "@/generated/project-index";
 import { motion, AnimatePresence } from "motion/react";
 import { MagneticButton } from "@/components/ui/magnetic-button";
 import { ArrowRight } from "lucide-react";
@@ -52,7 +52,7 @@ export default function ProjectsSection() {
               animate="show"
               exit="exit"
             >
-              {projects.map((project, i) => (
+              {featuredProjects.slice().map((project, i) => (
                 <motion.div
                   key={i}
                   variants={itemVariants}
