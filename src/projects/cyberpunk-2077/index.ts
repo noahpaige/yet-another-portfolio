@@ -4,6 +4,9 @@ export default {
   tags: ["RPG", "Cyberpunk", "Open World"],
   image: "/choom.png",
   imageAltText: "My Number 1 Choom",
+  timestamp: "2024-03-10T00:00:00Z",
+  featured: true,
+  featuredOrder: 3,
   template: {
     templateId: "custom",
   },
