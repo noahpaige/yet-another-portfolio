@@ -97,11 +97,17 @@
     isolation: isolate;
   }
   .glass-layer-light {
-    @apply bg-slate-200/10 p-[4px] rounded-md shadow-soft-light backdrop-blur-[15px];
+    @apply !bg-slate-200/10 p-[4px] rounded-md shadow-soft-light backdrop-blur-[15px];
     -webkit-backdrop-filter: blur(15px);
     transform: translateZ(0);
     will-change: backdrop-filter;
     isolation: isolate;
+    /* Safari-specific fixes for motion elements */
+    -webkit-transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    -webkit-perspective: 1000px;
+    -webkit-background-clip: padding-box;
+    background-clip: padding-box;
   }
   .glass-layer-light-hoverable {
     @apply bg-slate-200/10 p-[4px] hover:p-[6px] rounded-md shadow-soft-light hover:shadow-soft-light-hovered hover:bg-slate-200/30 backdrop-blur-[15px] transition-shadow duration-300 ease-in-out;
@@ -228,4 +234,6 @@
   .glass-hover-card {
     -webkit-backdrop-filter: blur(15px);
   }
+  
+
 }
