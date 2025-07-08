@@ -1,18 +1,22 @@
 import { RefObject, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-// Constants for better maintainability
-const SCROLL_TIMEOUTS = {
-  FALLBACK: 5000, // 5 seconds for very slow devices
-  WHEEL_DETECTION: 100, // 100ms for wheel event detection
-  IOS_FALLBACK: 1000, // 1 second for iOS Safari
-} as const;
-
-const SCROLL_THRESHOLDS = {
+// Centralized config for scroll and section behavior
+export const SCROLL_CONFIG = {
+  // Timeouts (ms)
+  FALLBACK: 5000, // Fallback for very slow devices
+  WHEEL_DETECTION: 100, // For wheel event detection
+  IOS_FALLBACK: 1000, // iOS Safari fallback
+  ANIMATION_DURATION: 700, // Duration of smooth scroll animation
+  ANIMATION_BUFFER: 100, // Buffer after animation
+  // Thresholds
   STOPPED_COUNT: 3, // Consecutive checks to consider scroll stopped
-  POSITION_CHANGE: 1, // Minimum pixel change to consider scrolling
+  POSITION_CHANGE: 1, // Minimum px change to consider scrolling
   VISIBILITY_TOP: 0.1, // 10% from top
   VISIBILITY_BOTTOM: 0.9, // 90% from bottom
+  // Wheel scroll specific
+  ACCUMULATED_THRESHOLD_FRAC: 0.05, // 40% of section height
+  WHEEL_DEBOUNCE_MS: 50, // Debounce time between wheel events
 } as const;
 
 // Detect iOS Safari
@@ -50,57 +54,40 @@ export function useScrollSections(
     // Ensure the target section index is within bounds
     if (targetSectionIndex >= 0 && targetSectionIndex < sectionIds.length) {
       const targetSection = sectionIds[targetSectionIndex];
-
-      // Immediately update active section and URL, regardless of current state
       setActiveSection(targetSection);
-
       // Update URL query parameters
       const params = new URLSearchParams(window.location.search);
       params.set("section", targetSection);
       router.replace(`?${params.toString()}`);
-
-      // Set scrolling manually to prevent IntersectionObserver interference
       setScrollingManually(true);
       setIsScrolling(true);
       targetSectionRef.current = targetSection;
-
-      // Clear any existing timeout
       clearScrollTimeout();
-
       // Set a timeout to reset the manual scrolling state
       scrollTimeoutRef.current = setTimeout(() => {
         setScrollingManually(false);
         setIsScrolling(false);
         targetSectionRef.current = null;
-      }, 700); // Slightly longer than scroll animation
+      }, SCROLL_CONFIG.ANIMATION_DURATION + SCROLL_CONFIG.ANIMATION_BUFFER);
     }
   };
 
   const checkIfScrollingFinished = () => {
     if (!targetSectionRef.current || !scrollingManually) return;
-
     const targetEl = document.getElementById(
       `section-${targetSectionRef.current}`
     );
     if (!targetEl) return;
-
-    // Check if the target section is now the most visible section
     const container = scrollRef.current;
     if (!container) return;
-
     const containerRect = container.getBoundingClientRect();
     const targetRect = targetEl.getBoundingClientRect();
-
-    // Calculate how much of the target section is visible
     const targetTop = targetRect.top - containerRect.top;
     const targetBottom = targetRect.bottom - containerRect.top;
     const containerHeight = containerRect.height;
-
-    // If target section is mostly visible (within 10% of container height), consider scrolling finished
     const isTargetVisible =
-      targetTop <= containerHeight * SCROLL_THRESHOLDS.VISIBILITY_TOP &&
-      targetBottom >= containerHeight * SCROLL_THRESHOLDS.VISIBILITY_BOTTOM;
-
+      targetTop <= containerHeight * SCROLL_CONFIG.VISIBILITY_TOP &&
+      targetBottom >= containerHeight * SCROLL_CONFIG.VISIBILITY_BOTTOM;
     if (isTargetVisible) {
       setScrollingManually(false);
       setIsScrolling(false);
@@ -117,27 +104,20 @@ export function useScrollSections(
       setIsScrolling(true);
       setActiveSection(section);
       targetSectionRef.current = section;
-
       // Update URL query parameters
       const params = new URLSearchParams(window.location.search);
       params.set("section", section);
       router.replace(`?${params.toString()}`);
-
-      // Smooth scroll first
       el.scrollIntoView({ behavior: "smooth", block: "start" });
-
-      // Force snap after smooth scroll (Chromium workaround)
       setTimeout(() => {
         el.scrollIntoView({ behavior: "auto", block: "start" });
-      }, 600);
-
+      }, SCROLL_CONFIG.ANIMATION_DURATION);
       clearScrollTimeout();
-
       scrollTimeoutRef.current = setTimeout(() => {
         setScrollingManually(false);
         setIsScrolling(false);
         targetSectionRef.current = null;
-      }, SCROLL_TIMEOUTS.FALLBACK);
+      }, SCROLL_CONFIG.FALLBACK);
     }
   };
 
@@ -145,63 +125,47 @@ export function useScrollSections(
   useEffect(() => {
     const container = scrollRef.current;
     if (!container) return;
-
     let scrollEndTimeout: NodeJS.Timeout | null = null;
     let lastScrollTop = container.scrollTop;
     let scrollStoppedCount = 0;
-
     const handleScroll = () => {
       if (!scrollingManually) return;
-
       const currentScrollTop = container.scrollTop;
       const isCurrentlyScrolling =
         Math.abs(currentScrollTop - lastScrollTop) >
-        SCROLL_THRESHOLDS.POSITION_CHANGE;
-
+        SCROLL_CONFIG.POSITION_CHANGE;
       if (isCurrentlyScrolling) {
         scrollStoppedCount = 0;
         setIsScrolling(true);
       } else {
         scrollStoppedCount++;
-        // If scroll position hasn't changed for 3 consecutive checks, consider it stopped
-        if (scrollStoppedCount >= SCROLL_THRESHOLDS.STOPPED_COUNT) {
+        if (scrollStoppedCount >= SCROLL_CONFIG.STOPPED_COUNT) {
           setIsScrolling(false);
           checkIfScrollingFinished();
         }
       }
-
       lastScrollTop = currentScrollTop;
-
       if (scrollEndTimeout) {
         clearTimeout(scrollEndTimeout);
       }
-
-      // Additional check after a short delay
       scrollEndTimeout = setTimeout(() => {
         if (scrollingManually && !isScrolling) {
           checkIfScrollingFinished();
         }
-      }, SCROLL_TIMEOUTS.WHEEL_DETECTION);
+      }, SCROLL_CONFIG.WHEEL_DETECTION);
     };
-
     // Note: Wheel events are now handled by useSmoothWheelScroll hook
     // This prevents conflicts between the two wheel event handlers
-
-    // Handle touch events to detect manual interruption (mobile/iOS)
     const handleTouchStart = () => {
       if (scrollingManually) {
-        // User is manually scrolling, reset programmatic scroll state
         setScrollingManually(false);
         setIsScrolling(false);
         targetSectionRef.current = null;
         clearScrollTimeout();
       }
     };
-
-    // iOS Safari specific: More aggressive fallback
     const handleIOSFallback = () => {
       if (isIOSSafari() && scrollingManually) {
-        // Force reset after a shorter timeout on iOS Safari
         setTimeout(() => {
           if (scrollingManually) {
             setScrollingManually(false);
@@ -209,20 +173,16 @@ export function useScrollSections(
             targetSectionRef.current = null;
             clearScrollTimeout();
           }
-        }, SCROLL_TIMEOUTS.IOS_FALLBACK);
+        }, SCROLL_CONFIG.IOS_FALLBACK);
       }
     };
-
     container.addEventListener("scroll", handleScroll, { passive: true });
     container.addEventListener("touchstart", handleTouchStart, {
       passive: true,
     });
-
-    // Add iOS Safari specific handling
     if (isIOSSafari()) {
       handleIOSFallback();
     }
-
     return () => {
       container.removeEventListener("scroll", handleScroll);
       container.removeEventListener("touchstart", handleTouchStart);
@@ -234,17 +194,12 @@ export function useScrollSections(
   useEffect(() => {
     const container = scrollRef.current;
     if (!container) return;
-
     const observer = new IntersectionObserver(
       (entries) => {
-        // Allow IntersectionObserver to work even during programmatic scrolling
-        // This helps with iOS Safari momentum scrolling
         const visible = entries.find((entry) => entry.isIntersecting);
         if (!visible) return;
-
         const section = visible.target.getAttribute("data-section");
         if (section && section !== activeSection) {
-          // Only update if we're not in the middle of a programmatic scroll to a different section
           if (!scrollingManually || targetSectionRef.current === section) {
             setActiveSection(section);
             const params = new URLSearchParams(window.location.search);
@@ -255,45 +210,32 @@ export function useScrollSections(
       },
       {
         root: container,
-        threshold: 0.5, // Adjust based on how much of section must be visible
-        rootMargin: "0px 0px -10% 0px", // Slightly more lenient for iOS Safari
+        threshold: 0.5,
+        rootMargin: "0px 0px -10% 0px",
       }
     );
-
     const children = Array.from(container.children);
     children.forEach((el) => observer.observe(el));
-
-    // iOS Safari specific: Additional scroll position-based detection
     const handleIOSScrollDetection = () => {
       if (!isIOSSafari() || scrollingManually) return;
-
       const containerHeight = container.clientHeight;
-
-      // Find which section is most visible
       let bestSection = activeSection;
       let bestVisibility = 0;
-
       children.forEach((child) => {
         const sectionName = child.getAttribute("data-section");
         if (!sectionName) return;
-
         const rect = child.getBoundingClientRect();
         const containerRect = container.getBoundingClientRect();
-
-        // Calculate visibility
         const top = rect.top - containerRect.top;
         const bottom = rect.bottom - containerRect.top;
         const visibleHeight =
           Math.min(bottom, containerHeight) - Math.max(top, 0);
         const visibility = Math.max(0, visibleHeight / containerHeight);
-
         if (visibility > bestVisibility) {
           bestVisibility = visibility;
           bestSection = sectionName;
         }
       });
-
-      // Update if we found a better section
       if (
         bestSection &&
         bestSection !== activeSection &&
@@ -305,14 +247,11 @@ export function useScrollSections(
         router.replace(`?${params.toString()}`);
       }
     };
-
-    // Add scroll listener for iOS Safari position-based detection
     if (isIOSSafari()) {
       container.addEventListener("scroll", handleIOSScrollDetection, {
         passive: true,
       });
     }
-
     return () => {
       children.forEach((el) => observer.unobserve(el));
       observer.disconnect();
@@ -326,28 +265,21 @@ export function useScrollSections(
   useEffect(() => {
     const selected = searchParams.get("section");
     if (selected) {
-      // Set scrolling manually to prevent IntersectionObserver interference
       setScrollingManually(true);
       setIsScrolling(true);
       setActiveSection(selected);
       targetSectionRef.current = selected;
-
       requestAnimationFrame(() => {
         const el = document.getElementById(`section-${selected}`);
         if (el) {
           el.scrollIntoView({ behavior: "smooth" });
-
-          // Clear any existing timeout
           clearScrollTimeout();
-
-          // Set a fallback timeout for initial deep link scrolls
           scrollTimeoutRef.current = setTimeout(() => {
             setScrollingManually(false);
             setIsScrolling(false);
             targetSectionRef.current = null;
-          }, SCROLL_TIMEOUTS.FALLBACK);
+          }, SCROLL_CONFIG.FALLBACK);
         } else {
-          // If element not found, reset scrolling manually
           setScrollingManually(false);
           setIsScrolling(false);
           targetSectionRef.current = null;
@@ -356,7 +288,6 @@ export function useScrollSections(
     }
   }, [searchParams]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       clearScrollTimeout();

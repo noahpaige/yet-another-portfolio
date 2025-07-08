@@ -1,4 +1,5 @@
 import { RefObject, useEffect, useRef } from "react";
+import { SCROLL_CONFIG } from "./use-scroll-sections";
 
 export function useSmoothWheelScroll(
   scrollRef: RefObject<HTMLElement>,
@@ -8,6 +9,7 @@ export function useSmoothWheelScroll(
 ) {
   const accumulatedScrollRef = useRef(0);
   const isWheelScrolling = useRef(false);
+  const lastWheelTimeRef = useRef(0);
 
   useEffect(() => {
     const container = scrollRef.current;
@@ -16,95 +18,78 @@ export function useSmoothWheelScroll(
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
 
+      // Don't process wheel events if we're already scrolling programmatically
+      if (scrollingManually || isScrolling || isWheelScrolling.current) {
+        return;
+      }
+
+      // Debounce rapid wheel events
+      const now = Date.now();
+      if (now - lastWheelTimeRef.current < SCROLL_CONFIG.WHEEL_DEBOUNCE_MS) {
+        return;
+      }
+      lastWheelTimeRef.current = now;
+
       const direction = e.deltaY > 0 ? 1 : -1;
       const sectionHeight = container.clientHeight;
       const currentScrollTop = container.scrollTop;
       const currentSection = Math.round(currentScrollTop / sectionHeight);
 
       // Detect if this is likely a trackpad event
-      // Trackpad events typically have smaller deltaY values and often have deltaX
       const isTrackpad = Math.abs(e.deltaY) < 50 || Math.abs(e.deltaX) > 0;
 
       if (isTrackpad) {
-        // For trackpad, accumulate scroll amounts
         accumulatedScrollRef.current += e.deltaY;
-
-        // Check if we've accumulated enough to move to the next/previous section
-        const accumulatedThreshold = sectionHeight * 0.25; // 25% of section height
+        const accumulatedThreshold = sectionHeight * SCROLL_CONFIG.ACCUMULATED_THRESHOLD_FRAC;
 
         if (Math.abs(accumulatedScrollRef.current) >= accumulatedThreshold) {
-          const targetSection =
-            currentSection + Math.sign(accumulatedScrollRef.current);
+          const targetSection = currentSection + Math.sign(accumulatedScrollRef.current);
+          const maxSection = Math.floor((container.scrollHeight - container.clientHeight) / sectionHeight);
+          const clampedTargetSection = Math.max(0, Math.min(maxSection, targetSection));
 
-          // Immediately update navbar and query params
-          if (onProgrammaticScroll) {
-            onProgrammaticScroll(targetSection);
-          }
-
-          // Only scroll if not already scrolling
-          if (!isWheelScrolling.current) {
+          if (clampedTargetSection !== currentSection) {
             isWheelScrolling.current = true;
-
-            const targetScrollTop = targetSection * sectionHeight;
-            const maxScrollTop =
-              container.scrollHeight - container.clientHeight;
-            const clampedTargetScrollTop = Math.max(
-              0,
-              Math.min(maxScrollTop, targetScrollTop)
-            );
-
+            if (onProgrammaticScroll) {
+              onProgrammaticScroll(clampedTargetSection);
+            }
+            const targetScrollTop = clampedTargetSection * sectionHeight;
+            const maxScrollTop = container.scrollHeight - container.clientHeight;
+            const clampedTargetScrollTop = Math.max(0, Math.min(maxScrollTop, targetScrollTop));
             container.scrollTo({
               top: clampedTargetScrollTop,
               behavior: "smooth",
             });
-
-            // Reset scrolling flag after animation
             setTimeout(() => {
               isWheelScrolling.current = false;
-            }, 600);
+            }, SCROLL_CONFIG.ANIMATION_DURATION + SCROLL_CONFIG.ANIMATION_BUFFER);
           }
-
-          // Reset accumulated scroll
           accumulatedScrollRef.current = 0;
         }
       } else {
-        // For mouse wheel, use the original behavior (one section at a time)
         const targetSection = currentSection + direction;
-
-        // Immediately update navbar and query params
-        if (onProgrammaticScroll) {
-          onProgrammaticScroll(targetSection);
-        }
-
-        // Only scroll if not already scrolling
-        if (!isWheelScrolling.current) {
+        const maxSection = Math.floor((container.scrollHeight - container.clientHeight) / sectionHeight);
+        const clampedTargetSection = Math.max(0, Math.min(maxSection, targetSection));
+        if (clampedTargetSection !== currentSection) {
           isWheelScrolling.current = true;
-
-          const targetScrollTop = targetSection * sectionHeight;
+          if (onProgrammaticScroll) {
+            onProgrammaticScroll(clampedTargetSection);
+          }
+          const targetScrollTop = clampedTargetSection * sectionHeight;
           const maxScrollTop = container.scrollHeight - container.clientHeight;
-          const clampedTargetScrollTop = Math.max(
-            0,
-            Math.min(maxScrollTop, targetScrollTop)
-          );
-
+          const clampedTargetScrollTop = Math.max(0, Math.min(maxScrollTop, targetScrollTop));
           container.scrollTo({
             top: clampedTargetScrollTop,
             behavior: "smooth",
           });
-
-          // Reset scrolling flag after animation
           setTimeout(() => {
             isWheelScrolling.current = false;
-          }, 600);
+          }, SCROLL_CONFIG.ANIMATION_DURATION + SCROLL_CONFIG.ANIMATION_BUFFER);
         }
-
-        // Reset accumulated scroll for mouse wheel
         accumulatedScrollRef.current = 0;
       }
     };
 
     container.addEventListener("wheel", handleWheel, { passive: false });
-
     return () => {
       container.removeEventListener("wheel", handleWheel);
     };
