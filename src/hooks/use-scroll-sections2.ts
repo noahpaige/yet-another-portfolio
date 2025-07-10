@@ -2,23 +2,18 @@ import { RefObject, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 // Centralized config for scroll and section behavior
-export const SCROLL_CONFIG = {
+export const SCROLL_CONFIG_2 = {
   // Timeouts (ms)
   FALLBACK: 2000, // Fallback for very slow devices
   WHEEL_DETECTION: 100, // For wheel event detection
   IOS_FALLBACK: 1000, // iOS Safari fallback
-  ANIMATION_DURATION: 400, // Duration of smooth scroll animation (reduced from 700ms)
-  ANIMATION_BUFFER: 100, // Buffer after animation
   // Thresholds
   STOPPED_COUNT: 3, // Consecutive checks to consider scroll stopped
   POSITION_CHANGE: 1, // Minimum px change to consider scrolling
   VISIBILITY_TOP: 0.1, // % from top as a fraction (0.05 = 5%)
   VISIBILITY_BOTTOM: 0.9, // % from bottom as a fraction (0.05 = 5%)
   // Wheel scroll specific
-  ACCUMULATED_THRESHOLD_FRAC: 0.4, // % of section height as a fraction (increased from 0.01 to 0.4 for better trackpad handling)
-  WHEEL_DEBOUNCE_MS: 50, // Debounce time between wheel events
-  WHEEL_THROTTLE_MS: 150, // Throttle time for wheel events (new)
-  TRACKPAD_THROTTLE_MS: 50, // Shorter throttle specifically for trackpad events
+  WHEEL_THROTTLE_MS: 100, // Throttle time for wheel events
 } as const;
 
 // Detect iOS Safari
@@ -31,7 +26,7 @@ const isIOSSafari = () => {
   );
 };
 
-export function useScrollSections(
+export function useScrollSections2(
   sectionIds: string[],
   scrollRef: RefObject<HTMLDivElement>
 ) {
@@ -70,7 +65,7 @@ export function useScrollSections(
         setScrollingManually(false);
         setIsScrolling(false);
         targetSectionRef.current = null;
-      }, SCROLL_CONFIG.ANIMATION_DURATION + SCROLL_CONFIG.ANIMATION_BUFFER);
+      }, SCROLL_CONFIG_2.FALLBACK);
     }
   };
 
@@ -88,8 +83,8 @@ export function useScrollSections(
     const targetBottom = targetRect.bottom - containerRect.top;
     const containerHeight = containerRect.height;
     const isTargetVisible =
-      targetTop <= containerHeight * SCROLL_CONFIG.VISIBILITY_TOP &&
-      targetBottom >= containerHeight * SCROLL_CONFIG.VISIBILITY_BOTTOM;
+      targetTop <= containerHeight * SCROLL_CONFIG_2.VISIBILITY_TOP &&
+      targetBottom >= containerHeight * SCROLL_CONFIG_2.VISIBILITY_BOTTOM;
     if (isTargetVisible) {
       setScrollingManually(false);
       setIsScrolling(false);
@@ -110,16 +105,16 @@ export function useScrollSections(
       const params = new URLSearchParams(window.location.search);
       params.set("section", section);
       router.replace(`?${params.toString()}`);
+
+      // Use scrollIntoView with smooth behavior - browser will handle the snap
       el.scrollIntoView({ behavior: "smooth", block: "start" });
-      setTimeout(() => {
-        el.scrollIntoView({ behavior: "auto", block: "start" });
-      }, SCROLL_CONFIG.ANIMATION_DURATION);
+
       clearScrollTimeout();
       scrollTimeoutRef.current = setTimeout(() => {
         setScrollingManually(false);
         setIsScrolling(false);
         targetSectionRef.current = null;
-      }, SCROLL_CONFIG.FALLBACK);
+      }, SCROLL_CONFIG_2.FALLBACK);
     }
   };
 
@@ -135,13 +130,13 @@ export function useScrollSections(
       const currentScrollTop = container.scrollTop;
       const isCurrentlyScrolling =
         Math.abs(currentScrollTop - lastScrollTop) >
-        SCROLL_CONFIG.POSITION_CHANGE;
+        SCROLL_CONFIG_2.POSITION_CHANGE;
       if (isCurrentlyScrolling) {
         scrollStoppedCount = 0;
         setIsScrolling(true);
       } else {
         scrollStoppedCount++;
-        if (scrollStoppedCount >= SCROLL_CONFIG.STOPPED_COUNT) {
+        if (scrollStoppedCount >= SCROLL_CONFIG_2.STOPPED_COUNT) {
           setIsScrolling(false);
           checkIfScrollingFinished();
         }
@@ -154,10 +149,9 @@ export function useScrollSections(
         if (scrollingManually && !isScrolling) {
           checkIfScrollingFinished();
         }
-      }, SCROLL_CONFIG.WHEEL_DETECTION);
+      }, SCROLL_CONFIG_2.WHEEL_DETECTION);
     };
-    // Note: Wheel events are now handled by useSmoothWheelScroll hook
-    // This prevents conflicts between the two wheel event handlers
+
     const handleTouchStart = () => {
       if (scrollingManually) {
         setScrollingManually(false);
@@ -166,6 +160,7 @@ export function useScrollSections(
         clearScrollTimeout();
       }
     };
+
     const handleIOSFallback = () => {
       if (isIOSSafari() && scrollingManually) {
         setTimeout(() => {
@@ -175,9 +170,10 @@ export function useScrollSections(
             targetSectionRef.current = null;
             clearScrollTimeout();
           }
-        }, SCROLL_CONFIG.IOS_FALLBACK);
+        }, SCROLL_CONFIG_2.IOS_FALLBACK);
       }
     };
+
     container.addEventListener("scroll", handleScroll, { passive: true });
     container.addEventListener("touchstart", handleTouchStart, {
       passive: true,
@@ -192,7 +188,7 @@ export function useScrollSections(
     };
   }, [scrollingManually, isScrolling, scrollRef]);
 
-  // 📦 Enhanced intersection-based scroll tracking for iOS Safari
+  // Enhanced intersection-based scroll tracking for iOS Safari
   useEffect(() => {
     const container = scrollRef.current;
     if (!container) return;
@@ -218,6 +214,7 @@ export function useScrollSections(
     );
     const children = Array.from(container.children);
     children.forEach((el) => observer.observe(el));
+
     const handleIOSScrollDetection = () => {
       if (!isIOSSafari() || scrollingManually) return;
       const containerHeight = container.clientHeight;
@@ -249,6 +246,7 @@ export function useScrollSections(
         router.replace(`?${params.toString()}`);
       }
     };
+
     if (isIOSSafari()) {
       container.addEventListener("scroll", handleIOSScrollDetection, {
         passive: true,
@@ -262,6 +260,43 @@ export function useScrollSections(
       }
     };
   }, [scrollingManually, activeSection, router, scrollRef]);
+
+  // --- Most-centered section calculation ---
+  useEffect(() => {
+    const container = scrollRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const containerRect = container.getBoundingClientRect();
+      const containerCenter = containerRect.top + containerRect.height / 2;
+      let minDistance = Infinity;
+      let mostCenteredSection: string | null = null;
+      for (const sectionId of sectionIds) {
+        const el = document.getElementById(`section-${sectionId}`);
+        if (!el) continue;
+        const rect = el.getBoundingClientRect();
+        const sectionCenter = rect.top + rect.height / 2;
+        const distance = Math.abs(sectionCenter - containerCenter);
+        if (distance < minDistance) {
+          minDistance = distance;
+          mostCenteredSection = sectionId;
+        }
+      }
+      if (mostCenteredSection && mostCenteredSection !== activeSection) {
+        setActiveSection(mostCenteredSection);
+        const params = new URLSearchParams(window.location.search);
+        params.set("section", mostCenteredSection);
+        router.replace(`?${params.toString()}`);
+      }
+    };
+
+    container.addEventListener("scroll", handleScroll, { passive: true });
+    // Run once on mount
+    handleScroll();
+    return () => {
+      container.removeEventListener("scroll", handleScroll);
+    };
+  }, [scrollRef, sectionIds, activeSection, router]);
 
   // Handle initial deep link
   useEffect(() => {
@@ -280,7 +315,7 @@ export function useScrollSections(
             setScrollingManually(false);
             setIsScrolling(false);
             targetSectionRef.current = null;
-          }, SCROLL_CONFIG.FALLBACK);
+          }, SCROLL_CONFIG_2.FALLBACK);
         } else {
           setScrollingManually(false);
           setIsScrolling(false);

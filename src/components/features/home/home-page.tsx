@@ -7,9 +7,8 @@ import HomePageSection from "@/components/features/home/sections/home-page-secti
 import BottomNav from "@/components/features/home/bottom-nav";
 import AnimatedBackground from "@/components/animated-background";
 import ClientOnly from "@/components/client-only";
-import { useScrollSections } from "@/hooks/use-scroll-sections";
+import { useScrollSections2 } from "@/hooks/use-scroll-sections2";
 import { Home, Folder, Info, Mail } from "lucide-react";
-import { useSmoothWheelScroll } from "@/hooks/use-smooth-wheel-scroll";
 import NoiseOverlay from "@/components/noise-overlay";
 import LazySection from "@/components/features/home/lazy-section";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -75,21 +74,9 @@ export default function HomePage() {
     icon: section.icon,
   }));
 
-  const {
-    activeSection,
-    scrollToSection,
-    scrollingManually,
-    isScrolling,
-    handleProgrammaticScroll,
-  } = useScrollSections(
+  const { activeSection, scrollToSection } = useScrollSections2(
     sectionNames,
     scrollContainerRef as RefObject<HTMLDivElement>
-  );
-  useSmoothWheelScroll(
-    scrollContainerRef as RefObject<HTMLDivElement>,
-    scrollingManually,
-    isScrolling,
-    handleProgrammaticScroll
   );
 
   const { scrollYProgress } = useScroll({
