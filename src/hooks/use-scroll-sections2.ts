@@ -1,342 +1,486 @@
-import { RefObject, useEffect, useRef, useState } from "react";
+import { RefObject, useEffect, useRef, useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-// Centralized config for scroll and section behavior
-export const SCROLL_CONFIG_2 = {
-  // Timeouts (ms)
-  FALLBACK: 2000, // Fallback for very slow devices
-  WHEEL_DETECTION: 100, // For wheel event detection
-  IOS_FALLBACK: 1000, // iOS Safari fallback
-  // Thresholds
-  STOPPED_COUNT: 3, // Consecutive checks to consider scroll stopped
-  POSITION_CHANGE: 1, // Minimum px change to consider scrolling
-  VISIBILITY_TOP: 0.1, // % from top as a fraction (0.05 = 5%)
-  VISIBILITY_BOTTOM: 0.9, // % from bottom as a fraction (0.05 = 5%)
-  // Wheel scroll specific
-  WHEEL_THROTTLE_MS: 100, // Throttle time for wheel events
-} as const;
+// Simplified Scroll State Machine
+export enum ScrollState {
+  IDLE = "idle",
+  SCROLLING = "scrolling",
+  ERROR = "error",
+}
 
-// Detect iOS Safari
-const isIOSSafari = () => {
-  if (typeof window === "undefined") return false;
-  return (
-    /iPad|iPhone|iPod/.test(navigator.userAgent) &&
-    /Safari/.test(navigator.userAgent) &&
-    !/Chrome/.test(navigator.userAgent)
-  );
-};
+// Scroll Status Interface
+export interface ScrollStatus {
+  state: ScrollState;
+  target?: string;
+  progress?: number;
+  error?: string;
+}
+
+// Scroll Operation Interface
+interface ScrollOperation {
+  target: string;
+  promise: Promise<boolean>;
+  startTime: number;
+  resolve: (success: boolean) => void;
+  reject: (error: string) => void;
+}
+
+// Centralized config for scroll and section behavior
+export const SCROLL_CONFIG = {
+  // Timeouts (ms)
+  FALLBACK: 3000,
+  SECTION_DETECTION_DEBOUNCE: 50, // Reduced for more responsive updates
+  URL_DEBOUNCE: 150, // Only for programmatic scroll URL updates
+  PROGRESS_UPDATE_INTERVAL: 50,
+  // Thresholds
+  VISIBILITY_THRESHOLD: 0.5, // Section must be 50% visible to be considered active
+  CENTER_THRESHOLD: 0.3, // Section center must be within 30% of container center
+} as const;
 
 export function useScrollSections2(
   sectionIds: string[],
   scrollRef: RefObject<HTMLDivElement>
 ) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  // Core state
   const [activeSection, setActiveSection] = useState(sectionIds[0]);
-  const [scrollingManually, setScrollingManually] = useState(false);
-  const [isScrolling, setIsScrolling] = useState(false);
-  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const targetSectionRef = useRef<string | null>(null);
+  const [scrollStatus, setScrollStatus] = useState<ScrollStatus>({
+    state: ScrollState.IDLE,
+  });
 
+  // Refs
+  const containerRef = useRef<HTMLDivElement>(null);
+  const currentOperationRef = useRef<ScrollOperation | null>(null);
+  const sectionDetectionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const urlUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastScrollTopRef = useRef(0);
+  const isManualScrollingRef = useRef(false);
+  const isManualUrlUpdateRef = useRef(false);
+  const scrollDetectionFrameRef = useRef<number | null>(null);
+
+  // Router and search params
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const clearScrollTimeout = () => {
-    if (scrollTimeoutRef.current) {
-      clearTimeout(scrollTimeoutRef.current);
-      scrollTimeoutRef.current = null;
+  // Clear all timeouts and intervals
+  const clearAllTimers = useCallback(() => {
+    if (sectionDetectionTimeoutRef.current) {
+      clearTimeout(sectionDetectionTimeoutRef.current);
+      sectionDetectionTimeoutRef.current = null;
     }
-  };
-
-  const handleProgrammaticScroll = (targetSectionIndex: number) => {
-    // Ensure the target section index is within bounds
-    if (targetSectionIndex >= 0 && targetSectionIndex < sectionIds.length) {
-      const targetSection = sectionIds[targetSectionIndex];
-      setActiveSection(targetSection);
-      // Update URL query parameters
-      const params = new URLSearchParams(window.location.search);
-      params.set("section", targetSection);
-      router.replace(`?${params.toString()}`);
-      setScrollingManually(true);
-      setIsScrolling(true);
-      targetSectionRef.current = targetSection;
-      clearScrollTimeout();
-      // Set a timeout to reset the manual scrolling state
-      scrollTimeoutRef.current = setTimeout(() => {
-        setScrollingManually(false);
-        setIsScrolling(false);
-        targetSectionRef.current = null;
-      }, SCROLL_CONFIG_2.FALLBACK);
+    if (urlUpdateTimeoutRef.current) {
+      clearTimeout(urlUpdateTimeoutRef.current);
+      urlUpdateTimeoutRef.current = null;
     }
-  };
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
+    if (scrollDetectionFrameRef.current) {
+      cancelAnimationFrame(scrollDetectionFrameRef.current);
+      scrollDetectionFrameRef.current = null;
+    }
+  }, []);
 
-  const checkIfScrollingFinished = () => {
-    if (!targetSectionRef.current || !scrollingManually) return;
-    const targetEl = document.getElementById(
-      `section-${targetSectionRef.current}`
-    );
-    if (!targetEl) return;
+  // URL management - immediate for manual scroll, debounced for programmatic
+  const updateURL = useCallback(
+    (section: string, isManualScroll: boolean = false) => {
+      if (isManualScroll) {
+        // Immediate update for manual scroll
+        const params = new URLSearchParams(window.location.search);
+        params.set("section", section);
+        router.replace(`?${params.toString()}`);
+      } else {
+        // Debounced update for programmatic scroll
+        if (urlUpdateTimeoutRef.current) {
+          clearTimeout(urlUpdateTimeoutRef.current);
+        }
+        urlUpdateTimeoutRef.current = setTimeout(() => {
+          const params = new URLSearchParams(window.location.search);
+          params.set("section", section);
+          router.replace(`?${params.toString()}`);
+        }, SCROLL_CONFIG.URL_DEBOUNCE);
+      }
+    },
+    [router]
+  );
+
+  // Optimized section detection using visibility and center position
+  const detectActiveSection = useCallback(() => {
     const container = scrollRef.current;
     if (!container) return;
-    const containerRect = container.getBoundingClientRect();
-    const targetRect = targetEl.getBoundingClientRect();
-    const targetTop = targetRect.top - containerRect.top;
-    const targetBottom = targetRect.bottom - containerRect.top;
-    const containerHeight = containerRect.height;
-    const isTargetVisible =
-      targetTop <= containerHeight * SCROLL_CONFIG_2.VISIBILITY_TOP &&
-      targetBottom >= containerHeight * SCROLL_CONFIG_2.VISIBILITY_BOTTOM;
-    if (isTargetVisible) {
-      setScrollingManually(false);
-      setIsScrolling(false);
-      targetSectionRef.current = null;
-      clearScrollTimeout();
-    }
-  };
 
-  const scrollToSection = (section: string) => {
-    const el = document.getElementById(`section-${section}`);
-    const container = scrollRef.current;
-    if (el && container) {
-      setScrollingManually(true);
-      setIsScrolling(true);
-      setActiveSection(section);
-      targetSectionRef.current = section;
-      // Update URL query parameters
+    // Don't detect sections during programmatic scroll
+    if (scrollStatus.state === ScrollState.SCROLLING) return;
+
+    const containerRect = container.getBoundingClientRect();
+    const containerCenter = containerRect.top + containerRect.height / 2;
+    let bestSection: string | null = null;
+    let bestScore = -1;
+
+    for (const sectionId of sectionIds) {
+      const el = document.getElementById(`section-${sectionId}`);
+      if (!el) continue;
+
+      const rect = el.getBoundingClientRect();
+      const sectionCenter = rect.top + rect.height / 2;
+
+      // Calculate how much of the section is visible
+      const visibleTop = Math.max(rect.top, containerRect.top);
+      const visibleBottom = Math.min(rect.bottom, containerRect.bottom);
+      const visibleHeight = Math.max(0, visibleBottom - visibleTop);
+      const visibilityPercentage = visibleHeight / rect.height;
+
+      // Calculate distance from container center (closer = better)
+      const centerDistance = Math.abs(sectionCenter - containerCenter);
+      const centerScore = Math.max(
+        0,
+        1 - centerDistance / (containerRect.height * 0.5)
+      );
+
+      // Combined score: prioritize sections that are both visible and centered
+      // Use a more aggressive scoring for immediate feedback
+      const combinedScore = visibilityPercentage * centerScore;
+
+      if (combinedScore > bestScore) {
+        bestScore = combinedScore;
+        bestSection = sectionId;
+      }
+    }
+
+    // Update if we found a better section - use a lower threshold for immediate feedback
+    if (bestSection && bestSection !== activeSection && bestScore > 0.1) {
+      setActiveSection(bestSection);
+
+      // Update URL without triggering scroll - use immediate update for manual scroll
+      isManualUrlUpdateRef.current = true;
       const params = new URLSearchParams(window.location.search);
-      params.set("section", section);
+      params.set("section", bestSection);
       router.replace(`?${params.toString()}`);
 
-      // Use scrollIntoView with smooth behavior - browser will handle the snap
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
-
-      clearScrollTimeout();
-      scrollTimeoutRef.current = setTimeout(() => {
-        setScrollingManually(false);
-        setIsScrolling(false);
-        targetSectionRef.current = null;
-      }, SCROLL_CONFIG_2.FALLBACK);
+      // Reset the flag after a short delay
+      setTimeout(() => {
+        isManualUrlUpdateRef.current = false;
+      }, 100);
     }
-  };
+  }, [sectionIds, activeSection, scrollRef, router, scrollStatus.state]);
 
-  // Enhanced scroll end detection
+  // Simplified scroll completion verification
+  const verifyScrollCompletion = useCallback(
+    (target: string, container: HTMLElement): boolean => {
+      const targetEl = document.getElementById(`section-${target}`);
+      if (!targetEl) return false;
+
+      const containerRect = container.getBoundingClientRect();
+      const targetRect = targetEl.getBoundingClientRect();
+
+      // Check if target is visible and centered
+      const visibleTop = Math.max(targetRect.top, containerRect.top);
+      const visibleBottom = Math.min(targetRect.bottom, containerRect.bottom);
+      const visibleHeight = Math.max(0, visibleBottom - visibleTop);
+      const visibilityPercentage = visibleHeight / targetRect.height;
+
+      const containerCenter = containerRect.top + containerRect.height / 2;
+      const sectionCenter = targetRect.top + targetRect.height / 2;
+      const centerDistance = Math.abs(sectionCenter - containerCenter);
+      const isCentered =
+        centerDistance < containerRect.height * SCROLL_CONFIG.CENTER_THRESHOLD;
+
+      return (
+        visibilityPercentage > SCROLL_CONFIG.VISIBILITY_THRESHOLD && isCentered
+      );
+    },
+    []
+  );
+
+  // Execute scroll with progress tracking
+  const executeScroll = useCallback(
+    async (target: string): Promise<boolean> => {
+      const container = scrollRef.current;
+      if (!container) return false;
+
+      const targetEl = document.getElementById(`section-${target}`);
+      if (!targetEl) return false;
+
+      // Don't create a new operation if one is already in progress
+      if (currentOperationRef.current) {
+        return false;
+      }
+
+      // Create scroll operation
+      const operation: ScrollOperation = {
+        target,
+        promise: Promise.resolve(false),
+        startTime: Date.now(),
+        resolve: () => {},
+        reject: () => {},
+      };
+
+      // Create the actual promise
+      operation.promise = new Promise<boolean>((resolve, reject) => {
+        operation.resolve = resolve;
+        operation.reject = reject;
+      });
+
+      currentOperationRef.current = operation;
+
+      try {
+        // Update scroll status
+        setScrollStatus({
+          state: ScrollState.SCROLLING,
+          target,
+          progress: 0,
+        });
+
+        // Start progress tracking
+        progressIntervalRef.current = setInterval(() => {
+          if (operation.target) {
+            const targetEl = document.getElementById(
+              `section-${operation.target}`
+            );
+            if (targetEl) {
+              const containerRect = container.getBoundingClientRect();
+              const targetRect = targetEl.getBoundingClientRect();
+              const targetTop = targetRect.top - containerRect.top;
+              const progress = Math.max(
+                0,
+                Math.min(
+                  100,
+                  ((containerRect.height - targetTop) / containerRect.height) *
+                    100
+                )
+              );
+
+              setScrollStatus((prev) => ({
+                ...prev,
+                progress: Math.round(progress),
+              }));
+            }
+          }
+        }, SCROLL_CONFIG.PROGRESS_UPDATE_INTERVAL);
+
+        // Execute scroll
+        targetEl.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+
+        // Wait for scroll to complete
+        const isCompleted = await new Promise<boolean>((resolve) => {
+          const checkCompletion = () => {
+            const completed = verifyScrollCompletion(target, container);
+            if (completed) {
+              resolve(true);
+            } else if (
+              Date.now() - operation.startTime >
+              SCROLL_CONFIG.FALLBACK
+            ) {
+              resolve(false);
+            } else {
+              setTimeout(checkCompletion, 100);
+            }
+          };
+          checkCompletion();
+        });
+
+        // Clear progress tracking
+        if (progressIntervalRef.current) {
+          clearInterval(progressIntervalRef.current);
+          progressIntervalRef.current = null;
+        }
+
+        if (isCompleted) {
+          setScrollStatus({
+            state: ScrollState.IDLE,
+            target,
+            progress: 100,
+          });
+          return true;
+        } else {
+          throw new Error("Scroll failed - target not reached within timeout");
+        }
+      } catch (error) {
+        // Clear progress tracking
+        if (progressIntervalRef.current) {
+          clearInterval(progressIntervalRef.current);
+          progressIntervalRef.current = null;
+        }
+
+        setScrollStatus({
+          state: ScrollState.ERROR,
+          target,
+          error: error instanceof Error ? error.message : "Unknown error",
+        });
+
+        // Reset to idle after error
+        setTimeout(() => {
+          setScrollStatus({ state: ScrollState.IDLE });
+        }, 1000);
+
+        return false;
+      } finally {
+        // Clean up operation
+        currentOperationRef.current = null;
+      }
+    },
+    [scrollRef, verifyScrollCompletion]
+  );
+
+  // Main scroll function
+  const scrollToSection = useCallback(
+    async (section: string) => {
+      // Cancel any existing operation gracefully
+      if (currentOperationRef.current) {
+        try {
+          currentOperationRef.current.reject("New scroll operation started");
+        } catch {
+          // Ignore errors from rejecting the previous operation
+        }
+        currentOperationRef.current = null;
+      }
+
+      // Update active section immediately for UI responsiveness
+      setActiveSection(section);
+      updateURL(section, false); // Mark as programmatic scroll update
+
+      // Execute scroll operation
+      const success = await executeScroll(section);
+
+      return success;
+    },
+    [executeScroll, updateURL]
+  );
+
+  // Programmatic scroll handler
+  const handleProgrammaticScroll = useCallback(
+    (targetSectionIndex: number) => {
+      if (targetSectionIndex >= 0 && targetSectionIndex < sectionIds.length) {
+        const targetSection = sectionIds[targetSectionIndex];
+        scrollToSection(targetSection);
+      }
+    },
+    [sectionIds, scrollToSection]
+  );
+
+  // Simplified scroll event handler
+  const handleScroll = useCallback(() => {
+    const container = scrollRef.current;
+    if (!container) return;
+
+    // Don't handle manual scroll detection during programmatic scrolls
+    if (scrollStatus.state === ScrollState.SCROLLING) return;
+
+    const currentScrollTop = container.scrollTop;
+    const isCurrentlyScrolling =
+      Math.abs(currentScrollTop - lastScrollTopRef.current) > 1;
+
+    if (isCurrentlyScrolling) {
+      isManualScrollingRef.current = true;
+
+      // Use requestAnimationFrame for smooth throttled detection
+      if (scrollDetectionFrameRef.current) {
+        cancelAnimationFrame(scrollDetectionFrameRef.current);
+      }
+
+      scrollDetectionFrameRef.current = requestAnimationFrame(() => {
+        detectActiveSection();
+      });
+
+      // Clear existing detection timeout
+      if (sectionDetectionTimeoutRef.current) {
+        clearTimeout(sectionDetectionTimeoutRef.current);
+      }
+
+      // Set new timeout for final section detection when scrolling stops
+      sectionDetectionTimeoutRef.current = setTimeout(() => {
+        isManualScrollingRef.current = false;
+        // Final detection to ensure accuracy
+        detectActiveSection();
+      }, SCROLL_CONFIG.SECTION_DETECTION_DEBOUNCE);
+    }
+
+    lastScrollTopRef.current = currentScrollTop;
+  }, [scrollRef, detectActiveSection, scrollStatus.state]);
+
+  // Touch event handler for iOS
+  const handleTouchStart = useCallback(() => {
+    if (scrollStatus.state !== ScrollState.IDLE) {
+      // User interrupted programmatic scroll
+      if (currentOperationRef.current) {
+        currentOperationRef.current.reject("User interrupted scroll");
+        currentOperationRef.current = null;
+      }
+
+      // Clear any pending timeouts and animation frames
+      if (sectionDetectionTimeoutRef.current) {
+        clearTimeout(sectionDetectionTimeoutRef.current);
+        sectionDetectionTimeoutRef.current = null;
+      }
+
+      if (scrollDetectionFrameRef.current) {
+        cancelAnimationFrame(scrollDetectionFrameRef.current);
+        scrollDetectionFrameRef.current = null;
+      }
+
+      setScrollStatus({ state: ScrollState.IDLE });
+    }
+  }, [scrollStatus.state]);
+
+  // Set up scroll event listeners
   useEffect(() => {
     const container = scrollRef.current;
     if (!container) return;
-    let scrollEndTimeout: NodeJS.Timeout | null = null;
-    let lastScrollTop = container.scrollTop;
-    let scrollStoppedCount = 0;
-    const handleScroll = () => {
-      if (!scrollingManually) return;
-      const currentScrollTop = container.scrollTop;
-      const isCurrentlyScrolling =
-        Math.abs(currentScrollTop - lastScrollTop) >
-        SCROLL_CONFIG_2.POSITION_CHANGE;
-      if (isCurrentlyScrolling) {
-        scrollStoppedCount = 0;
-        setIsScrolling(true);
-      } else {
-        scrollStoppedCount++;
-        if (scrollStoppedCount >= SCROLL_CONFIG_2.STOPPED_COUNT) {
-          setIsScrolling(false);
-          checkIfScrollingFinished();
-        }
-      }
-      lastScrollTop = currentScrollTop;
-      if (scrollEndTimeout) {
-        clearTimeout(scrollEndTimeout);
-      }
-      scrollEndTimeout = setTimeout(() => {
-        if (scrollingManually && !isScrolling) {
-          checkIfScrollingFinished();
-        }
-      }, SCROLL_CONFIG_2.WHEEL_DETECTION);
-    };
-
-    const handleTouchStart = () => {
-      if (scrollingManually) {
-        setScrollingManually(false);
-        setIsScrolling(false);
-        targetSectionRef.current = null;
-        clearScrollTimeout();
-      }
-    };
-
-    const handleIOSFallback = () => {
-      if (isIOSSafari() && scrollingManually) {
-        setTimeout(() => {
-          if (scrollingManually) {
-            setScrollingManually(false);
-            setIsScrolling(false);
-            targetSectionRef.current = null;
-            clearScrollTimeout();
-          }
-        }, SCROLL_CONFIG_2.IOS_FALLBACK);
-      }
-    };
 
     container.addEventListener("scroll", handleScroll, { passive: true });
     container.addEventListener("touchstart", handleTouchStart, {
       passive: true,
     });
-    if (isIOSSafari()) {
-      handleIOSFallback();
-    }
+
     return () => {
       container.removeEventListener("scroll", handleScroll);
       container.removeEventListener("touchstart", handleTouchStart);
-      if (scrollEndTimeout) clearTimeout(scrollEndTimeout);
     };
-  }, [scrollingManually, isScrolling, scrollRef]);
+  }, [scrollRef, handleScroll, handleTouchStart]);
 
-  // Enhanced intersection-based scroll tracking for iOS Safari
-  useEffect(() => {
-    const container = scrollRef.current;
-    if (!container) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries.find((entry) => entry.isIntersecting);
-        if (!visible) return;
-        const section = visible.target.getAttribute("data-section");
-        if (section && section !== activeSection) {
-          if (!scrollingManually || targetSectionRef.current === section) {
-            setActiveSection(section);
-            const params = new URLSearchParams(window.location.search);
-            params.set("section", section);
-            router.replace(`?${params.toString()}`);
-          }
-        }
-      },
-      {
-        root: container,
-        threshold: 0.5,
-        rootMargin: "0px 0px -10% 0px",
-      }
-    );
-    const children = Array.from(container.children);
-    children.forEach((el) => observer.observe(el));
-
-    const handleIOSScrollDetection = () => {
-      if (!isIOSSafari() || scrollingManually) return;
-      const containerHeight = container.clientHeight;
-      let bestSection = activeSection;
-      let bestVisibility = 0;
-      children.forEach((child) => {
-        const sectionName = child.getAttribute("data-section");
-        if (!sectionName) return;
-        const rect = child.getBoundingClientRect();
-        const containerRect = container.getBoundingClientRect();
-        const top = rect.top - containerRect.top;
-        const bottom = rect.bottom - containerRect.top;
-        const visibleHeight =
-          Math.min(bottom, containerHeight) - Math.max(top, 0);
-        const visibility = Math.max(0, visibleHeight / containerHeight);
-        if (visibility > bestVisibility) {
-          bestVisibility = visibility;
-          bestSection = sectionName;
-        }
-      });
-      if (
-        bestSection &&
-        bestSection !== activeSection &&
-        bestVisibility > 0.3
-      ) {
-        setActiveSection(bestSection);
-        const params = new URLSearchParams(window.location.search);
-        params.set("section", bestSection);
-        router.replace(`?${params.toString()}`);
-      }
-    };
-
-    if (isIOSSafari()) {
-      container.addEventListener("scroll", handleIOSScrollDetection, {
-        passive: true,
-      });
-    }
-    return () => {
-      children.forEach((el) => observer.unobserve(el));
-      observer.disconnect();
-      if (isIOSSafari()) {
-        container.removeEventListener("scroll", handleIOSScrollDetection);
-      }
-    };
-  }, [scrollingManually, activeSection, router, scrollRef]);
-
-  // --- Most-centered section calculation ---
-  useEffect(() => {
-    const container = scrollRef.current;
-    if (!container) return;
-
-    const handleScroll = () => {
-      const containerRect = container.getBoundingClientRect();
-      const containerCenter = containerRect.top + containerRect.height / 2;
-      let minDistance = Infinity;
-      let mostCenteredSection: string | null = null;
-      for (const sectionId of sectionIds) {
-        const el = document.getElementById(`section-${sectionId}`);
-        if (!el) continue;
-        const rect = el.getBoundingClientRect();
-        const sectionCenter = rect.top + rect.height / 2;
-        const distance = Math.abs(sectionCenter - containerCenter);
-        if (distance < minDistance) {
-          minDistance = distance;
-          mostCenteredSection = sectionId;
-        }
-      }
-      if (mostCenteredSection && mostCenteredSection !== activeSection) {
-        setActiveSection(mostCenteredSection);
-        const params = new URLSearchParams(window.location.search);
-        params.set("section", mostCenteredSection);
-        router.replace(`?${params.toString()}`);
-      }
-    };
-
-    container.addEventListener("scroll", handleScroll, { passive: true });
-    // Run once on mount
-    handleScroll();
-    return () => {
-      container.removeEventListener("scroll", handleScroll);
-    };
-  }, [scrollRef, sectionIds, activeSection, router]);
-
-  // Handle initial deep link
+  // Handle initial deep link - use the same scrollToSection function
   useEffect(() => {
     const selected = searchParams.get("section");
-    if (selected) {
-      setScrollingManually(true);
-      setIsScrolling(true);
-      setActiveSection(selected);
-      targetSectionRef.current = selected;
-      requestAnimationFrame(() => {
-        const el = document.getElementById(`section-${selected}`);
-        if (el) {
-          el.scrollIntoView({ behavior: "smooth" });
-          clearScrollTimeout();
-          scrollTimeoutRef.current = setTimeout(() => {
-            setScrollingManually(false);
-            setIsScrolling(false);
-            targetSectionRef.current = null;
-          }, SCROLL_CONFIG_2.FALLBACK);
-        } else {
-          setScrollingManually(false);
-          setIsScrolling(false);
-          targetSectionRef.current = null;
-        }
-      });
+    if (
+      selected &&
+      sectionIds.includes(selected) &&
+      selected !== activeSection &&
+      scrollStatus.state === ScrollState.IDLE && // Only run when not already scrolling
+      !isManualUrlUpdateRef.current // Don't run if URL was updated by manual scroll detection
+    ) {
+      // Use the same scrollToSection function for consistency
+      scrollToSection(selected);
     }
-  }, [searchParams]);
+  }, [
+    searchParams,
+    sectionIds,
+    activeSection,
+    scrollToSection,
+    scrollStatus.state,
+  ]);
 
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      clearScrollTimeout();
+      clearAllTimers();
+      if (currentOperationRef.current) {
+        currentOperationRef.current.reject("Component unmounted");
+      }
+      // Reset flags
+      isManualUrlUpdateRef.current = false;
+      isManualScrollingRef.current = false;
     };
-  }, []);
+  }, [clearAllTimers]);
 
   return {
     containerRef,
     activeSection,
     scrollToSection,
-    scrollingManually,
-    isScrolling,
+    scrollStatus,
     handleProgrammaticScroll,
   };
 }
