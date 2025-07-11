@@ -59,6 +59,7 @@ export function useScrollSections(
   const isManualUrlUpdateRef = useRef(false);
   const scrollDetectionFrameRef = useRef<number | null>(null);
   const isMountedRef = useRef(true); // Track component mount state
+  const deepLinkOperationRef = useRef<string | null>(null); // Track deep link operations atomically
 
   // Router and search params
   const searchParams = useSearchParams();
@@ -171,14 +172,15 @@ export function useScrollSections(
       setActiveSection(bestSection);
 
       // Update URL without triggering scroll - use immediate update for manual scroll
+      // Atomic operation: set flag and update URL atomically
       isManualUrlUpdateRef.current = true;
       const params = new URLSearchParams(window.location.search);
       params.set("section", bestSection);
       router.replace(`?${params.toString()}`);
 
-      // Reset the flag after a short delay
+      // Reset the flag after a short delay, but only if no other URL update is in progress
       setTimeout(() => {
-        if (isMountedRef.current) {
+        if (isMountedRef.current && isManualUrlUpdateRef.current) {
           isManualUrlUpdateRef.current = false;
         }
       }, 100);
@@ -224,7 +226,7 @@ export function useScrollSections(
       const targetEl = document.getElementById(`section-${target}`);
       if (!targetEl) return false;
 
-      // Don't create a new operation if one is already in progress
+      // Atomic operation: check and set current operation atomically
       if (currentOperationRef.current) {
         return false;
       }
@@ -245,6 +247,7 @@ export function useScrollSections(
         operation.reject = reject;
       });
 
+      // Atomic assignment
       currentOperationRef.current = operation;
 
       try {
@@ -498,20 +501,31 @@ export function useScrollSections(
     };
   }, [scrollRef, handleScroll, handleTouchStart]);
 
-  // Handle initial deep link - use the same scrollToSection function
+  // Handle initial deep link - use atomic operation tracking
   useEffect(() => {
     if (!isMountedRef.current) return; // Don't handle if unmounted
 
     const selected = searchParams.get("section");
+
+    // Atomic check: only proceed if we have a valid section and no deep link operation is in progress
     if (
       selected &&
       sectionIds.includes(selected) &&
       selected !== activeSection &&
+      !deepLinkOperationRef.current && // Atomic check for ongoing deep link operation
       scrollStatus.state === ScrollState.IDLE && // Only run when not already scrolling
       !isManualUrlUpdateRef.current // Don't run if URL was updated by manual scroll detection
     ) {
+      // Atomically mark this deep link operation as in progress
+      deepLinkOperationRef.current = selected;
+
       // Use the same scrollToSection function for consistency
-      scrollToSection(selected);
+      scrollToSection(selected).finally(() => {
+        // Clear the operation reference when done (success or failure)
+        if (isMountedRef.current) {
+          deepLinkOperationRef.current = null;
+        }
+      });
     }
   }, [
     searchParams,
@@ -536,6 +550,7 @@ export function useScrollSections(
       // Reset flags
       isManualUrlUpdateRef.current = false;
       isManualScrollingRef.current = false;
+      deepLinkOperationRef.current = null;
     };
   }, [clearAllTimers, cancelCurrentOperation]);
 
