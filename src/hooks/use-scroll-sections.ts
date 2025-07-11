@@ -35,6 +35,45 @@ export const SCROLL_CONFIG = {
   CENTER_THRESHOLD: 0.3, // Section center must be within 30% of container center
 } as const;
 
+// Helper functions
+const getSectionElement = (sectionId: string) =>
+  document.getElementById(`section-${sectionId}`);
+
+const calculateVisibilityPercentage = (
+  rect: DOMRect,
+  containerRect: DOMRect
+) => {
+  const visibleTop = Math.max(rect.top, containerRect.top);
+  const visibleBottom = Math.min(rect.bottom, containerRect.bottom);
+  const visibleHeight = Math.max(0, visibleBottom - visibleTop);
+  return visibleHeight / rect.height;
+};
+
+const clearTimer = (
+  timerRef: React.MutableRefObject<NodeJS.Timeout | null>
+) => {
+  if (timerRef.current) {
+    clearTimeout(timerRef.current);
+    timerRef.current = null;
+  }
+};
+
+const clearAnimationFrame = (
+  frameRef: React.MutableRefObject<number | null>
+) => {
+  if (frameRef.current) {
+    cancelAnimationFrame(frameRef.current);
+    frameRef.current = null;
+  }
+};
+
+const calculateProgress = (targetRect: DOMRect, containerRect: DOMRect) => {
+  const targetTop = targetRect.top - containerRect.top;
+  const progressPercent =
+    ((containerRect.height - targetTop) / containerRect.height) * 100;
+  return Math.max(0, Math.min(100, progressPercent));
+};
+
 export function useScrollSections(
   sectionIds: string[],
   scrollRef: RefObject<HTMLDivElement>
@@ -62,27 +101,13 @@ export function useScrollSections(
 
   // Clear all timeouts and intervals
   const clearAllTimers = useCallback(() => {
-    const timers = [
-      sectionDetectionTimeoutRef.current,
-      urlUpdateTimeoutRef.current,
-      progressIntervalRef.current,
-    ];
-
-    timers.forEach((timer) => {
-      if (timer) {
-        clearTimeout(timer);
-      }
-    });
-
-    if (scrollDetectionFrameRef.current) {
-      cancelAnimationFrame(scrollDetectionFrameRef.current);
+    clearTimer(sectionDetectionTimeoutRef);
+    clearTimer(urlUpdateTimeoutRef);
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
     }
-
-    // Reset all refs
-    sectionDetectionTimeoutRef.current = null;
-    urlUpdateTimeoutRef.current = null;
-    progressIntervalRef.current = null;
-    scrollDetectionFrameRef.current = null;
+    clearAnimationFrame(scrollDetectionFrameRef);
   }, []);
 
   // Cancel current scroll operation safely
@@ -108,9 +133,7 @@ export function useScrollSections(
       if (isManualScroll) {
         updateUrlParams();
       } else {
-        if (urlUpdateTimeoutRef.current) {
-          clearTimeout(urlUpdateTimeoutRef.current);
-        }
+        clearTimer(urlUpdateTimeoutRef);
         urlUpdateTimeoutRef.current = setTimeout(() => {
           if (isMountedRef.current) {
             updateUrlParams();
@@ -137,17 +160,17 @@ export function useScrollSections(
     let bestScore = -1;
 
     for (const sectionId of sectionIds) {
-      const el = document.getElementById(`section-${sectionId}`);
+      const el = getSectionElement(sectionId);
       if (!el) continue;
 
       const rect = el.getBoundingClientRect();
       const sectionCenter = rect.top + rect.height / 2;
 
       // Calculate how much of the section is visible
-      const visibleTop = Math.max(rect.top, containerRect.top);
-      const visibleBottom = Math.min(rect.bottom, containerRect.bottom);
-      const visibleHeight = Math.max(0, visibleBottom - visibleTop);
-      const visibilityPercentage = visibleHeight / rect.height;
+      const visibilityPercentage = calculateVisibilityPercentage(
+        rect,
+        containerRect
+      );
 
       // Calculate distance from container center (closer = better)
       const centerDistance = Math.abs(sectionCenter - containerCenter);
@@ -189,17 +212,17 @@ export function useScrollSections(
   // Simplified scroll completion verification
   const verifyScrollCompletion = useCallback(
     (target: string, container: HTMLElement): boolean => {
-      const targetEl = document.getElementById(`section-${target}`);
+      const targetEl = getSectionElement(target);
       if (!targetEl) return false;
 
       const containerRect = container.getBoundingClientRect();
       const targetRect = targetEl.getBoundingClientRect();
 
       // Check if target is visible and centered
-      const visibleTop = Math.max(targetRect.top, containerRect.top);
-      const visibleBottom = Math.min(targetRect.bottom, containerRect.bottom);
-      const visibleHeight = Math.max(0, visibleBottom - visibleTop);
-      const visibilityPercentage = visibleHeight / targetRect.height;
+      const visibilityPercentage = calculateVisibilityPercentage(
+        targetRect,
+        containerRect
+      );
 
       const containerCenter = containerRect.top + containerRect.height / 2;
       const sectionCenter = targetRect.top + targetRect.height / 2;
@@ -222,7 +245,7 @@ export function useScrollSections(
       const container = scrollRef.current;
       if (!container) return false;
 
-      const targetEl = document.getElementById(`section-${target}`);
+      const targetEl = getSectionElement(target);
       if (!targetEl) return false;
 
       // Atomic operation: check and set current operation atomically
@@ -259,24 +282,15 @@ export function useScrollSections(
           }
 
           if (operation.target) {
-            const targetEl = document.getElementById(
-              `section-${operation.target}`
-            );
+            const targetEl = getSectionElement(operation.target);
             if (targetEl) {
               const containerRect = container.getBoundingClientRect();
               const targetRect = targetEl.getBoundingClientRect();
-              const targetTop = targetRect.top - containerRect.top;
-              const progressPercent =
-                ((containerRect.height - targetTop) / containerRect.height) *
-                100;
-              const clampedProgress = Math.max(
-                0,
-                Math.min(100, progressPercent)
-              );
+              const progress = calculateProgress(targetRect, containerRect);
 
               setScrollStatus((prev) => ({
                 ...prev,
-                progress: Math.round(clampedProgress),
+                progress: Math.round(progress),
               }));
             }
           }
@@ -414,10 +428,7 @@ export function useScrollSections(
 
     if (isCurrentlyScrolling) {
       // Use requestAnimationFrame for smooth throttled detection
-      if (scrollDetectionFrameRef.current) {
-        cancelAnimationFrame(scrollDetectionFrameRef.current);
-      }
-
+      clearAnimationFrame(scrollDetectionFrameRef);
       scrollDetectionFrameRef.current = requestAnimationFrame(() => {
         if (isMountedRef.current) {
           detectActiveSection();
@@ -425,9 +436,7 @@ export function useScrollSections(
       });
 
       // Clear existing detection timeout
-      if (sectionDetectionTimeoutRef.current) {
-        clearTimeout(sectionDetectionTimeoutRef.current);
-      }
+      clearTimer(sectionDetectionTimeoutRef);
 
       // Set new timeout for final section detection when scrolling stops
       sectionDetectionTimeoutRef.current = setTimeout(() => {
@@ -450,15 +459,8 @@ export function useScrollSections(
       cancelCurrentOperation();
 
       // Clear any pending timeouts and animation frames
-      if (sectionDetectionTimeoutRef.current) {
-        clearTimeout(sectionDetectionTimeoutRef.current);
-        sectionDetectionTimeoutRef.current = null;
-      }
-
-      if (scrollDetectionFrameRef.current) {
-        cancelAnimationFrame(scrollDetectionFrameRef.current);
-        scrollDetectionFrameRef.current = null;
-      }
+      clearTimer(sectionDetectionTimeoutRef);
+      clearAnimationFrame(scrollDetectionFrameRef);
 
       setScrollStatus({ state: ScrollState.IDLE });
     }
