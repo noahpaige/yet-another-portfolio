@@ -19,11 +19,8 @@ export interface ScrollStatus {
 // Scroll Operation Interface
 interface ScrollOperation {
   target: string;
-  promise: Promise<boolean>;
   startTime: number;
-  resolve: (success: boolean) => void;
-  reject: (error: string) => void;
-  isCancelled: boolean; // Add cancellation flag
+  isCancelled: boolean;
 }
 
 // Centralized config for scroll and section behavior
@@ -49,13 +46,11 @@ export function useScrollSections(
   });
 
   // Refs
-  const containerRef = useRef<HTMLDivElement>(null);
   const currentOperationRef = useRef<ScrollOperation | null>(null);
   const sectionDetectionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const urlUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastScrollTopRef = useRef(0);
-  const isManualScrollingRef = useRef(false);
   const isManualUrlUpdateRef = useRef(false);
   const scrollDetectionFrameRef = useRef<number | null>(null);
   const isMountedRef = useRef(true); // Track component mount state
@@ -67,22 +62,27 @@ export function useScrollSections(
 
   // Clear all timeouts and intervals
   const clearAllTimers = useCallback(() => {
-    if (sectionDetectionTimeoutRef.current) {
-      clearTimeout(sectionDetectionTimeoutRef.current);
-      sectionDetectionTimeoutRef.current = null;
-    }
-    if (urlUpdateTimeoutRef.current) {
-      clearTimeout(urlUpdateTimeoutRef.current);
-      urlUpdateTimeoutRef.current = null;
-    }
-    if (progressIntervalRef.current) {
-      clearInterval(progressIntervalRef.current);
-      progressIntervalRef.current = null;
-    }
+    const timers = [
+      sectionDetectionTimeoutRef.current,
+      urlUpdateTimeoutRef.current,
+      progressIntervalRef.current,
+    ];
+
+    timers.forEach((timer) => {
+      if (timer) {
+        clearTimeout(timer);
+      }
+    });
+
     if (scrollDetectionFrameRef.current) {
       cancelAnimationFrame(scrollDetectionFrameRef.current);
-      scrollDetectionFrameRef.current = null;
     }
+
+    // Reset all refs
+    sectionDetectionTimeoutRef.current = null;
+    urlUpdateTimeoutRef.current = null;
+    progressIntervalRef.current = null;
+    scrollDetectionFrameRef.current = null;
   }, []);
 
   // Cancel current scroll operation safely
@@ -97,24 +97,23 @@ export function useScrollSections(
   // URL management - immediate for manual scroll, debounced for programmatic
   const updateURL = useCallback(
     (section: string, isManualScroll: boolean = false) => {
-      if (!isMountedRef.current) return; // Don't update URL if component is unmounted
+      if (!isMountedRef.current) return;
 
-      if (isManualScroll) {
-        // Immediate update for manual scroll
+      const updateUrlParams = () => {
         const params = new URLSearchParams(window.location.search);
         params.set("section", section);
         router.replace(`?${params.toString()}`);
+      };
+
+      if (isManualScroll) {
+        updateUrlParams();
       } else {
-        // Debounced update for programmatic scroll
         if (urlUpdateTimeoutRef.current) {
           clearTimeout(urlUpdateTimeoutRef.current);
         }
         urlUpdateTimeoutRef.current = setTimeout(() => {
           if (isMountedRef.current) {
-            // Check again before updating
-            const params = new URLSearchParams(window.location.search);
-            params.set("section", section);
-            router.replace(`?${params.toString()}`);
+            updateUrlParams();
           }
         }, SCROLL_CONFIG.URL_DEBOUNCE);
       }
@@ -234,31 +233,20 @@ export function useScrollSections(
       // Create scroll operation
       const operation: ScrollOperation = {
         target,
-        promise: Promise.resolve(false),
         startTime: Date.now(),
-        resolve: () => {},
-        reject: () => {},
         isCancelled: false,
       };
-
-      // Create the actual promise
-      operation.promise = new Promise<boolean>((resolve, reject) => {
-        operation.resolve = resolve;
-        operation.reject = reject;
-      });
 
       // Atomic assignment
       currentOperationRef.current = operation;
 
       try {
         // Update scroll status
-        if (isMountedRef.current) {
-          setScrollStatus({
-            state: ScrollState.SCROLLING,
-            target,
-            progress: 0,
-          });
-        }
+        setScrollStatus({
+          state: ScrollState.SCROLLING,
+          target,
+          progress: 0,
+        });
 
         // Start progress tracking
         progressIntervalRef.current = setInterval(() => {
@@ -278,18 +266,17 @@ export function useScrollSections(
               const containerRect = container.getBoundingClientRect();
               const targetRect = targetEl.getBoundingClientRect();
               const targetTop = targetRect.top - containerRect.top;
-              const progress = Math.max(
+              const progressPercent =
+                ((containerRect.height - targetTop) / containerRect.height) *
+                100;
+              const clampedProgress = Math.max(
                 0,
-                Math.min(
-                  100,
-                  ((containerRect.height - targetTop) / containerRect.height) *
-                    100
-                )
+                Math.min(100, progressPercent)
               );
 
               setScrollStatus((prev) => ({
                 ...prev,
-                progress: Math.round(progress),
+                progress: Math.round(clampedProgress),
               }));
             }
           }
@@ -337,13 +324,11 @@ export function useScrollSections(
         }
 
         if (isCompleted) {
-          if (isMountedRef.current) {
-            setScrollStatus({
-              state: ScrollState.IDLE,
-              target,
-              progress: 100,
-            });
-          }
+          setScrollStatus({
+            state: ScrollState.IDLE,
+            target,
+            progress: 100,
+          });
           return true;
         } else {
           throw new Error("Scroll failed - target not reached within timeout");
@@ -355,21 +340,18 @@ export function useScrollSections(
           progressIntervalRef.current = null;
         }
 
-        // Only update status if component is still mounted
-        if (isMountedRef.current) {
-          setScrollStatus({
-            state: ScrollState.ERROR,
-            target,
-            error: error instanceof Error ? error.message : "Unknown error",
-          });
+        setScrollStatus({
+          state: ScrollState.ERROR,
+          target,
+          error: error instanceof Error ? error.message : "Unknown error",
+        });
 
-          // Reset to idle after error
-          setTimeout(() => {
-            if (isMountedRef.current) {
-              setScrollStatus({ state: ScrollState.IDLE });
-            }
-          }, 1000);
-        }
+        // Reset to idle after error
+        setTimeout(() => {
+          if (isMountedRef.current) {
+            setScrollStatus({ state: ScrollState.IDLE });
+          }
+        }, 1000);
 
         return false;
       } finally {
@@ -431,8 +413,6 @@ export function useScrollSections(
       Math.abs(currentScrollTop - lastScrollTopRef.current) > 1;
 
     if (isCurrentlyScrolling) {
-      isManualScrollingRef.current = true;
-
       // Use requestAnimationFrame for smooth throttled detection
       if (scrollDetectionFrameRef.current) {
         cancelAnimationFrame(scrollDetectionFrameRef.current);
@@ -452,7 +432,6 @@ export function useScrollSections(
       // Set new timeout for final section detection when scrolling stops
       sectionDetectionTimeoutRef.current = setTimeout(() => {
         if (isMountedRef.current) {
-          isManualScrollingRef.current = false;
           // Final detection to ensure accuracy
           detectActiveSection();
         }
@@ -549,13 +528,11 @@ export function useScrollSections(
 
       // Reset flags
       isManualUrlUpdateRef.current = false;
-      isManualScrollingRef.current = false;
       deepLinkOperationRef.current = null;
     };
   }, [clearAllTimers, cancelCurrentOperation]);
 
   return {
-    containerRef,
     activeSection,
     scrollToSection,
     scrollStatus,
