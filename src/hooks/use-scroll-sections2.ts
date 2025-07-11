@@ -23,6 +23,7 @@ interface ScrollOperation {
   startTime: number;
   resolve: (success: boolean) => void;
   reject: (error: string) => void;
+  isCancelled: boolean; // Add cancellation flag
 }
 
 // Centralized config for scroll and section behavior
@@ -57,6 +58,7 @@ export function useScrollSections2(
   const isManualScrollingRef = useRef(false);
   const isManualUrlUpdateRef = useRef(false);
   const scrollDetectionFrameRef = useRef<number | null>(null);
+  const isMountedRef = useRef(true); // Track component mount state
 
   // Router and search params
   const searchParams = useSearchParams();
@@ -82,9 +84,20 @@ export function useScrollSections2(
     }
   }, []);
 
+  // Cancel current scroll operation safely
+  const cancelCurrentOperation = useCallback(() => {
+    if (currentOperationRef.current) {
+      currentOperationRef.current.isCancelled = true;
+      // Don't reject the promise, just mark as cancelled
+      currentOperationRef.current = null;
+    }
+  }, []);
+
   // URL management - immediate for manual scroll, debounced for programmatic
   const updateURL = useCallback(
     (section: string, isManualScroll: boolean = false) => {
+      if (!isMountedRef.current) return; // Don't update URL if component is unmounted
+
       if (isManualScroll) {
         // Immediate update for manual scroll
         const params = new URLSearchParams(window.location.search);
@@ -96,9 +109,12 @@ export function useScrollSections2(
           clearTimeout(urlUpdateTimeoutRef.current);
         }
         urlUpdateTimeoutRef.current = setTimeout(() => {
-          const params = new URLSearchParams(window.location.search);
-          params.set("section", section);
-          router.replace(`?${params.toString()}`);
+          if (isMountedRef.current) {
+            // Check again before updating
+            const params = new URLSearchParams(window.location.search);
+            params.set("section", section);
+            router.replace(`?${params.toString()}`);
+          }
         }, SCROLL_CONFIG.URL_DEBOUNCE);
       }
     },
@@ -107,6 +123,8 @@ export function useScrollSections2(
 
   // Optimized section detection using visibility and center position
   const detectActiveSection = useCallback(() => {
+    if (!isMountedRef.current) return; // Don't detect if component is unmounted
+
     const container = scrollRef.current;
     if (!container) return;
 
@@ -160,7 +178,9 @@ export function useScrollSections2(
 
       // Reset the flag after a short delay
       setTimeout(() => {
-        isManualUrlUpdateRef.current = false;
+        if (isMountedRef.current) {
+          isManualUrlUpdateRef.current = false;
+        }
       }, 100);
     }
   }, [sectionIds, activeSection, scrollRef, router, scrollStatus.state]);
@@ -196,6 +216,8 @@ export function useScrollSections2(
   // Execute scroll with progress tracking
   const executeScroll = useCallback(
     async (target: string): Promise<boolean> => {
+      if (!isMountedRef.current) return false; // Don't execute if unmounted
+
       const container = scrollRef.current;
       if (!container) return false;
 
@@ -214,6 +236,7 @@ export function useScrollSections2(
         startTime: Date.now(),
         resolve: () => {},
         reject: () => {},
+        isCancelled: false,
       };
 
       // Create the actual promise
@@ -226,14 +249,24 @@ export function useScrollSections2(
 
       try {
         // Update scroll status
-        setScrollStatus({
-          state: ScrollState.SCROLLING,
-          target,
-          progress: 0,
-        });
+        if (isMountedRef.current) {
+          setScrollStatus({
+            state: ScrollState.SCROLLING,
+            target,
+            progress: 0,
+          });
+        }
 
         // Start progress tracking
         progressIntervalRef.current = setInterval(() => {
+          if (!isMountedRef.current || operation.isCancelled) {
+            if (progressIntervalRef.current) {
+              clearInterval(progressIntervalRef.current);
+              progressIntervalRef.current = null;
+            }
+            return;
+          }
+
           if (operation.target) {
             const targetEl = document.getElementById(
               `section-${operation.target}`
@@ -268,6 +301,12 @@ export function useScrollSections2(
         // Wait for scroll to complete
         const isCompleted = await new Promise<boolean>((resolve) => {
           const checkCompletion = () => {
+            // Check if operation was cancelled
+            if (!isMountedRef.current || operation.isCancelled) {
+              resolve(false);
+              return;
+            }
+
             const completed = verifyScrollCompletion(target, container);
             if (completed) {
               resolve(true);
@@ -289,12 +328,19 @@ export function useScrollSections2(
           progressIntervalRef.current = null;
         }
 
+        // Check if operation was cancelled
+        if (!isMountedRef.current || operation.isCancelled) {
+          return false;
+        }
+
         if (isCompleted) {
-          setScrollStatus({
-            state: ScrollState.IDLE,
-            target,
-            progress: 100,
-          });
+          if (isMountedRef.current) {
+            setScrollStatus({
+              state: ScrollState.IDLE,
+              target,
+              progress: 100,
+            });
+          }
           return true;
         } else {
           throw new Error("Scroll failed - target not reached within timeout");
@@ -306,16 +352,21 @@ export function useScrollSections2(
           progressIntervalRef.current = null;
         }
 
-        setScrollStatus({
-          state: ScrollState.ERROR,
-          target,
-          error: error instanceof Error ? error.message : "Unknown error",
-        });
+        // Only update status if component is still mounted
+        if (isMountedRef.current) {
+          setScrollStatus({
+            state: ScrollState.ERROR,
+            target,
+            error: error instanceof Error ? error.message : "Unknown error",
+          });
 
-        // Reset to idle after error
-        setTimeout(() => {
-          setScrollStatus({ state: ScrollState.IDLE });
-        }, 1000);
+          // Reset to idle after error
+          setTimeout(() => {
+            if (isMountedRef.current) {
+              setScrollStatus({ state: ScrollState.IDLE });
+            }
+          }, 1000);
+        }
 
         return false;
       } finally {
@@ -329,13 +380,11 @@ export function useScrollSections2(
   // Main scroll function
   const scrollToSection = useCallback(
     async (section: string) => {
+      if (!isMountedRef.current) return false; // Don't scroll if unmounted
+
       // Cancel any existing operation gracefully
       if (currentOperationRef.current) {
-        try {
-          currentOperationRef.current.reject("New scroll operation started");
-        } catch {
-          // Ignore errors from rejecting the previous operation
-        }
+        currentOperationRef.current.isCancelled = true;
         currentOperationRef.current = null;
       }
 
@@ -354,6 +403,8 @@ export function useScrollSections2(
   // Programmatic scroll handler
   const handleProgrammaticScroll = useCallback(
     (targetSectionIndex: number) => {
+      if (!isMountedRef.current) return; // Don't handle if unmounted
+
       if (targetSectionIndex >= 0 && targetSectionIndex < sectionIds.length) {
         const targetSection = sectionIds[targetSectionIndex];
         scrollToSection(targetSection);
@@ -364,6 +415,8 @@ export function useScrollSections2(
 
   // Simplified scroll event handler
   const handleScroll = useCallback(() => {
+    if (!isMountedRef.current) return; // Don't handle if unmounted
+
     const container = scrollRef.current;
     if (!container) return;
 
@@ -383,7 +436,9 @@ export function useScrollSections2(
       }
 
       scrollDetectionFrameRef.current = requestAnimationFrame(() => {
-        detectActiveSection();
+        if (isMountedRef.current) {
+          detectActiveSection();
+        }
       });
 
       // Clear existing detection timeout
@@ -393,9 +448,11 @@ export function useScrollSections2(
 
       // Set new timeout for final section detection when scrolling stops
       sectionDetectionTimeoutRef.current = setTimeout(() => {
-        isManualScrollingRef.current = false;
-        // Final detection to ensure accuracy
-        detectActiveSection();
+        if (isMountedRef.current) {
+          isManualScrollingRef.current = false;
+          // Final detection to ensure accuracy
+          detectActiveSection();
+        }
       }, SCROLL_CONFIG.SECTION_DETECTION_DEBOUNCE);
     }
 
@@ -404,12 +461,11 @@ export function useScrollSections2(
 
   // Touch event handler for iOS
   const handleTouchStart = useCallback(() => {
+    if (!isMountedRef.current) return; // Don't handle if unmounted
+
     if (scrollStatus.state !== ScrollState.IDLE) {
       // User interrupted programmatic scroll
-      if (currentOperationRef.current) {
-        currentOperationRef.current.reject("User interrupted scroll");
-        currentOperationRef.current = null;
-      }
+      cancelCurrentOperation();
 
       // Clear any pending timeouts and animation frames
       if (sectionDetectionTimeoutRef.current) {
@@ -424,7 +480,7 @@ export function useScrollSections2(
 
       setScrollStatus({ state: ScrollState.IDLE });
     }
-  }, [scrollStatus.state]);
+  }, [scrollStatus.state, cancelCurrentOperation]);
 
   // Set up scroll event listeners
   useEffect(() => {
@@ -444,6 +500,8 @@ export function useScrollSections2(
 
   // Handle initial deep link - use the same scrollToSection function
   useEffect(() => {
+    if (!isMountedRef.current) return; // Don't handle if unmounted
+
     const selected = searchParams.get("section");
     if (
       selected &&
@@ -466,15 +524,20 @@ export function useScrollSections2(
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      // Mark component as unmounted first
+      isMountedRef.current = false;
+
+      // Cancel current operation without rejecting
+      cancelCurrentOperation();
+
+      // Clear all timers
       clearAllTimers();
-      if (currentOperationRef.current) {
-        currentOperationRef.current.reject("Component unmounted");
-      }
+
       // Reset flags
       isManualUrlUpdateRef.current = false;
       isManualScrollingRef.current = false;
     };
-  }, [clearAllTimers]);
+  }, [clearAllTimers, cancelCurrentOperation]);
 
   return {
     containerRef,
