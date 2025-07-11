@@ -6,7 +6,7 @@ const SCROLL_TIMEOUTS = {
   FALLBACK: 2000, // 2 seconds for very slow devices and long scrolls
   WHEEL_DETECTION: 100, // 100ms for wheel event detection
   IOS_FALLBACK: 1000, // 1 second for iOS Safari
-  SMOOTH_SCROLL_DURATION: 1500, // Expected duration for smooth scroll animations
+  SMOOTH_SCROLL_DURATION: 600, // Expected duration for smooth scroll animations
 } as const;
 
 const SCROLL_THRESHOLDS = {
