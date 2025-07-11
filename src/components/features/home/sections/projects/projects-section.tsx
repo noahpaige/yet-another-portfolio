@@ -78,7 +78,7 @@ export default function ProjectsSection() {
           transition={{ delay: 0.4 }}
         >
           <MagneticButton onClick={() => router.push("/projects")}>
-            <span className="whitespace-nowrap pr-1">More Projects</span>
+            <span className="whitespace-nowrap p-1 pr-2">More Projects</span>
             <ArrowRight className="h-4 w-4" />
           </MagneticButton>
         </motion.div>
