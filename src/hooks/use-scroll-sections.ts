@@ -3,9 +3,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 // Constants for better maintainability
 const SCROLL_TIMEOUTS = {
-  FALLBACK: 50, // 5 seconds for very slow devices
-  WHEEL_DETECTION: 50, // 100ms for wheel event detection
+  FALLBACK: 2000, // 2 seconds for very slow devices and long scrolls
+  WHEEL_DETECTION: 100, // 100ms for wheel event detection
   IOS_FALLBACK: 1000, // 1 second for iOS Safari
+  SMOOTH_SCROLL_DURATION: 1500, // Expected duration for smooth scroll animations
 } as const;
 
 const SCROLL_THRESHOLDS = {
@@ -79,16 +80,32 @@ export function useScrollSections(
     const targetBottom = targetRect.bottom - containerRect.top;
     const containerHeight = containerRect.height;
 
-    // If target section is mostly visible (within 10% of container height), consider scrolling finished
+    // If target section is mostly visible (within 20% of container height), consider scrolling finished
     const isTargetVisible =
-      targetTop <= containerHeight * SCROLL_THRESHOLDS.VISIBILITY_TOP &&
-      targetBottom >= containerHeight * SCROLL_THRESHOLDS.VISIBILITY_BOTTOM;
+      targetTop <= containerHeight * 0.2 &&
+      targetBottom >= containerHeight * 0.8;
 
     if (isTargetVisible) {
       setScrollingManually(false);
       setIsScrolling(false);
       targetSectionRef.current = null;
       clearScrollTimeout();
+    } else {
+      // Additional check: if we're close to the target section, consider it finished
+      const targetOffsetTop = targetEl.offsetTop;
+      const currentScrollTop = container.scrollTop;
+      const containerHeight = container.clientHeight;
+
+      // If we're within one container height of the target, consider it close enough
+      const isCloseToTarget =
+        Math.abs(currentScrollTop - targetOffsetTop) <= containerHeight;
+
+      if (isCloseToTarget) {
+        setScrollingManually(false);
+        setIsScrolling(false);
+        targetSectionRef.current = null;
+        clearScrollTimeout();
+      }
     }
   };
 
@@ -116,11 +133,12 @@ export function useScrollSections(
 
       clearScrollTimeout();
 
+      // Use a longer timeout for programmatic scrolls to allow for smooth animation
       scrollTimeoutRef.current = setTimeout(() => {
         setScrollingManually(false);
         setIsScrolling(false);
         targetSectionRef.current = null;
-      }, SCROLL_TIMEOUTS.FALLBACK);
+      }, SCROLL_TIMEOUTS.SMOOTH_SCROLL_DURATION);
     }
   };
 
@@ -328,7 +346,7 @@ export function useScrollSections(
             setScrollingManually(false);
             setIsScrolling(false);
             targetSectionRef.current = null;
-          }, SCROLL_TIMEOUTS.FALLBACK);
+          }, SCROLL_TIMEOUTS.SMOOTH_SCROLL_DURATION);
         } else {
           // If element not found, reset scrolling manually
           setScrollingManually(false);
