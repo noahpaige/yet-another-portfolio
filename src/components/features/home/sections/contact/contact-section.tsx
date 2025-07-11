@@ -132,7 +132,7 @@ export const ContactSection = () => {
                     }}
                   />
                   <span
-                    className="whitespace-nowrap flex-1 text-left"
+                    className="whitespace-nowrap flex-1 text-center"
                     style={{ fontSize: buttonTextFontSize }}
                   >
                     {button.name}
