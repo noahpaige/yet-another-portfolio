@@ -7,7 +7,7 @@ import HomePageSection from "@/components/features/home/sections/home-page-secti
 import BottomNav from "@/components/features/home/bottom-nav";
 import AnimatedBackground from "@/components/animated-background";
 import ClientOnly from "@/components/client-only";
-import { useScrollSections2 } from "@/hooks/use-scroll-sections2";
+import { useScrollSections } from "@/hooks/use-scroll-sections";
 import { Home, Folder, Info, Mail } from "lucide-react";
 import NoiseOverlay from "@/components/noise-overlay";
 import LazySection from "@/components/features/home/lazy-section";
@@ -74,7 +74,7 @@ export default function HomePage() {
     icon: section.icon,
   }));
 
-  const { activeSection, scrollToSection } = useScrollSections2(
+  const { activeSection, scrollToSection } = useScrollSections(
     sectionNames,
     scrollContainerRef as RefObject<HTMLDivElement>
   );

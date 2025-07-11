@@ -38,7 +38,7 @@ export const SCROLL_CONFIG = {
   CENTER_THRESHOLD: 0.3, // Section center must be within 30% of container center
 } as const;
 
-export function useScrollSections2(
+export function useScrollSections(
   sectionIds: string[],
   scrollRef: RefObject<HTMLDivElement>
 ) {
