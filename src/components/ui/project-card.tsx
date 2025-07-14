@@ -46,7 +46,7 @@ export const ProjectCard = React.memo(
       >
         {/* Attach the ref to the Link */}
         <Link href={`/projects/${project.id}`} ref={linkRef}>
-          <div className="group relative overflow-hidden rounded-xl glass-layer-hoverable transition-all duration-300">
+          <div className="group relative overflow-hidden rounded-xl glass-layer-hoverable transition-all duration-300 p-1.5">
             <div
               className="relative rounded-lg overflow-hidden"
               style={{ height: cardHeight }}
