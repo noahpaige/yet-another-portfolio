@@ -16,7 +16,6 @@ export const ProjectCard = React.memo(
     const linkRef = useRef<HTMLAnchorElement>(null);
 
     // Generate responsive font size based on container height
-    // Using the same breakpoints as the container: 24, 32, 40, 48, 64, 80 (in rem, converted to px)
     const titleFontSize = useClampCSS(
       16, // min font size (1rem)
       32, // max font size (2rem)
@@ -27,10 +26,9 @@ export const ProjectCard = React.memo(
     );
 
     // Generate dynamic height based on screen height only
-    // Converting the height classes to pixel values: h-32(128px), h-44(176px), h-48(192px), h-56(224px), h-64(256px), h-80(320px)
     const cardHeight = useClampCSS(
-      64, // min height (h-32 = 128px)
-      320, // max height (h-80 = 320px)
+      60, // min height
+      320, // max height
       500, // min screen height where scaling starts
       1200, // max screen height where scaling stops
       0, // min screen width (ignored)
