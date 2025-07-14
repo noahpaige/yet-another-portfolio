@@ -60,55 +60,6 @@ export function useScrollSections(
     }
   };
 
-  const checkIfScrollingFinished = () => {
-    if (!targetSectionRef.current || !scrollingManually) return;
-
-    const targetEl = document.getElementById(
-      `section-${targetSectionRef.current}`
-    );
-    if (!targetEl) return;
-
-    // Check if the target section is now the most visible section
-    const container = scrollRef.current;
-    if (!container) return;
-
-    const containerRect = container.getBoundingClientRect();
-    const targetRect = targetEl.getBoundingClientRect();
-
-    // Calculate how much of the target section is visible
-    const targetTop = targetRect.top - containerRect.top;
-    const targetBottom = targetRect.bottom - containerRect.top;
-    const containerHeight = containerRect.height;
-
-    // If target section is mostly visible (within 20% of container height), consider scrolling finished
-    const isTargetVisible =
-      targetTop <= containerHeight * 0.2 &&
-      targetBottom >= containerHeight * 0.8;
-
-    if (isTargetVisible) {
-      setScrollingManually(false);
-      setIsScrolling(false);
-      targetSectionRef.current = null;
-      clearScrollTimeout();
-    } else {
-      // Additional check: if we're close to the target section, consider it finished
-      const targetOffsetTop = targetEl.offsetTop;
-      const currentScrollTop = container.scrollTop;
-      const containerHeight = container.clientHeight;
-
-      // If we're within one container height of the target, consider it close enough
-      const isCloseToTarget =
-        Math.abs(currentScrollTop - targetOffsetTop) <= containerHeight;
-
-      if (isCloseToTarget) {
-        setScrollingManually(false);
-        setIsScrolling(false);
-        targetSectionRef.current = null;
-        clearScrollTimeout();
-      }
-    }
-  };
-
   const scrollToSection = (section: string) => {
     const el = document.getElementById(`section-${section}`);
     const container = scrollRef.current;
@@ -150,6 +101,55 @@ export function useScrollSections(
     let scrollEndTimeout: NodeJS.Timeout | null = null;
     let lastScrollTop = container.scrollTop;
     let scrollStoppedCount = 0;
+
+    const checkIfScrollingFinished = () => {
+      if (!targetSectionRef.current || !scrollingManually) return;
+
+      const targetEl = document.getElementById(
+        `section-${targetSectionRef.current}`
+      );
+      if (!targetEl) return;
+
+      // Check if the target section is now the most visible section
+      const container = scrollRef.current;
+      if (!container) return;
+
+      const containerRect = container.getBoundingClientRect();
+      const targetRect = targetEl.getBoundingClientRect();
+
+      // Calculate how much of the target section is visible
+      const targetTop = targetRect.top - containerRect.top;
+      const targetBottom = targetRect.bottom - containerRect.top;
+      const containerHeight = containerRect.height;
+
+      // If target section is mostly visible (within 20% of container height), consider scrolling finished
+      const isTargetVisible =
+        targetTop <= containerHeight * 0.2 &&
+        targetBottom >= containerHeight * 0.8;
+
+      if (isTargetVisible) {
+        setScrollingManually(false);
+        setIsScrolling(false);
+        targetSectionRef.current = null;
+        clearScrollTimeout();
+      } else {
+        // Additional check: if we're close to the target section, consider it finished
+        const targetOffsetTop = targetEl.offsetTop;
+        const currentScrollTop = container.scrollTop;
+        const containerHeight = container.clientHeight;
+
+        // If we're within one container height of the target, consider it close enough
+        const isCloseToTarget =
+          Math.abs(currentScrollTop - targetOffsetTop) <= containerHeight;
+
+        if (isCloseToTarget) {
+          setScrollingManually(false);
+          setIsScrolling(false);
+          targetSectionRef.current = null;
+          clearScrollTimeout();
+        }
+      }
+    };
 
     const handleScroll = () => {
       if (!scrollingManually) return;
