@@ -60,9 +60,9 @@ pandoc resume.md -o resume.html --from markdown+raw_html
   </tr>
 </table>
 
-- **Developed interactive visualization applications** using Electron for rocket trajectory analysis and data processing
-- **Modernized legacy internal tools** by proposing and implementing new solutions to improve team efficiency
-- **Applied orbital mechanics principles** to create accurate spacecraft trajectory simulations and analysis tools
+- **Developed interactive visualization applications** using Electron for rocket trajectory analysis and data processing.
+- **Modernized legacy internal tools** by proposing and implementing new solutions to improve team efficiency.
+- **Applied orbital mechanics principles** to create accurate spacecraft trajectory simulations and analysis tools.
 
 <table width="100%">
   <tr>
@@ -73,8 +73,8 @@ pandoc resume.md -o resume.html --from markdown+raw_html
   </tr>
 </table>
 
-- **Collaborated with Apple** through Cal Poly's Summer Undergraduate Research Program to develop code quality analysis tools
-- **Built data visualization systems** using Node.js and D3.js for code quality metrics and reporting
+- **Collaborated with Apple** through Cal Poly's Summer Undergraduate Research Program to develop code quality analysis tools.
+- **Built data visualization systems** using Node.js and D3.js for code quality metrics and reporting.
 
 ---
 
@@ -89,9 +89,9 @@ pandoc resume.md -o resume.html --from markdown+raw_html
   </tr>
 </table>
 
-- **Published research** on multiplayer game engagement dynamics at IEEE Conference on Games 2019
-- **Analyzed social group dynamics** to enhance player engagement and interaction in multiplayer environments
-- **Applied game design principles** to understand how peer presence affects player behavior and satisfaction
+- **Published research** on multiplayer game engagement dynamics at IEEE Conference on Games 2019.
+- **Analyzed social group dynamics** to enhance player engagement and interaction in multiplayer environments.
+- **Applied game design principles** to understand how peer presence affects player behavior and satisfaction.
 
 <table width="100%">
   <tr>
@@ -102,9 +102,9 @@ pandoc resume.md -o resume.html --from markdown+raw_html
   </tr>
 </table>
 
-- **Developed personality-driven AI system** using Big-Five personality traits and emotion models for enhanced NPC behavior
-- **Implemented intelligent NPC framework** that improves immersion and decision-making quality in games
-- **Applied psychological principles** to create more realistic and engaging non-player character interactions
+- **Developed personality-driven AI system** using Big-Five personality traits and emotion models for enhanced NPC behavior.
+- **Implemented intelligent NPC framework** that improves immersion and decision-making quality in games.
+- **Applied psychological principles** to create more realistic and engaging non-player character interactions.
 
 ---
 
