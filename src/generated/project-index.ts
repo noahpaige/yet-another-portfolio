@@ -30,7 +30,7 @@ export const projects: Project[] = [
       "Academic",
       "Thesis"
     ],
-    "image": "/masters-thesis.jpg",
+    "image": "/masters-thesis.png",
     "imageAltText": "Masters thesis research and academic work",
     "timestamp": "2024-12-01T00:00:00Z",
     "featured": true,
