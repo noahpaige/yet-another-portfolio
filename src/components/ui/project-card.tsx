@@ -1,6 +1,7 @@
 "use client";
 import React, { useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Magnetic } from "@/components/ui/magnetic";
 import { Project } from "@/generated/project-index";
 import { useClampCSS } from "@/hooks/useClampCSS";
@@ -68,14 +69,13 @@ export const ProjectCard = React.memo(
                     className="relative w-full rounded-lg"
                     style={{ height: cardHeight }}
                   >
-                    <img
+                    <Image
                       src={project.image}
                       alt=""
-                      className="w-full h-full object-cover rounded-lg"
-                      onError={(e) => {
-                        const img = e.target as HTMLImageElement;
-                        img.style.display = "none";
-                        const fallback = img.parentElement?.querySelector(
+                      fill
+                      className="object-cover rounded-lg"
+                      onError={() => {
+                        const fallback = document.querySelector(
                           ".image-fallback"
                         ) as HTMLElement;
                         if (fallback) {
