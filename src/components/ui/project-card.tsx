@@ -64,12 +64,32 @@ export const ProjectCard = React.memo(
                   style={{ height: cardHeight }}
                 >
                   {/* Project Image */}
-                  <img
-                    src={project.image}
-                    alt={project.imageAltText}
-                    className="w-full object-cover rounded-lg"
+                  <div
+                    className="relative w-full rounded-lg"
                     style={{ height: cardHeight }}
-                  />
+                  >
+                    <img
+                      src={project.image}
+                      alt=""
+                      className="w-full h-full object-cover rounded-lg"
+                      onError={(e) => {
+                        const img = e.target as HTMLImageElement;
+                        img.style.display = "none";
+                        const fallback = img.parentElement?.querySelector(
+                          ".image-fallback"
+                        ) as HTMLElement;
+                        if (fallback) {
+                          fallback.style.display = "flex";
+                        }
+                      }}
+                    />
+                    <div
+                      className="image-fallback hidden w-full h-full items-center justify-center bg-gray-800 text-slate-400 text-sm rounded-lg text-center"
+                      style={{ height: cardHeight }}
+                    >
+                      {project.imageAltText}
+                    </div>
+                  </div>
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
                 </div>
               </Magnetic>
