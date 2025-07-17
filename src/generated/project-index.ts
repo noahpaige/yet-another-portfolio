@@ -23,6 +23,23 @@ export interface Project {
 // All projects sorted by timestamp (newest first)
 export const projects: Project[] = [
   {
+    "id": "masters-thesis",
+    "title": "Masters Thesis",
+    "tags": [
+      "Research",
+      "Academic",
+      "Thesis"
+    ],
+    "image": "/masters-thesis.jpg",
+    "imageAltText": "Masters thesis research and academic work",
+    "timestamp": "2024-12-01T00:00:00Z",
+    "featured": true,
+    "featuredOrder": 1,
+    "template": {
+      "templateId": "default"
+    }
+  },
+  {
     "id": "indiana-jones",
     "title": "Find the Great Circle",
     "tags": [
