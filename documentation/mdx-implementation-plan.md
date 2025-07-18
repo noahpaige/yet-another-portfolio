@@ -1,118 +1,50 @@
-## 📋 Updated Implementation Plan: MDX-Based Article System
+## 📝 Requirements: MDX Blog Post Rendering (React + Tailwind)
 
-### **Phase 1: MDX Setup & Configuration**
+We are building a system to render blog posts authored in MDX. The main goal is to support author-friendly `.mdx` content that renders correctly in the React app, with light layout styling and support for metadata like titles, dates, and slugs.
 
-1. **Install MDX Dependencies**
+### ✅ Core Functional Requirements
 
-   - Add `@next/mdx`, `@mdx-js/react`, `@mdx-js/loader` for MDX support
-   - Add `@tailwindcss/typography` for prose styling
-   - Update `next.config.ts` to enable MDX
+1. **Render `.mdx` Files in a React App**
 
-2. **Configure Tailwind Typography**
-   - Install and configure `@tailwindcss/typography` plugin
-   - Add custom prose styles that work well with your existing dark theme
-   - Ensure typography plugin provides good baseline styling for headings, lists, blockquotes, etc.
+   - Accept `.mdx` files stored locally (e.g., in `posts/`)
+   - Render their content into a styled blog layout
+   - Support JSX embedded inside markdown
 
-### **Phase 2: MDX Provider & Component System**
+2. **Custom Blog Layout**
 
-3. **Create MDX Provider Configuration**
+   - Use a `BlogPostLayout` component to wrap the MDX content
+   - Include typical blog UI like title, date, and an optional header image
+   - Style using Tailwind CSS utilities (basic spacing, readable typography)
 
-   - Build `MDXProvider` with custom component mappings in `src/components/mdx/`
-   - Implement responsive image component
-   - Add iframe/embed component with aspect ratio handling
-   - Create ShadCN Alert-based blockquote component
-   - Style links with hover effects
-   - Create reusable components for custom layouts (like Cyberpunk animations)
+3. **No `@tailwindcss/typography` Dependency**
 
-4. **Enhanced Article Layout**
-   - Update `ArticleLayout` to use MDX provider
-   - Ensure proper typography plugin integration with `prose` classes
-   - Maintain existing animated background functionality
+   - Avoid reliance on the Tailwind `prose` plugin to reduce complexity
+   - Apply layout and typographic styles manually or via utility classes
 
-### **Phase 3: Content Migration & Structure**
+4. **MDX Integration**
 
-5. **Create Content Directory Structure**
-
-   ```
-   src/
-   ├── projects/                    # Keep existing structure
-   │   ├── project-id/
-   │   │   ├── index.ts            # Metadata (unchanged)
-   │   │   └── content.mdx         # MDX content (replaces .tsx)
-   │   └── ...
-   ├── components/
-   │   ├── mdx/                    # New: MDX-specific components
-   │   │   ├── mdx-provider.tsx    # MDX provider configuration
-   │   │   ├── components.tsx      # Custom MDX components
-   │   │   └── types.ts            # MDX types
-   │   └── articles/               # Existing (unchanged)
-   └── scripts/
-       └── generate-project-index.ts  # Extended to handle MDX
-   ```
-
-6. **Migrate Existing Projects to MDX**
-   - Convert existing `content.tsx` files to `.mdx` format
-   - Extract custom components (like Cyberpunk animations) into reusable components
-   - Maintain current metadata structure in `index.ts`
-   - Update project loading system to handle MDX files
-
-### **Phase 4: Example Implementation**
-
-7. **Create Example Article**
-   - Build comprehensive example MDX file demonstrating all features
-   - Include headings, images, iframes, and custom components
-   - Test responsive behavior and styling
-
-### **Phase 5: Integration & Testing**
-
-8. **Update Project System**
-
-   - Modify project loading to support MDX files
-   - Update dynamic import system in `[id]/page.tsx`
-   - Ensure backward compatibility during migration
-   - Test all existing projects still work
-
-9. **Extensibility Preparation**
-   - Design system to easily add blog support later
-   - Create shared utilities for content management
-   - Document patterns for future content types
+   - Use a library like `@mdx-js/react` or `next-mdx-remote` (if in Next.js)
+   - Support custom React components in MDX (e.g., `<Callout>`, `<Image>`)
+   - Enable passing components via `MDXProvider` or `components` prop
 
 ---
 
-## **Key Design Decisions**
+### ✳️ Optional Enhancements (Final Steps)
 
-### **Extensibility Strategy**
+5. **Frontmatter Support**
 
-- **Unified Content System**: Both projects and blogs will use the same MDX infrastructure
-- **Shared Components**: All MDX components will be reusable across content types
-- **Metadata Consistency**: Maintain current project metadata structure for compatibility
-- **Future Blog Support**: Design with blog routes (`/blog/[slug]`) in mind
+   - Allow each `.mdx` file to start with a frontmatter block (YAML format)
+   - Fields might include: `title`, `date`, `description`, `tags`, `slug`
+   - Parse frontmatter with a library like `gray-matter`
 
-### **File Organization**
+6. **Metadata Extraction**
 
-- **Content Separation**: Keep MDX files separate from React components
-- **Shared Utilities**: Centralize MDX configuration and components
-- **Type Safety**: Maintain TypeScript support throughout
+   - Dynamically load all `.mdx` files in a `posts/` directory
+   - Extract frontmatter from each and build a post metadata index
+   - Use this index to render blog cards, lists, or previews elsewhere in the app
 
-### **Styling Approach**
+---
 
-- **Tailwind Typography**: Use `prose` classes for consistent markdown styling (general styling, not dark-mode specific)
-- **Theme Integration**: Ensure typography works well with your existing dark theme
-- **Responsive Design**: All components will be mobile-friendly
-- **Custom Components**: ShadCN integration for enhanced UI elements
+## 🚧 Next Step: Create an Implementation Plan
 
-### **Migration Strategy**
-
-- **One Format**: Convert all projects to MDX-only
-- **Component Extraction**: Move custom layouts to reusable components
-- **Gradual Migration**: Convert projects one at a time to ensure stability
-- **Backward Compatibility**: Ensure system works during transition period
-
-The main changes from the previous plan:
-
-1. **MDX-only approach** - no dual format support
-2. **Component extraction** - move custom layouts to reusable components
-3. **Simplified structure** - one content format to maintain
-4. **Migration focus** - convert existing projects to MDX
-
-Would you like me to proceed with this updated implementation plan?
+Before diving into code, let’s define an **implementation plan** that breaks this into small, verifiable steps. This will help ensure clarity and prevent rework.
