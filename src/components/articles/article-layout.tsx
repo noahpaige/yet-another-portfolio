@@ -5,14 +5,14 @@ import { useScroll } from "framer-motion";
 import AnimatedBackground from "@/components/animated-background";
 import ClientOnly from "@/components/client-only";
 import NoiseOverlay from "@/components/noise-overlay";
-import type { ArticleTemplateProps } from "./types";
+import type { ArticleLayoutProps } from "./types";
 
-export default function ArticleTemplate({
+export default function ArticleLayout({
   header,
   tags,
   colorPairs,
   children,
-}: ArticleTemplateProps) {
+}: ArticleLayoutProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Override body overflow to enable scrolling on this page

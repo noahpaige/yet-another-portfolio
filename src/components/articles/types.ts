@@ -1,6 +1,6 @@
 import type { HSLColor } from "@/components/animated-background";
 
-export interface ArticleTemplateProps {
+export interface ArticleLayoutProps {
   header: string;
   tags: string[];
   colorPairs: [HSLColor, HSLColor][];

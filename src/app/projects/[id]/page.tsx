@@ -1,6 +1,6 @@
 import React from "react";
 import { getProjectById } from "@/generated/project-index";
-import ArticleTemplate from "@/components/project-templates/article-template";
+import ArticleLayout from "@/components/articles/article-layout";
 import { notFound } from "next/navigation";
 import type { HSLColor } from "@/components/animated-background";
 
@@ -43,12 +43,12 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
   const colorPairs = project.colorPairs || defaultColorPairs;
 
   return (
-    <ArticleTemplate
+    <ArticleLayout
       header={project.title}
       tags={project.tags}
       colorPairs={colorPairs}
     >
       <ProjectContent />
-    </ArticleTemplate>
+    </ArticleLayout>
   );
 }
