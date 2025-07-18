@@ -29,7 +29,7 @@ The Article Template is a robust, content-focused template designed for detailed
 - **Single-column layout** with maximum width constraint (`CONTENT_BOUNDS.xMaxPx`)
 - **Centered alignment** with consistent margins
 - **Typography hierarchy** with proper spacing and line heights
-- **Sticky navigation** that appears on scroll (configurable)
+- **ContentElement[] rendering system** for structured content
 
 ## Content Elements System
 
@@ -37,7 +37,8 @@ The Article Template is a robust, content-focused template designed for detailed
 
 - **Automatic fragment identifier generation** for navigation
 - **Three levels of hierarchy** (H1, H2, H3) with distinct styling
-- **Sticky navigation integration** with smooth scrolling
+- **Clickable headings** with hover underline effect
+- **URL fragment management** on click
 - **Responsive typography** that scales appropriately
 
 ### Body Text
@@ -73,9 +74,8 @@ interface ArticleTemplateConfig {
     overlayOpacity?: number; // Default: 0.3
   };
   content: {
-    maxWidth?: number; // Default: CONTENT_BOUNDS.yMaxPx
-    enableStickyNav?: boolean; // Default: true
-    stickyNavOffset?: number; // Default: 80px
+    maxWidth?: number; // Default: CONTENT_BOUNDS.xMaxPx
+    enableFragmentNavigation?: boolean; // Default: true
   };
   figures: {
     defaultMargin?: number; // Default: 24px
@@ -109,10 +109,10 @@ interface ContentElement {
 
 ### Navigation System
 
-- **Automatic fragment generation** from section headers
-- **Sticky navigation bar** with smooth scrolling
-- **Breadcrumb support** for complex content structures
-- **Keyboard navigation** with proper focus management
+- **Automatic fragment identifier generation** from section headers
+- **Clickable headings** with hover underline effect
+- **URL fragment updates** when clicking headings
+- **Browser-native scroll behavior** to sections
 
 ### Responsive Design
 
@@ -125,7 +125,7 @@ interface ContentElement {
 
 - **Lazy loading** for images and heavy content
 - **Efficient DOM updates** with minimal reflows
-- **Optimized rendering** for smooth scrolling
+- **Optimized rendering** for content elements
 - **Memory management** for long-form content
 
 ### Accessibility Features
@@ -144,25 +144,58 @@ interface ContentElement {
 - Typography system and responsive layout
 - Basic content rendering pipeline
 
-### Phase 2: Navigation (Week 2)
+### Phase 2: Define Elements (Week 2)
 
-- Fragment identifier generation
-- Sticky navigation component
-- Smooth scrolling implementation
+- **Header Text Component** (`article-header-text`):
+  - Supports H1, H2, H3 levels with proper typography
+  - Automatic fragment identifier generation
+  - Clickable with hover underline effect
+  - URL fragment management on click
+- **Body Text Component** (`article-body-text`):
+  - Rich text support (paragraphs, lists, emphasis, links)
+  - Proper spacing and typography
+  - Responsive text sizing
+- **Figure Component** (`article-figure`):
+  - Flexible content container (images, videos, interactive elements)
+  - Three alignment options (left, right, center)
+  - Caption support and alt text integration
+  - Responsive behavior (always stacks on mobile)
+- **TypeScript Interfaces**: Complete type definitions for all element types
 
-### Phase 3: Figure System (Week 3)
+### Phase 3: Create Elements System (Week 3)
 
-- Flexible figure container
-- Text wrapping logic
-- Responsive behavior implementation
+- **ContentElement[] Rendering System**:
+  - Array-based content structure for dynamic rendering
+  - Element factory pattern for creating components from data
+  - Registry system for mapping element types to components
+- **Integration with Template**:
+  - Seamless integration with existing template structure
+  - Proper content flow and spacing
+  - Responsive layout support
+- **Content Parsing**:
+  - System for converting markdown/structured content to ContentElement[]
+  - Element creation from various input formats
+  - Validation and error handling
 
-### Phase 4: Content Integration (Week 4)
+### Phase 4: Navigation (Week 4)
 
-- Content parsing and rendering
-- Configuration system
+- Fragment identifier generation for section headers
+- Clickable headings with hover effects
+- URL fragment management
+
+### Phase 5: Figure System (Week 5)
+
+- Text wrapping logic for figure alignment
+- Responsive behavior implementation (always stack on mobile)
+- Caption and alt text integration
+
+### Phase 6: Content Integration (Week 6)
+
+- Integration with existing project system
+- Configuration system for template options
 - Template registry integration
 
-### Phase 5: Polish (Week 5)
+### Phase 7: Polish (Week 7)
 
 - Accessibility improvements
 - Performance optimizations
@@ -172,8 +205,8 @@ interface ContentElement {
 
 ### State Management
 
-- **Scroll position tracking** for sticky navigation
-- **Fragment identifier management** for navigation
+- **Fragment identifier management** for section headers
+- **URL fragment state** for navigation
 - **Responsive state** for mobile/desktop behavior
 - **Loading states** for lazy-loaded content
 
