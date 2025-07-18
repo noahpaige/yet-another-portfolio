@@ -1,9 +1,6 @@
 import React from "react";
 import { getProjectById } from "@/generated/project-index";
-import {
-  getTemplateById,
-  getDefaultTemplate,
-} from "@/components/project-templates/template-registry";
+import ArticleTemplate from "@/components/project-templates/article-template";
 import { notFound } from "next/navigation";
 import type { HSLColor } from "@/components/animated-background";
 
@@ -31,12 +28,6 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
     notFound();
   }
 
-  // Get template configuration
-  const templateConfig = project.template;
-  const templateId = templateConfig?.templateId || "default";
-  const template = getTemplateById(templateId) || getDefaultTemplate();
-  const TemplateComponent = template.component;
-
   // Default color pairs if none provided
   const defaultColorPairs: [HSLColor, HSLColor][] = [
     [
@@ -49,15 +40,15 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
     ],
   ];
 
-  const colorPairs = templateConfig?.colorPairs || defaultColorPairs;
+  const colorPairs = project.colorPairs || defaultColorPairs;
 
   return (
-    <TemplateComponent
+    <ArticleTemplate
       header={project.title}
       tags={project.tags}
       colorPairs={colorPairs}
     >
       <ProjectContent />
-    </TemplateComponent>
+    </ArticleTemplate>
   );
 }

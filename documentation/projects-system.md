@@ -11,7 +11,7 @@ The projects system in this portfolio app is designed to automatically generate 
 1. **Project Folders** (`src/projects/`) - Individual project definitions
 2. **Generated Index** (`src/generated/project-index.ts`) - Auto-generated project registry
 3. **Dynamic Routes** (`src/app/projects/[id]/page.tsx`) - Individual project pages
-4. **Project Templates** (`src/components/project-templates/`) - Layout templates for projects
+4. **Article Template** (`src/components/articles/article-template.tsx`) - Single layout template for all projects
 5. **Project Cards** (`src/components/ui/project-card.tsx`) - Reusable project preview cards
 
 ## How It Works
@@ -43,17 +43,13 @@ export default {
   timestamp: "2024-01-01T00:00:00Z", // ISO date string
   featured: true, // Show on home page
   featuredOrder: 1, // Order on home page (optional)
-  template: {
-    // Template configuration (optional)
-    templateId: "minimal",
-    colorPairs: [
-      // Custom background colors (optional)
-      [
-        { h: 145, s: 50, l: 30 },
-        { h: 290, s: 35, l: 10 },
-      ],
+  colorPairs: [
+    // Custom background colors (optional)
+    [
+      { h: 145, s: 50, l: 30 },
+      { h: 290, s: 35, l: 10 },
     ],
-  },
+  ],
 };
 ```
 
@@ -101,7 +97,7 @@ export interface Project {
   timestamp: string;
   featured: boolean;
   featuredOrder?: number;
-  template?: ProjectTemplateConfig;
+  colorPairs?: [HSLColor, HSLColor][];
 }
 
 export const projects: Project[] = [
@@ -126,8 +122,8 @@ Each project page is dynamically generated using Next.js dynamic routes:
 1. **Route Resolution**: Next.js matches `/projects/[id]` to the project ID
 2. **Project Lookup**: Uses `getProjectById()` to find project metadata
 3. **Content Loading**: Dynamically imports the project's `content.tsx`
-4. **Template Application**: Applies the specified template (or default)
-5. **Rendering**: Renders the project with the chosen layout
+4. **Template Application**: Applies the unified article template
+5. **Rendering**: Renders the project with consistent layout
 
 ```typescript
 export default async function ProjectPage({ params }: ProjectPageProps) {
@@ -142,17 +138,28 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
   const contentModule = await import(`@/projects/${id}/content`);
   const ProjectContent = contentModule.default;
 
-  // Get template configuration
-  const template = getTemplateById(project.template?.templateId || "default");
+  // Default color pairs if none provided
+  const defaultColorPairs: [HSLColor, HSLColor][] = [
+    [
+      { h: 145, s: 50, l: 30 },
+      { h: 290, s: 35, l: 10 },
+    ],
+    [
+      { h: 245, s: 30, l: 9 },
+      { h: 145, s: 60, l: 27 },
+    ],
+  ];
+
+  const colorPairs = project.colorPairs || defaultColorPairs;
 
   return (
-    <TemplateComponent
+    <ArticleTemplate
       header={project.title}
       tags={project.tags}
-      colorPairs={project.template?.colorPairs || defaultColorPairs}
+      colorPairs={colorPairs}
     >
       <ProjectContent />
-    </TemplateComponent>
+    </ArticleTemplate>
   );
 }
 ```
@@ -179,53 +186,42 @@ export default function ProjectsPage() {
 }
 ```
 
-### 4. Project Templates
+### 4. Article Template
 
-The template system provides different layout options for projects:
+The system uses a single, unified template for all projects:
 
-#### Available Templates:
+#### Article Template (`article-template.tsx`)
 
-1. **Default Template** (`default-template.tsx`)
+- **Animated Background**: Full animated gradient background with scroll-based effects
+- **Centered Layout**: Clean, centered layout with header and tags
+- **Scrollable Content**: Proper scrolling behavior with content area
+- **Customizable Colors**: Optional custom background color pairs per project
+- **Responsive Design**: Adapts to different screen sizes
+- **Accessibility**: Proper semantic markup and alt text support
 
-   - Full animated background
-   - Centered layout with header and tags
-   - Scrollable content area
+#### Template Features:
 
-2. **Minimal Template** (`minimal-template.tsx`)
+- **Header Section**: Large title with project tags displayed as badges
+- **Content Area**: Full-width content area with proper typography
+- **Background Effects**: Animated gradient background with noise overlay
+- **Scroll Integration**: Background animation tied to scroll progress
+- **Color Customization**: Projects can define custom `colorPairs` for unique backgrounds
 
-   - Clean, simple layout
-   - No animated background
-   - Focus on content
-
-3. **Fullscreen Template** (`fullscreen-template.tsx`)
-
-   - Hero-focused layout
-   - Large title and animated background
-   - Immersive experience
-
-4. **Custom Template** (`custom-template.tsx`)
-   - Complete freedom
-   - Project provides its own layout
-   - Maximum flexibility
-
-#### Template Configuration:
+#### Color Customization:
 
 ```typescript
 // In project index.ts
-template: {
-  templateId: "minimal",  // Template to use
-  colorPairs: [           // Custom background colors (optional)
-    [{ h: 145, s: 50, l: 30 }, { h: 290, s: 35, l: 10 }]
-  ]
-}
+colorPairs: [
+  [
+    { h: 145, s: 50, l: 30 }, // First color
+    { h: 290, s: 35, l: 10 }, // Second color
+  ],
+  [
+    { h: 245, s: 30, l: 9 },  // Third color
+    { h: 145, s: 60, l: 27 }, // Fourth color
+  ],
+],
 ```
-
-#### Template Differences:
-
-- **Default**: Full animated background, centered layout, scrollable content
-- **Minimal**: Clean slate background, simple layout, no animations
-- **Fullscreen**: Hero section with large title, animated background, content below
-- **Custom**: No layout provided - project content handles everything
 
 ### 5. Project Cards
 
@@ -270,6 +266,13 @@ The `ProjectCard` component provides consistent project previews across the app:
      timestamp: "2024-01-15T00:00:00Z",
      featured: true,
      featuredOrder: 1,
+     colorPairs: [
+       // Optional custom colors
+       [
+         { h: 145, s: 50, l: 30 },
+         { h: 290, s: 35, l: 10 },
+       ],
+     ],
    };
    ```
 
@@ -299,7 +302,7 @@ The `ProjectCard` component provides consistent project previews across the app:
 ### Updating Projects
 
 1. **Edit Content**: Modify `content.tsx` for layout changes
-2. **Edit Metadata**: Update `index.ts` for title, tags, etc.
+2. **Edit Metadata**: Update `index.ts` for title, tags, colors, etc.
 3. **Regenerate Index**: Run the generation script
 4. **Deploy**: Changes are automatically reflected
 
@@ -318,11 +321,12 @@ The `ProjectCard` component provides consistent project previews across the app:
 - IntelliSense support
 - Automatic project validation
 
-### 3. **Flexible Templates**
+### 3. **Unified Template System**
 
-- Multiple layout options
-- Custom styling per project
-- Easy template switching
+- Single, consistent layout for all projects
+- Simplified maintenance and updates
+- Customizable background colors per project
+- Clean, modern design
 
 ### 4. **Performance**
 
@@ -336,6 +340,7 @@ The `ProjectCard` component provides consistent project previews across the app:
 - Consistent project structure
 - Easy to add new projects
 - No manual route configuration
+- Simplified template system
 
 ## Scripts
 
@@ -406,17 +411,13 @@ src/
 │   ├── page.tsx                # Projects listing
 │   └── [id]/page.tsx           # Individual project pages
 ├── components/
-│   ├── project-templates/      # Layout templates
-│   │   ├── default-template.tsx
-│   │   ├── minimal-template.tsx
-│   │   ├── fullscreen-template.tsx
-│   │   ├── custom-template.tsx
-│   │   ├── template-registry.tsx
-│   │   └── types.ts
+│   ├── articles/               # Article template
+│   │   ├── article-template.tsx # Single unified template
+│   │   └── types.ts            # Template types
 │   └── ui/
 │       └── project-card.tsx    # Project preview cards
 └── scripts/
     └── generate-project-index.ts  # Index generation script
 ```
 
-This system provides a powerful, flexible, and maintainable way to manage portfolio projects with minimal manual configuration and maximum automation.
+This system provides a powerful, flexible, and maintainable way to manage portfolio projects with minimal manual configuration and maximum automation. The simplified template system ensures consistency across all projects while still allowing for customization through background colors.

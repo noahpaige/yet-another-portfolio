@@ -3,11 +3,6 @@
 
 import type { HSLColor } from "@/components/animated-background";
 
-export interface ProjectTemplateConfig {
-  templateId: string;
-  colorPairs?: [HSLColor, HSLColor][];
-}
-
 export interface Project {
   id: string;
   title: string;
@@ -17,7 +12,7 @@ export interface Project {
   timestamp: string;
   featured: boolean;
   featuredOrder?: number;
-  template?: ProjectTemplateConfig;
+  colorPairs?: [HSLColor, HSLColor][];
 }
 
 // All projects sorted by timestamp (newest first)
@@ -34,10 +29,7 @@ export const projects: Project[] = [
     "imageAltText": "Masters thesis research and academic work",
     "timestamp": "2024-12-01T00:00:00Z",
     "featured": true,
-    "featuredOrder": 1,
-    "template": {
-      "templateId": "default"
-    }
+    "featuredOrder": 1
   },
   {
     "id": "indiana-jones",
@@ -51,10 +43,7 @@ export const projects: Project[] = [
     "imageAltText": "Gotcha!",
     "timestamp": "2024-06-20T00:00:00Z",
     "featured": true,
-    "featuredOrder": 6,
-    "template": {
-      "templateId": "minimal"
-    }
+    "featuredOrder": 6
   },
   {
     "id": "ghost-of-tsushima",
@@ -69,35 +58,32 @@ export const projects: Project[] = [
     "timestamp": "2024-05-15T00:00:00Z",
     "featured": true,
     "featuredOrder": 5,
-    "template": {
-      "templateId": "default",
-      "colorPairs": [
-        [
-          {
-            "h": 15,
-            "s": 70,
-            "l": 25
-          },
-          {
-            "h": 200,
-            "s": 40,
-            "l": 15
-          }
-        ],
-        [
-          {
-            "h": 200,
-            "s": 50,
-            "l": 20
-          },
-          {
-            "h": 15,
-            "s": 80,
-            "l": 30
-          }
-        ]
+    "colorPairs": [
+      [
+        {
+          "h": 15,
+          "s": 70,
+          "l": 25
+        },
+        {
+          "h": 200,
+          "s": 40,
+          "l": 15
+        }
+      ],
+      [
+        {
+          "h": 200,
+          "s": 50,
+          "l": 20
+        },
+        {
+          "h": 15,
+          "s": 80,
+          "l": 30
+        }
       ]
-    }
+    ]
   },
   {
     "id": "death-stranding",
@@ -111,10 +97,7 @@ export const projects: Project[] = [
     "imageAltText": "Troy Baker babysitting.",
     "timestamp": "2024-04-05T00:00:00Z",
     "featured": true,
-    "featuredOrder": 4,
-    "template": {
-      "templateId": "minimal"
-    }
+    "featuredOrder": 4
   },
   {
     "id": "cyberpunk-2077",
@@ -128,10 +111,7 @@ export const projects: Project[] = [
     "imageAltText": "My Number 1 Choom",
     "timestamp": "2024-03-10T00:00:00Z",
     "featured": true,
-    "featuredOrder": 3,
-    "template": {
-      "templateId": "custom"
-    }
+    "featuredOrder": 3
   },
   {
     "id": "control",
@@ -145,10 +125,7 @@ export const projects: Project[] = [
     "imageAltText": "How does the director even get over there?",
     "timestamp": "2024-02-20T00:00:00Z",
     "featured": true,
-    "featuredOrder": 2,
-    "template": {
-      "templateId": "minimal"
-    }
+    "featuredOrder": 2
   },
   {
     "id": "clair-obscur",
@@ -163,35 +140,32 @@ export const projects: Project[] = [
     "timestamp": "2024-01-15T00:00:00Z",
     "featured": true,
     "featuredOrder": 1,
-    "template": {
-      "templateId": "default",
-      "colorPairs": [
-        [
-          {
-            "h": 280,
-            "s": 60,
-            "l": 25
-          },
-          {
-            "h": 145,
-            "s": 40,
-            "l": 15
-          }
-        ],
-        [
-          {
-            "h": 145,
-            "s": 50,
-            "l": 20
-          },
-          {
-            "h": 280,
-            "s": 70,
-            "l": 30
-          }
-        ]
+    "colorPairs": [
+      [
+        {
+          "h": 280,
+          "s": 60,
+          "l": 25
+        },
+        {
+          "h": 145,
+          "s": 40,
+          "l": 15
+        }
+      ],
+      [
+        {
+          "h": 145,
+          "s": 50,
+          "l": 20
+        },
+        {
+          "h": 280,
+          "s": 70,
+          "l": 30
+        }
       ]
-    }
+    ]
   }
 ];
 

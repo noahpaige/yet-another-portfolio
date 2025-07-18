@@ -5,14 +5,14 @@ import { useScroll } from "framer-motion";
 import AnimatedBackground from "@/components/animated-background";
 import ClientOnly from "@/components/client-only";
 import NoiseOverlay from "@/components/noise-overlay";
-import type { ProjectTemplateProps } from "./types";
+import type { ArticleTemplateProps } from "./types";
 
-export default function FullscreenTemplate({
+export default function ArticleTemplate({
   header,
   tags,
   colorPairs,
   children,
-}: ProjectTemplateProps) {
+}: ArticleTemplateProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Override body overflow to enable scrolling on this page
@@ -49,35 +49,29 @@ export default function FullscreenTemplate({
         ref={scrollContainerRef}
         className="min-h-screen bg-black overflow-x-hidden"
       >
-        {/* Hero Section */}
-        <div className="relative z-10 min-h-screen flex items-center justify-center">
-          <div className="text-center px-4">
-            <h1 className="text-6xl md:text-8xl font-bold mb-8 text-zinc-100 leading-tight">
-              {header}
-            </h1>
-            {tags.length > 0 && (
-              <div className="flex flex-wrap justify-center gap-3 mb-12">
-                {tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="px-4 py-2 bg-zinc-800/50 text-zinc-300 rounded-full text-lg backdrop-blur-sm border border-zinc-700/50"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Content Section */}
-        <div className="relative z-10 bg-black/80 backdrop-blur-sm">
-          <div className="container mx-auto px-4 py-16">
-            <div className="max-w-4xl mx-auto">
-              <div className="prose prose-invert prose-lg max-w-none">
-                {children}
-              </div>
+        {/* Header */}
+        <div className="container mx-auto px-4 py-12 relative z-10">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-16">
+              <h1 className="text-5xl md:text-6xl font-bold mb-6 text-zinc-100">
+                {header}
+              </h1>
+              {tags.length > 0 && (
+                <div className="flex flex-wrap justify-center gap-2">
+                  {tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="px-3 py-1 bg-zinc-800/50 text-zinc-300 rounded-full text-sm backdrop-blur-sm"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
+
+            {/* Content */}
+            <div className="prose prose-invert max-w-none">{children}</div>
           </div>
         </div>
       </div>

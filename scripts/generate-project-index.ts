@@ -27,11 +27,6 @@ let indexContent = `// This file is auto-generated. Do not edit manually.
 
 import type { HSLColor } from "@/components/animated-background";
 
-export interface ProjectTemplateConfig {
-  templateId: string;
-  colorPairs?: [HSLColor, HSLColor][];
-}
-
 export interface Project {
   id: string;
   title: string;
@@ -41,7 +36,7 @@ export interface Project {
   timestamp: string;
   featured: boolean;
   featuredOrder?: number;
-  template?: ProjectTemplateConfig;
+  colorPairs?: [HSLColor, HSLColor][];
 }
 
 // All projects sorted by timestamp (newest first)
@@ -58,10 +53,9 @@ const allProjects: Array<{
   timestamp: string;
   featured: boolean;
   featuredOrder?: number;
-  template?: {
-    templateId: string;
-    colorPairs?: Array<[{ h: number; s: number; l: number }, { h: number; s: number; l: number }]>;
-  };
+  colorPairs?: Array<
+    [{ h: number; s: number; l: number }, { h: number; s: number; l: number }]
+  >;
 }> = [];
 
 projectDirs.forEach((projectDir) => {
@@ -74,6 +68,15 @@ projectDirs.forEach((projectDir) => {
       try {
         // Evaluate the object to get the actual data
         const projectObject = eval(`(${match[1]})`);
+
+        // Extract colorPairs from template config if it exists
+        if (projectObject.template?.colorPairs) {
+          projectObject.colorPairs = projectObject.template.colorPairs;
+        }
+
+        // Remove template field
+        delete projectObject.template;
+
         allProjects.push(projectObject);
       } catch (error) {
         console.error(`Error parsing project ${projectDir}:`, error);
@@ -83,13 +86,16 @@ projectDirs.forEach((projectDir) => {
 });
 
 // Sort all projects by timestamp (newest first)
-allProjects.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+allProjects.sort(
+  (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+);
 
 // Add all projects to the index
 allProjects.forEach((project, index) => {
-  indexContent += `  ${JSON.stringify(project, null, 2).split('\n').map((line, i) => i === 0 ? line : '  ' + line).join('\n')}${
-    index < allProjects.length - 1 ? "," : ""
-  }\n`;
+  indexContent += `  ${JSON.stringify(project, null, 2)
+    .split("\n")
+    .map((line, i) => (i === 0 ? line : "  " + line))
+    .join("\n")}${index < allProjects.length - 1 ? "," : ""}\n`;
 });
 
 indexContent += `];
@@ -112,5 +118,7 @@ export function getProjectById(id: string): Project | undefined {
 fs.writeFileSync(OUTPUT_FILE, indexContent);
 
 console.log(`✅ Generated project index with ${allProjects.length} projects`);
-console.log(`⭐ Featured projects: ${allProjects.filter(p => p.featured).length}`);
+console.log(
+  `⭐ Featured projects: ${allProjects.filter((p) => p.featured).length}`
+);
 console.log(`📁 Output: ${OUTPUT_FILE}`);

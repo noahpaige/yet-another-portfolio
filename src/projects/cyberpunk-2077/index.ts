@@ -7,7 +7,4 @@ export default {
   timestamp: "2024-03-10T00:00:00Z",
   featured: true,
   featuredOrder: 3,
-  template: {
-    templateId: "custom",
-  },
 };

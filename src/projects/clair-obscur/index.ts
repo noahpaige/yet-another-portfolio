@@ -7,17 +7,14 @@ export default {
   timestamp: "2024-01-15T00:00:00Z",
   featured: true,
   featuredOrder: 1,
-  template: {
-    templateId: "default",
-    colorPairs: [
-      [
-        { h: 280, s: 60, l: 25 },
-        { h: 145, s: 40, l: 15 },
-      ],
-      [
-        { h: 145, s: 50, l: 20 },
-        { h: 280, s: 70, l: 30 },
-      ],
+  colorPairs: [
+    [
+      { h: 280, s: 60, l: 25 },
+      { h: 145, s: 40, l: 15 },
     ],
-  },
+    [
+      { h: 145, s: 50, l: 20 },
+      { h: 280, s: 70, l: 30 },
+    ],
+  ],
 };
