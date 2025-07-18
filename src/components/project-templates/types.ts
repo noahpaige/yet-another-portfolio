@@ -5,6 +5,12 @@ export interface ProjectTemplateProps {
   tags: string[];
   colorPairs: [HSLColor, HSLColor][];
   children: React.ReactNode;
+  config?: {
+    image?: string;
+    imageAltText?: string;
+    timestamp?: string;
+    [key: string]: unknown;
+  };
 }
 
 export interface ProjectTemplate {

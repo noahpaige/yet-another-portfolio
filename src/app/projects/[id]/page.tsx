@@ -56,6 +56,11 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
       header={project.title}
       tags={project.tags}
       colorPairs={colorPairs}
+      config={{
+        image: project.image,
+        imageAltText: project.imageAltText,
+        timestamp: project.timestamp,
+      }}
     >
       <ProjectContent />
     </TemplateComponent>

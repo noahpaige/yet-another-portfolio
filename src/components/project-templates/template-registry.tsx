@@ -2,6 +2,7 @@ import DefaultTemplate from "./default-template";
 import MinimalTemplate from "./minimal-template";
 import FullscreenTemplate from "./fullscreen-template";
 import CustomTemplate from "./custom-template";
+import ArticleTemplate from "./article-template";
 import type { ProjectTemplate } from "./types";
 
 export const templates: ProjectTemplate[] = [
@@ -22,6 +23,13 @@ export const templates: ProjectTemplate[] = [
     name: "Fullscreen",
     component: FullscreenTemplate,
     description: "Hero-focused layout with large title and animated background",
+  },
+  {
+    id: "article",
+    name: "Article",
+    component: ArticleTemplate,
+    description:
+      "Content-focused template for detailed documentation and academic papers",
   },
   {
     id: "custom",
