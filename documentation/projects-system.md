@@ -11,7 +11,7 @@ The projects system in this portfolio app is designed to automatically generate 
 1. **Project Folders** (`src/projects/`) - Individual project definitions
 2. **Generated Index** (`src/generated/project-index.ts`) - Auto-generated project registry
 3. **Dynamic Routes** (`src/app/projects/[id]/page.tsx`) - Individual project pages
-4. **Article Template** (`src/components/articles/article-template.tsx`) - Single layout template for all projects
+4. **Article Template** (`src/components/articles/article-layout.tsx`) - Single layout template for all projects
 5. **Project Cards** (`src/components/ui/project-card.tsx`) - Reusable project preview cards
 
 ## How It Works
@@ -153,13 +153,13 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
   const colorPairs = project.colorPairs || defaultColorPairs;
 
   return (
-    <ArticleTemplate
+    <ArticleLayout
       header={project.title}
       tags={project.tags}
       colorPairs={colorPairs}
     >
       <ProjectContent />
-    </ArticleTemplate>
+    </ArticleLayout>
   );
 }
 ```
@@ -190,7 +190,7 @@ export default function ProjectsPage() {
 
 The system uses a single, unified template for all projects:
 
-#### Article Template (`article-template.tsx`)
+#### Article Template (`article-layout.tsx`)
 
 - **Animated Background**: Full animated gradient background with scroll-based effects
 - **Centered Layout**: Clean, centered layout with header and tags
@@ -412,7 +412,7 @@ src/
 │   └── [id]/page.tsx           # Individual project pages
 ├── components/
 │   ├── articles/               # Article template
-│   │   ├── article-template.tsx # Single unified template
+│   │   ├── article-layout.tsx # Single unified template
 │   │   └── types.ts            # Template types
 │   └── ui/
 │       └── project-card.tsx    # Project preview cards
