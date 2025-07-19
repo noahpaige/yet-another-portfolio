@@ -11,6 +11,8 @@
     "generate-mdx-index": "tsx scripts/generate-mdx-index.ts",
     "test-enhanced-frontmatter": "tsx scripts/test-enhanced-frontmatter.ts",
     "demo-enhanced-frontmatter": "tsx scripts/demo-enhanced-frontmatter.ts",
+    "test-content-filtering": "tsx scripts/test-content-filtering.ts",
+    "test-content-analytics": "tsx scripts/test-content-analytics.ts",
     "generate-project-index": "tsx scripts/generate-project-index.ts"
   },
   "dependencies": {
