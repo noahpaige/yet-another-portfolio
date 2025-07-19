@@ -9,6 +9,8 @@
     "lint": "next lint",
     "generate-content-index": "tsx scripts/generate-content-index.ts",
     "generate-mdx-index": "tsx scripts/generate-mdx-index.ts",
+    "test-enhanced-frontmatter": "tsx scripts/test-enhanced-frontmatter.ts",
+    "demo-enhanced-frontmatter": "tsx scripts/demo-enhanced-frontmatter.ts",
     "generate-project-index": "tsx scripts/generate-project-index.ts"
   },
   "dependencies": {
@@ -28,7 +30,7 @@
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.56.1",
     "tailwind-merge": "^3.2.0",
-    "zod": "^3.24.3"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

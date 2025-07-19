@@ -1,6 +1,10 @@
 import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
+import {
+  processFrontmatter,
+  enhanceMetadata,
+} from "../src/lib/enhanced-frontmatter";
 
 interface ContentTypeConfig {
   name: string;
@@ -38,8 +42,55 @@ export interface MDXMetadata {
   title?: string;
   description?: string;
   date?: string;
+  author?: string;
+  readTime?: number;
+  category?: string;
   tags?: string[];
-  [key: string]: string | string[] | undefined;
+  slug?: string;
+  featured?: boolean;
+  featuredOrder?: number;
+  status?: "draft" | "published" | "archived";
+  lastModified?: string;
+  version?: string;
+  seo?: {
+    title?: string;
+    description?: string;
+    keywords?: string[];
+    image?: string;
+    canonical?: string;
+  };
+  social?: {
+    twitter?: {
+      title?: string;
+      description?: string;
+      image?: string;
+    };
+    og?: {
+      title?: string;
+      description?: string;
+      image?: string;
+      type?: string;
+    };
+  };
+  // Project-specific fields
+  type?: "project";
+  technologies?: string[];
+  github?: string;
+  demo?: string;
+  difficulty?: "beginner" | "intermediate" | "advanced" | "expert";
+  completionDate?: string;
+  teamSize?: number;
+  role?: string;
+  duration?: string;
+  budget?: string;
+  client?: string;
+  awards?: string[];
+  media?: {
+    thumbnail?: string;
+    gallery?: string[];
+    video?: string;
+  };
+  [key: string]: string | string[] | number | boolean | object | undefined;
 }
 
 export interface MDXContent {
@@ -84,7 +135,7 @@ export const ${name}MDXContent: Record<string, MDXContent | null> = {
   const mdxData: Record<
     string,
     {
-      metadata: Record<string, string | string[] | undefined>;
+      metadata: Record<string, unknown>;
       content: string;
     } | null
   > = {};
@@ -97,12 +148,21 @@ export const ${name}MDXContent: Record<string, MDXContent | null> = {
         const fileContent = fs.readFileSync(mdxPath, "utf8");
         const { data, content } = matter(fileContent);
 
+        // Process and enhance frontmatter
+        const processedMetadata = processFrontmatter(data);
+        const enhancedMetadata = enhanceMetadata(processedMetadata);
+
         mdxData[contentDir] = {
-          metadata: data,
+          metadata: enhancedMetadata,
           content: content.trim(),
         };
 
         console.log(`✅ Processed MDX for: ${contentDir}`);
+        console.log(
+          `   📊 Enhanced metadata: ${enhancedMetadata.readTime}min read, ${
+            enhancedMetadata.tags?.length || 0
+          } tags`
+        );
       } catch (error) {
         console.error(`❌ Error processing MDX for ${contentDir}:`, error);
         mdxData[contentDir] = null;
