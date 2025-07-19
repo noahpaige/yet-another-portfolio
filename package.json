@@ -13,6 +13,7 @@
     "demo-enhanced-frontmatter": "tsx scripts/demo-enhanced-frontmatter.ts",
     "test-content-filtering": "tsx scripts/test-content-filtering.ts",
     "test-content-analytics": "tsx scripts/test-content-analytics.ts",
+    "test-project-discovery": "tsx scripts/test-project-discovery.ts",
     "generate-project-index": "tsx scripts/generate-project-index.ts"
   },
   "dependencies": {
