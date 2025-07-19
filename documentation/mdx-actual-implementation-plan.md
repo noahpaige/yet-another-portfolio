@@ -293,123 +293,177 @@ description: "Project description from frontmatter"
 
 ---
 
-### **Step 8: Advanced Content Management** 🔄
+### **Step 8: Focused Content Management** 🔄
 
 **Status**: PLANNED
 
 **What We Need to Do:**
 
-- [ ] Add content versioning and draft support
-- [ ] Implement content categories and hierarchical organization
-- [ ] Create content analytics and usage tracking
-- [ ] Add content scheduling and publication workflows
-- [ ] Implement content backup and recovery systems
+- [ ] Add simple draft system with `status: "draft"` field
+- [ ] Implement content categories and filtering using existing metadata
+- [ ] Create basic analytics for content performance insights
+- [ ] Leverage Git-based versioning for content management
+- [ ] Build content organization and discovery features
+
+**Scope Rationale:**
+Since you're comfortable with rebuild/redeploy workflow, we focus on features that provide immediate value without over-engineering:
+
+- **Draft System**: Work on content without affecting live portfolio
+- **Categories & Filtering**: Help visitors find relevant projects
+- **Basic Analytics**: Understand which content performs best
+- **Git Versioning**: Leverage existing workflow for content management
 
 ---
 
-### **Step 9: Enhanced Content Discovery** 🔄
+### **Step 9: Content Discovery & Organization** 🔄
 
 **Status**: PLANNED
 
 **What We Need to Do:**
 
-- [ ] Create advanced search with full-text search capabilities
-- [ ] Implement content recommendations and related content
-- [ ] Add content tagging and tag-based navigation
-- [ ] Create content preview and thumbnail generation
-- [ ] Implement content sharing and social features
+- [ ] Create project filtering by category, tags, and difficulty
+- [ ] Implement project search with existing metadata
+- [ ] Add project recommendations based on tags and categories
+- [ ] Create project grid/list views with filtering options
+- [ ] Build project comparison and showcase features
 
 **Files to Create:**
 
-- `src/components/mdx/advanced-search.tsx`
-- `src/components/mdx/content-recommendations.tsx`
-- `src/components/mdx/content-preview.tsx`
+- `src/components/projects/project-filter.tsx`
+- `src/components/projects/project-search.tsx`
+- `src/components/projects/project-grid.tsx`
+
+**Scope Rationale:**
+Focus on practical features that help visitors discover and understand your work:
+
+- **Filtering**: Let visitors find projects by technology, difficulty, or type
+- **Search**: Quick project discovery using existing metadata
+- **Organization**: Better project presentation and comparison
 
 ---
 
 ## 🔄 **Phase 4: Integration & Testing (PLANNED)**
 
-### **Step 10: Advanced Integration & APIs** 🔄
+### **Step 10: Portfolio Integration & Enhancement** 🔄
 
 **Status**: PLANNED
 
 **What We Need to Do:**
 
-- [ ] Create REST API endpoints for content access
-- [ ] Implement GraphQL schema for flexible content queries
-- [ ] Add webhook support for content updates
-- [ ] Create content import/export functionality
-- [ ] Implement content synchronization across environments
+- [ ] Integrate enhanced metadata into existing project pages
+- [ ] Create project showcase components using rich metadata
+- [ ] Add project comparison and related projects features
+- [ ] Implement project analytics and performance tracking
+- [ ] Build project export and sharing capabilities
 
 **Files to Create:**
 
-- `src/app/api/content/route.ts`
-- `src/lib/graphql-schema.ts`
-- `src/lib/content-sync.ts`
+- `src/components/projects/project-showcase.tsx`
+- `src/components/projects/project-comparison.tsx`
+- `src/components/projects/project-analytics.tsx`
+
+**Scope Rationale:**
+Since you're using rebuild/redeploy, focus on enhancing the portfolio experience:
+
+- **Showcase**: Better project presentation using rich metadata
+- **Comparison**: Help visitors understand project differences
+- **Analytics**: Track which projects get attention
+- **Sharing**: Easy project sharing for opportunities
 
 ---
 
-### **Step 11: Advanced MDX Components** 🔄
+### **Step 11: Practical MDX Components** 🔄
 
 **Status**: PLANNED
 
 **What We Need to Do:**
 
-- [ ] Create interactive components (tabs, accordions, carousels)
-- [ ] Implement data visualization components (charts, graphs)
-- [ ] Add form components for user interaction
-- [ ] Create animation and transition components
-- [ ] Implement component composition and nesting
+- [ ] Create project-specific components (tech stack, timeline, gallery)
+- [ ] Implement interactive elements (collapsible sections, tabs)
+- [ ] Add portfolio-focused components (achievements, testimonials)
+- [ ] Create responsive layout components for better presentation
+- [ ] Build reusable project showcase components
 
 **Files to Create:**
 
+- `src/components/mdx/project-components/`
 - `src/components/mdx/interactive/`
-- `src/components/mdx/data-viz/`
-- `src/components/mdx/forms/`
+- `src/components/mdx/portfolio/`
+
+**Scope Rationale:**
+Focus on components that enhance portfolio presentation:
+
+- **Project Components**: Better showcase of your work and achievements
+- **Interactive Elements**: Engage visitors without over-engineering
+- **Portfolio Focus**: Components specifically for professional presentation
 
 ---
 
-### **Step 12: Advanced Performance & Caching** 🔄
+### **Step 12: Portfolio Performance & Optimization** 🔄
 
 **Status**: PLANNED
 
 **What We Need to Do:**
 
-- [ ] Implement intelligent content caching strategies
-- [ ] Add CDN integration for static assets
-- [ ] Create performance monitoring and analytics
-- [ ] Implement progressive loading and streaming
-- [ ] Add offline support and service workers
+- [ ] Optimize build performance and bundle size
+- [ ] Implement image optimization and lazy loading
+- [ ] Add performance monitoring for portfolio metrics
+- [ ] Create responsive design optimizations
+- [ ] Build accessibility improvements and SEO enhancements
+
+**Scope Rationale:**
+Focus on performance that directly benefits your portfolio:
+
+- **Build Optimization**: Faster rebuilds for content updates
+- **Image Optimization**: Better loading experience for project showcases
+- **Performance Monitoring**: Track portfolio performance metrics
+- **Accessibility**: Ensure portfolio is accessible to all visitors
 
 ---
 
 ## 🔄 **Phase 5: Polish & Documentation (PLANNED)**
 
-### **Step 13: Advanced Error Handling & Monitoring** 🔄
+### **Step 13: Portfolio Error Handling & Validation** 🔄
 
 **Status**: PLANNED
 
 **What We Need to Do:**
 
-- [ ] Implement comprehensive error tracking and reporting
-- [ ] Create automated error recovery and self-healing
-- [ ] Add content validation and integrity checks
-- [ ] Implement graceful degradation strategies
-- [ ] Create error analytics and alerting systems
+- [ ] Add content validation and error boundaries
+- [ ] Implement graceful fallbacks for missing content
+- [ ] Create build-time validation for MDX content
+- [ ] Add user-friendly error messages and recovery
+- [ ] Build content integrity checks and reporting
+
+**Scope Rationale:**
+Focus on error handling that protects your portfolio:
+
+- **Content Validation**: Ensure MDX content is always valid
+- **Graceful Fallbacks**: Portfolio never breaks due to content issues
+- **Build Validation**: Catch errors before deployment
+- **User Experience**: Professional error handling for visitors
 
 ---
 
-### **Step 14: Developer Experience & Tooling** 🔄
+### **Step 14: Portfolio Development Experience** 🔄
 
 **Status**: PLANNED
 
 **What We Need to Do:**
 
-- [ ] Create VS Code extensions for MDX authoring
-- [ ] Implement content preview and live editing
-- [ ] Add automated testing and validation tools
-- [ ] Create content management dashboard
-- [ ] Implement content analytics and insights
+- [ ] Create MDX authoring templates and examples
+- [ ] Implement content validation and testing scripts
+- [ ] Add portfolio development documentation
+- [ ] Create content management utilities and helpers
+- [ ] Build portfolio analytics and insights dashboard
+
+**Scope Rationale:**
+Focus on developer experience that improves portfolio maintenance:
+
+- **Templates**: Make it easy to create new project content
+- **Validation**: Ensure content quality and consistency
+- **Documentation**: Clear guidance for portfolio development
+- **Utilities**: Tools to manage and optimize portfolio content
 
 ---
 
@@ -477,8 +531,11 @@ The generic system is ready to support blog content with minimal changes:
 
 ## 🚀 **Next Steps**
 
-**Immediate Priority**: Step 8 - Advanced Content Management
-**Long-term Goal**: Complete Steps 8-14 for full MDX integration
+**Immediate Priority**: Step 8 - Focused Content Management
+**Long-term Goal**: Complete Steps 8-14 for enhanced portfolio experience
 **Future Enhancement**: Add blog component using the same generic system
+
+**Scope Philosophy:**
+Since you're comfortable with rebuild/redeploy workflow, we focus on features that provide immediate value without over-engineering. Each step prioritizes practical benefits for your portfolio over complex infrastructure.
 
 The foundation is solid and the generic system will scale beautifully for future content types! 🎯
