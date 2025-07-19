@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { searchProjects } from "@/lib/content-filtering";
 import { type MDXContent } from "@/generated/project-mdx-index";
 
@@ -20,19 +20,26 @@ export function ProjectSearch({
   const [query, setQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
 
-  // Debounced search
-  const searchResults = useMemo(() => {
+  // Handle search results with useEffect to avoid render-time state updates
+  useEffect(() => {
     if (!query.trim()) {
-      onSearchResults([]);
-      return [];
+      // Don't call onSearchResults when there's no query to avoid clearing all projects
+      return;
     }
 
     setIsSearching(true);
     const results = searchProjects(query.trim());
     setIsSearching(false);
     onSearchResults(results);
-    return results;
   }, [query, onSearchResults]);
+
+  // Debounced search results for display
+  const searchResults = useMemo(() => {
+    if (!query.trim()) {
+      return [];
+    }
+    return searchProjects(query.trim());
+  }, [query]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(e.target.value);

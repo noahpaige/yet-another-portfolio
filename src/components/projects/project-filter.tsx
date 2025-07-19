@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   filterProjects,
   getCategories,
@@ -35,8 +35,21 @@ export function ProjectFilter({
   const difficulties = getDifficulties();
   const technologies = getTechnologies();
 
-  // Apply filters and notify parent
-  const filteredProjects = useMemo(() => {
+  // Apply filters and notify parent with useEffect to avoid render-time state updates
+  useEffect(() => {
+    // Check if there are any active filters
+    const hasActiveFilters =
+      selectedCategory ||
+      selectedTags.length > 0 ||
+      selectedDifficulty ||
+      selectedTechnologies.length > 0 ||
+      searchTerm;
+
+    if (!hasActiveFilters) {
+      // Don't call onFilterChange when there are no active filters to avoid clearing all projects
+      return;
+    }
+
     const results = filterProjects({
       category: selectedCategory || undefined,
       tags: selectedTags.length > 0 ? selectedTags : undefined,
@@ -52,7 +65,6 @@ export function ProjectFilter({
     });
 
     onFilterChange(results.projects);
-    return results;
   }, [
     selectedCategory,
     selectedTags,
@@ -60,6 +72,29 @@ export function ProjectFilter({
     selectedTechnologies,
     searchTerm,
     onFilterChange,
+  ]);
+
+  // Get filtered results for display
+  const filteredProjects = useMemo(() => {
+    return filterProjects({
+      category: selectedCategory || undefined,
+      tags: selectedTags.length > 0 ? selectedTags : undefined,
+      difficulty:
+        (selectedDifficulty as
+          | "beginner"
+          | "intermediate"
+          | "advanced"
+          | "expert") || undefined,
+      technologies:
+        selectedTechnologies.length > 0 ? selectedTechnologies : undefined,
+      search: searchTerm || undefined,
+    });
+  }, [
+    selectedCategory,
+    selectedTags,
+    selectedDifficulty,
+    selectedTechnologies,
+    searchTerm,
   ]);
 
   const clearFilters = () => {
