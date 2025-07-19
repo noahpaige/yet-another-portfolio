@@ -1,6 +1,8 @@
 import React from "react";
 import { getProjectById } from "@/generated/project-index";
+import { getProjectMDXContent } from "@/lib/mdx";
 import ArticleLayout from "@/components/articles/article-layout";
+import MDXRenderer from "@/components/mdx/mdx-renderer";
 import { notFound } from "next/navigation";
 import type { HSLColor } from "@/components/animated-background";
 
@@ -18,13 +20,11 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
     notFound();
   }
 
-  // Dynamically import the project content
-  let ProjectContent;
-  try {
-    const contentModule = await import(`@/projects/${id}/content`);
-    ProjectContent = contentModule.default;
-  } catch (error) {
-    console.error(`Failed to load content for project ${id}:`, error);
+  // Get MDX content for the project
+  const mdxContent = getProjectMDXContent(id);
+
+  if (!mdxContent) {
+    console.error(`No MDX content found for project ${id}`);
     notFound();
   }
 
@@ -48,7 +48,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
       tags={project.tags}
       colorPairs={colorPairs}
     >
-      <ProjectContent />
+      <MDXRenderer content={mdxContent} />
     </ArticleLayout>
   );
 }
