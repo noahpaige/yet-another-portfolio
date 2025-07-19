@@ -1,22 +1,43 @@
-import React from "react";
 import { MDXRemote } from "next-mdx-remote/rsc";
-import type { MDXContent } from "@/lib/mdx";
+import type { MDXContent } from "@/generated/project-mdx-index";
 
 interface MDXRendererProps {
   content: MDXContent;
+  className?: string;
 }
 
-// Custom components that can be used in MDX
-const components = {
-  // You can add custom components here
-  // Callout: (props: any) => <div className="bg-blue-100 p-4 rounded">{props.children}</div>,
-  // Image: (props: any) => <img {...props} className="rounded" />,
-};
+/**
+ * MDX Renderer Component
+ * Renders MDX content using next-mdx-remote with proper styling
+ */
+export default function MDXRenderer({
+  content,
+  className = "",
+}: MDXRendererProps) {
+  if (!content || !content.content) {
+    return (
+      <div className={`text-zinc-400 italic ${className}`}>
+        No content available.
+      </div>
+    );
+  }
 
-export default function MDXRenderer({ content }: MDXRendererProps) {
-  return (
-    <div className="mdx-content">
-      <MDXRemote source={content.content} components={components} />
-    </div>
-  );
+  try {
+    return (
+      <div className={className}>
+        <MDXRemote
+          source={content.content}
+          // We'll add custom components here in Step 6
+          components={{}}
+        />
+      </div>
+    );
+  } catch (error) {
+    console.error("Error rendering MDX content:", error);
+    return (
+      <div className={`text-red-400 ${className}`}>
+        Error rendering content. Please try again later.
+      </div>
+    );
+  }
 }
