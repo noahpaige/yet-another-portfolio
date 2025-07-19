@@ -3,12 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "npm run generate-project-index && npm run generate-mdx-index && next dev",
-    "build": "npm run generate-project-index && npm run generate-mdx-index && next build",
+    "dev": "npm run generate-content-index && npm run generate-mdx-index && next dev",
+    "build": "npm run generate-content-index && npm run generate-mdx-index && next build",
     "start": "next start",
     "lint": "next lint",
-    "generate-project-index": "tsx scripts/generate-project-index.ts",
-    "generate-mdx-index": "tsx scripts/generate-mdx-index.ts"
+    "generate-content-index": "tsx scripts/generate-content-index.ts",
+    "generate-mdx-index": "tsx scripts/generate-mdx-index.ts",
+    "generate-project-index": "tsx scripts/generate-project-index.ts"
   },
   "dependencies": {
     "@radix-ui/react-hover-card": "^1.1.14",

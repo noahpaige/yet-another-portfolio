@@ -1,34 +1,30 @@
 // Import generated MDX content (build-time)
-import { getMDXContent, getProjectsWithMDX } from "@/generated/mdx-index";
-import { projects, getProjectById } from "@/generated/project-index";
+import {
+  getProjectMDXContent as getProjectMDXContentFromIndex,
+  getProjectsWithMDX,
+  type MDXContent,
+} from "@/generated/project-mdx-index";
+import {
+  projects,
+  getProjectById,
+  type Project,
+} from "@/generated/project-index";
+import { type ProjectWithMDX } from "@/lib/unified-projects";
 
 // Re-export types from generated index
 export type { MDXMetadata, MDXContent } from "@/generated/mdx-index";
 
-// Interface for project metadata (from existing index.ts files)
-export interface ProjectMetadata {
-  id: string;
-  title: string;
-  tags: string[];
-  image: string;
-  imageAltText: string;
-  timestamp: string;
-  featured: boolean;
-  featuredOrder?: number;
-}
+// Re-export unified interface
+export type { UnifiedProject } from "@/lib/unified-projects";
 
-// Combined interface for projects with both MDX and existing metadata
-export interface ProjectWithMDX {
-  id: string;
-  mdxContent: MDXContent | null;
-  projectMetadata: ProjectMetadata | null;
-}
+// Interface for project metadata (from existing index.ts files)
+export type ProjectMetadata = Project;
 
 /**
  * Get MDX content for a specific project (fast, build-time data)
  */
 export function getProjectMDXContent(projectId: string): MDXContent | null {
-  return getMDXContent(projectId);
+  return getProjectMDXContentFromIndex(projectId);
 }
 
 /**

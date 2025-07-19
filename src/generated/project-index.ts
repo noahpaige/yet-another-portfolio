@@ -1,7 +1,7 @@
 // This file is auto-generated. Do not edit manually.
-// Run: npm run generate-project-index
+// Run: npm run generate-content-index
 
-import type { HSLColor } from "@/components/animated-background";
+import type { HSLColor } from '@/components/animated-background';
 
 export interface Project {
   id: string;
@@ -175,7 +175,7 @@ export const featuredProjects: Project[] = projects
   .sort((a, b) => (a.featuredOrder || 0) - (b.featuredOrder || 0))
   .slice(0, 6); // Limit to 6 featured projects
 
-export const projectIds = projects.map(p => p.id);
+export const projectsIds = projects.map(p => p.id);
 
 // Helper function to get project by ID
 export function getProjectById(id: string): Project | undefined {
