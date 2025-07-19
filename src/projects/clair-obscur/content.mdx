@@ -9,28 +9,91 @@ description: "A world painted in despair and beauty — where brushstrokes shape
   </h1>
 
 {" "}
+
 <div className="text-lg leading-relaxed text-slate-300">
   A world painted in despair and beauty — where brushstrokes shape fate and
   dreams are as fragile as canvas. *Expedition 33* is more than a battle for
   survival... it&apos;s an elegy whispered through oil and shadow.
 </div>
 
-{" "}
+<Callout type="info">
+  **Expedition 33** is a turn-based RPG where every choice matters. The world is
+  painted in shades of despair and beauty.
+</Callout>
+
+<Divider />
+
 <div className="text-lg text-slate-400 italic">
   &ldquo;She chooses a number. They vanish. We march to unmake her
   memory.&rdquo;
 </div>
 
-{" "}
-<div className="text-md text-slate-400 border-t border-slate-600 pt-4">
-  Each expedition is a requiem, each spell a verse. You are not just a soldier —
-  you are a story fighting to stay written. Through shifting skies and painted
-  beasts, the expedition trudges on, one number closer to the end.
-</div>
+<Quote author="The Painter" source="Clair Obscur: Expedition 33">
+  "In this world of shadows and light, every brushstroke tells a story. Every
+  expedition is a verse in the grand poem of survival."
+</Quote>
 
-  <div className="flex justify-end">
-    <span className="text-sm text-slate-500">
-      ✦ When she speaks your name, resist the fade.
-    </span>
-  </div>
+<Divider />
+
+## The World of Clair Obscur
+
+Each expedition is a requiem, each spell a verse. You are not just a soldier —
+you are a story fighting to stay written. Through shifting skies and painted
+beasts, the expedition trudges on, one number closer to the end.
+
+<Callout type="warning">
+  **Warning**: This game contains mature themes and challenging content that may
+  not be suitable for all players.
+</Callout>
+
+### Key Features
+
+- **Turn-based Combat**: Strategic battles with unique painting mechanics
+- **Story-driven**: Every choice affects the narrative and world
+- **Beautiful Art**: Hand-painted visuals that tell the story
+- **Atmospheric**: Haunting soundtrack and immersive world design
+
+<CodeBlock language="javascript" title="Expedition System">
+```javascript
+// Example of expedition mechanics
+class Expedition {
+  constructor(number) {
+    this.number = number;
+    this.painter = new Painter();
+    this.survivors = [];
+  }
+  
+  beginExpedition() {
+    return this.painter.chooseNumber();
+  }
+}
+```
+</CodeBlock>
+
+<Callout type="success">
+  **Success**: The expedition system has been praised for its innovative
+  approach to storytelling and combat mechanics.
+</Callout>
+
+<Divider />
+
+<Image
+  src="/clair_obscure.png"
+  alt="Clair Obscur: Expedition 33 - A beautiful painted world of shadows and light"
+  width={800}
+  height={600}
+/>
+
+<Divider />
+
+<Callout type="error">
+  **Critical**: Remember, when she speaks your name, you must resist the fade.
+  The expedition depends on it.
+</Callout>
+
+<div className="flex justify-end">
+  <span className="text-sm text-slate-500">
+    ✦ When she speaks your name, resist the fade.
+  </span>
+</div>
 </div>

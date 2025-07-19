@@ -1,0 +1,212 @@
+import React from "react";
+import Image from "next/image";
+
+// Custom Callout component for MDX
+const Callout: React.FC<{
+  type?: "info" | "warning" | "error" | "success";
+  children: React.ReactNode;
+}> = ({ type = "info", children }) => {
+  const styles = {
+    info: "bg-blue-900/20 border-blue-500/30 text-blue-200",
+    warning: "bg-yellow-900/20 border-yellow-500/30 text-yellow-200",
+    error: "bg-red-900/20 border-red-500/30 text-red-200",
+    success: "bg-green-900/20 border-green-500/30 text-green-200",
+  };
+
+  const icons = {
+    info: "ℹ️",
+    warning: "⚠️",
+    error: "❌",
+    success: "✅",
+  };
+
+  return (
+    <div className={`p-4 rounded-lg border ${styles[type]} my-6`}>
+      <div className="flex items-start gap-3">
+        <span className="text-lg">{icons[type]}</span>
+        <div className="flex-1">{children}</div>
+      </div>
+    </div>
+  );
+};
+
+// Custom Image component for MDX
+const MDXImage: React.FC<{
+  src: string;
+  alt: string;
+  width?: number;
+  height?: number;
+  className?: string;
+}> = ({ src, alt, width = 800, height = 600, className = "" }) => {
+  return (
+    <div className={`my-6 ${className}`}>
+      <Image
+        src={src}
+        alt={alt}
+        width={width}
+        height={height}
+        className="rounded-lg shadow-lg"
+      />
+      {alt && (
+        <p className="text-sm text-zinc-400 text-center mt-2 italic">{alt}</p>
+      )}
+    </div>
+  );
+};
+
+// Custom CodeBlock component for MDX
+const CodeBlock: React.FC<{
+  children: React.ReactNode;
+  language?: string;
+  title?: string;
+}> = ({ children, language = "text", title }) => {
+  return (
+    <div className="my-6">
+      {title && (
+        <div className="bg-zinc-800 text-zinc-300 px-4 py-2 rounded-t-lg border-b border-zinc-700 text-sm font-mono">
+          {title}
+        </div>
+      )}
+      <pre
+        className={`bg-zinc-900 p-4 rounded-lg border border-zinc-700 overflow-x-auto ${
+          title ? "rounded-t-none" : ""
+        }`}
+      >
+        <code className={`language-${language} text-zinc-200`}>{children}</code>
+      </pre>
+    </div>
+  );
+};
+
+// Custom Link component for MDX
+const MDXLink: React.FC<{
+  href: string;
+  children: React.ReactNode;
+  className?: string;
+}> = ({ href, children, className = "" }) => {
+  const isExternal = href.startsWith("http");
+
+  return (
+    <a
+      href={href}
+      className={`text-cyan-400 hover:text-cyan-300 underline transition-colors ${className}`}
+      target={isExternal ? "_blank" : undefined}
+      rel={isExternal ? "noopener noreferrer" : undefined}
+    >
+      {children}
+      {isExternal && <span className="ml-1">↗</span>}
+    </a>
+  );
+};
+
+// Custom Quote component for MDX
+const Quote: React.FC<{
+  children: React.ReactNode;
+  author?: string;
+  source?: string;
+}> = ({ children, author, source }) => {
+  return (
+    <blockquote className="border-l-4 border-zinc-600 pl-6 my-6 italic text-zinc-300">
+      <div className="text-lg">{children}</div>
+      {(author || source) && (
+        <footer className="text-sm text-zinc-400 mt-2">
+          {author && <span className="font-semibold">— {author}</span>}
+          {source && (
+            <span className="ml-2">
+              {author ? ", " : "— "}
+              <cite>{source}</cite>
+            </span>
+          )}
+        </footer>
+      )}
+    </blockquote>
+  );
+};
+
+// Custom Divider component for MDX
+const Divider: React.FC<{ className?: string }> = ({ className = "" }) => {
+  return <hr className={`border-zinc-700 my-8 ${className}`} />;
+};
+
+// Export the component mapping for use in MDX
+export const mdxComponents = {
+  // Custom components
+  Callout,
+  Image: MDXImage,
+  CodeBlock,
+  Link: MDXLink,
+  Quote,
+  Divider,
+
+  // Override default HTML elements with enhanced styling
+  h1: (props: React.HTMLAttributes<HTMLHeadingElement>) => (
+    <h1 className="text-4xl font-bold text-zinc-100 mb-6 mt-8" {...props} />
+  ),
+  h2: (props: React.HTMLAttributes<HTMLHeadingElement>) => (
+    <h2 className="text-3xl font-semibold text-zinc-100 mb-4 mt-6" {...props} />
+  ),
+  h3: (props: React.HTMLAttributes<HTMLHeadingElement>) => (
+    <h3 className="text-2xl font-semibold text-zinc-100 mb-3 mt-5" {...props} />
+  ),
+  h4: (props: React.HTMLAttributes<HTMLHeadingElement>) => (
+    <h4 className="text-xl font-semibold text-zinc-100 mb-2 mt-4" {...props} />
+  ),
+  p: (props: React.HTMLAttributes<HTMLParagraphElement>) => (
+    <p className="text-zinc-300 leading-relaxed mb-4" {...props} />
+  ),
+  ul: (props: React.HTMLAttributes<HTMLUListElement>) => (
+    <ul
+      className="list-disc list-inside text-zinc-300 mb-4 space-y-1"
+      {...props}
+    />
+  ),
+  ol: (props: React.HTMLAttributes<HTMLOListElement>) => (
+    <ol
+      className="list-decimal list-inside text-zinc-300 mb-4 space-y-1"
+      {...props}
+    />
+  ),
+  li: (props: React.HTMLAttributes<HTMLLIElement>) => (
+    <li className="text-zinc-300" {...props} />
+  ),
+  strong: (props: React.HTMLAttributes<HTMLElement>) => (
+    <strong className="font-semibold text-zinc-200" {...props} />
+  ),
+  em: (props: React.HTMLAttributes<HTMLElement>) => (
+    <em className="italic text-zinc-300" {...props} />
+  ),
+  code: (props: React.HTMLAttributes<HTMLElement>) => (
+    <code
+      className="bg-zinc-800 text-cyan-300 px-1 py-0.5 rounded text-sm font-mono"
+      {...props}
+    />
+  ),
+  pre: (props: React.HTMLAttributes<HTMLPreElement>) => (
+    <pre
+      className="bg-zinc-900 p-4 rounded-lg border border-zinc-700 overflow-x-auto my-4"
+      {...props}
+    />
+  ),
+  blockquote: (props: React.HTMLAttributes<HTMLElement>) => (
+    <blockquote
+      className="border-l-4 border-zinc-600 pl-4 italic text-zinc-400 my-4"
+      {...props}
+    />
+  ),
+  a: (props: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
+    <a
+      className="text-cyan-400 hover:text-cyan-300 underline transition-colors"
+      {...props}
+    />
+  ),
+};
+
+// Export individual components for direct use
+export {
+  Callout,
+  MDXImage as Image,
+  CodeBlock,
+  MDXLink as Link,
+  Quote,
+  Divider,
+};

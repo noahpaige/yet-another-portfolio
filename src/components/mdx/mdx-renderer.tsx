@@ -1,5 +1,6 @@
 import { MDXRemote } from "next-mdx-remote/rsc";
 import type { MDXContent } from "@/generated/project-mdx-index";
+import { mdxComponents } from "./mdx-provider";
 
 interface MDXRendererProps {
   content: MDXContent;
@@ -25,11 +26,7 @@ export default function MDXRenderer({
   try {
     return (
       <div className={className}>
-        <MDXRemote
-          source={content.content}
-          // We'll add custom components here in Step 6
-          components={{}}
-        />
+        <MDXRemote source={content.content} components={mdxComponents} />
       </div>
     );
   } catch (error) {
