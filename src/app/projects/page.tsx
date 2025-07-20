@@ -12,6 +12,7 @@ import AnimatedBackground from "@/components/animated-background";
 import ClientOnly from "@/components/client-only";
 import NoiseOverlay from "@/components/noise-overlay";
 import type { HSLColor } from "@/components/animated-background";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 
 // Types
 interface FilteredProject {
@@ -37,6 +38,9 @@ export default function ProjectsPage() {
   const [filteredProjects, setFilteredProjects] = useState<FilteredProject[]>(
     []
   );
+
+  // Check if screen is medium size or larger
+  const isSmallScreen = useMediaQuery("(min-width: 640px)");
 
   const { scrollYProgress } = useScroll({
     container: scrollContainerRef,
@@ -118,7 +122,7 @@ export default function ProjectsPage() {
                           key={id}
                           project={project}
                           hideTags={false}
-                          showDetails={true}
+                          showDetails={isSmallScreen}
                           mdxContent={content}
                         />
                       );
