@@ -39,7 +39,7 @@ export const ProjectCard = React.memo(
       60, // min height
       320, // max height
       500, // min screen height where scaling starts
-      1200, // max screen height where scaling stops
+      1400, // max screen height where scaling stops
       0, // min screen width (ignored)
       0 // max screen width (ignored)
     );
