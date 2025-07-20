@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState, useMemo, useEffect } from "react";
+import React, { useRef, useState, useMemo } from "react";
 import { useScroll } from "framer-motion";
 import { projects } from "@/generated/project-index";
 import { getAllProjectMDXContent } from "@/generated/project-mdx-index";
@@ -45,17 +45,6 @@ export default function ProjectsPage() {
     []
   );
 
-  // Override body overflow to enable scrolling on this page
-  useEffect(() => {
-    const originalOverflow = document.body.style.overflowY;
-    document.body.style.overflowY = "auto";
-
-    // Cleanup: restore original overflow when component unmounts
-    return () => {
-      document.body.style.overflowY = originalOverflow;
-    };
-  }, []);
-
   const { scrollYProgress } = useScroll({
     container: scrollContainerRef,
     offset: ["start start", "end end"],
@@ -85,74 +74,79 @@ export default function ProjectsPage() {
   );
 
   return (
-    <div>
+    <>
       {/* Top Navbar */}
       <TopNavbar currentPage="projects" />
 
-      {/* Animated Background and Noise Overlay */}
-      <ClientOnly>
-        <div className="sticky inset-0">
-          <AnimatedBackground
-            scrollYProgress={scrollYProgress}
-            colorPairs={colorPairs}
-          />
-          <NoiseOverlay
-            opacity={0.04}
-            resolution={1}
-            scrollContainerRef={scrollContainerRef}
-          />
-        </div>
-      </ClientOnly>
-
       {/* Main Content */}
-      <div ref={scrollContainerRef} className="min-h-screen bg-black pt-18">
-        <div className="container mx-auto px-4 py-8 relative z-10">
-          {/* Page Header */}
-          <div className="text-center mb-10">
-            <h1 className="text-5xl md:text-6xl font-bold text-zinc-100">
-              Projects
-            </h1>
+      <main
+        ref={scrollContainerRef}
+        className="relative z-0 h-screen overflow-y-scroll overflow-x-hidden bg-black text-zinc-200"
+      >
+        {/* Animated Background and Noise Overlay */}
+        <ClientOnly>
+          <div className="sticky inset-0">
+            <AnimatedBackground
+              scrollYProgress={scrollYProgress}
+              colorPairs={colorPairs}
+            />
+            <NoiseOverlay
+              opacity={0.04}
+              resolution={1}
+              scrollContainerRef={scrollContainerRef}
+            />
           </div>
+        </ClientOnly>
 
-          {/* Main Layout */}
-          <div className="flex flex-col lg:flex-row gap-8">
-            {/* Sidebar with Filters */}
-            <div className="lg:w-80 flex-shrink-0">
-              <div className="sticky top-26">
-                <ProjectFilter onFilterChange={handleFilterChange} />
+        <div className="pt-18">
+          <div className="container mx-auto px-4 py-8 relative z-10">
+            {/* Page Header */}
+            <div className="text-center mb-10">
+              <h1 className="text-5xl md:text-6xl font-bold text-zinc-100">
+                Projects
+              </h1>
+            </div>
+
+            {/* Main Layout */}
+            <div className="flex flex-col lg:flex-row gap-8">
+              {/* Sidebar with Filters */}
+              <div className="lg:w-80 flex-shrink-0">
+                <div className="sticky top-26">
+                  <ProjectFilter onFilterChange={handleFilterChange} />
+                </div>
+              </div>
+
+              {/* Projects Grid */}
+              <div className="flex-1">
+                {filteredProjects.length > 0 ? (
+                  <div className="grid grid-cols-1 gap-6">
+                    {filteredProjects.map(({ id, content }) => {
+                      const project = projects.find((p) => p.id === id);
+                      if (!project) return null;
+
+                      return (
+                        <ProjectCard
+                          key={id}
+                          project={project}
+                          hideTags={false}
+                          showDetails={true}
+                          mdxContent={content}
+                        />
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <p className="text-zinc-400 text-lg">
+                      No projects found matching your filters.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
-
-            {/* Projects Grid */}
-            <div className="flex-1">
-              {filteredProjects.length > 0 ? (
-                <div className="grid grid-cols-1 gap-6">
-                  {filteredProjects.map(({ id, content }) => {
-                    const project = projects.find((p) => p.id === id);
-                    if (!project) return null;
-
-                    return (
-                      <ProjectCard
-                        key={id}
-                        project={project}
-                        hideTags={false}
-                        showDetails={true}
-                        mdxContent={content}
-                      />
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <p className="text-zinc-400 text-lg">
-                    No projects found matching your filters.
-                  </p>
-                </div>
-              )}
-            </div>
           </div>
         </div>
-      </div>
-    </div>
+      </main>
+    </>
   );
 }
