@@ -22,20 +22,13 @@ interface FilteredProject {
 // Color pairs for the animated background
 const colorPairs: [HSLColor, HSLColor][] = [
   [
-    { h: 145, s: 50, l: 30 },
+    { h: 145, s: 50, l: 20 },
     { h: 290, s: 35, l: 10 },
   ],
-  [
-    { h: 245, s: 30, l: 9 },
-    { h: 145, s: 60, l: 27 },
-  ],
-  [
-    { h: 145, s: 70, l: 23 },
-    { h: 195, s: 25, l: 8 },
-  ],
+
   [
     { h: 140, s: 20, l: 7 },
-    { h: 145, s: 80, l: 20 },
+    { h: 145, s: 80, l: 15 },
   ],
 ];
 
@@ -90,11 +83,7 @@ export default function ProjectsPage() {
               scrollYProgress={scrollYProgress}
               colorPairs={colorPairs}
             />
-            <NoiseOverlay
-              opacity={0.04}
-              resolution={1}
-              scrollContainerRef={scrollContainerRef}
-            />
+            <NoiseOverlay opacity={0.04} resolution={1} />
           </div>
         </ClientOnly>
 
