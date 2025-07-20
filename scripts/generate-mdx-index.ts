@@ -42,15 +42,11 @@ export interface MDXMetadata {
   title?: string;
   description?: string;
   date?: string;
-  author?: string;
   readTime?: number;
-  category?: string;
   tags?: string[];
   slug?: string;
   featured?: boolean;
   featuredOrder?: number;
-  status?: "draft" | "published" | "archived";
-  lastModified?: string;
   version?: string;
   seo?: {
     title?: string;
@@ -59,37 +55,8 @@ export interface MDXMetadata {
     image?: string;
     canonical?: string;
   };
-  social?: {
-    twitter?: {
-      title?: string;
-      description?: string;
-      image?: string;
-    };
-    og?: {
-      title?: string;
-      description?: string;
-      image?: string;
-      type?: string;
-    };
-  };
   // Project-specific fields
   type?: "project";
-  technologies?: string[];
-  github?: string;
-  demo?: string;
-  difficulty?: "beginner" | "intermediate" | "advanced" | "expert";
-  completionDate?: string;
-  teamSize?: number;
-  role?: string;
-  duration?: string;
-  budget?: string;
-  client?: string;
-  awards?: string[];
-  media?: {
-    thumbnail?: string;
-    gallery?: string[];
-    video?: string;
-  };
   [key: string]: string | string[] | number | boolean | object | undefined;
 }
 
@@ -200,14 +167,14 @@ export function get${interfaceName}MDXContent(${name.slice(
 // Get all ${name} that have MDX content
 export function get${interfaceName}sWithMDX(): string[] {
   return Object.entries(${name}MDXContent)
-    .filter(([_, content]) => content !== null)
-    .map(([${name.slice(0, -1)}Id, _]) => ${name.slice(0, -1)}Id);
+    .filter(([, content]) => content !== null)
+    .map(([${name.slice(0, -1)}Id]) => ${name.slice(0, -1)}Id);
 }
 
 // Get all MDX content as array
 export function getAll${interfaceName}MDXContent(): Array<{ id: string; content: MDXContent }> {
   return Object.entries(${name}MDXContent)
-    .filter(([_, content]) => content !== null)
+    .filter(([, content]) => content !== null)
     .map(([${name.slice(0, -1)}Id, content]) => ({
       id: ${name.slice(0, -1)}Id,
       content: content as MDXContent

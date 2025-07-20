@@ -12,7 +12,7 @@ import {
 import { type ProjectWithMDX } from "@/lib/unified-projects";
 
 // Re-export types from generated index
-export type { MDXMetadata, MDXContent } from "@/generated/mdx-index";
+export type { MDXMetadata, MDXContent } from "@/generated/project-mdx-index";
 
 // Re-export unified interface
 export type { UnifiedProject } from "@/lib/unified-projects";

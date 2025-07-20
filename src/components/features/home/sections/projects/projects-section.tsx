@@ -62,7 +62,7 @@ export default function ProjectsSection() {
                       : "col-span-1"
                   }`}
                 >
-                  <ProjectCard project={project} />
+                  <ProjectCard project={project} showDetails={false} />
                 </motion.div>
               ))}
             </motion.div>

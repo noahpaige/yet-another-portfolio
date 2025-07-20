@@ -1,14 +1,10 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import {
-  filterProjects,
-  getCategories,
-  getTags,
-  getDifficulties,
-  getTechnologies,
-} from "@/lib/content-filtering";
+import { filterProjects, getTags } from "@/lib/content-filtering";
 import { type MDXContent } from "@/generated/project-mdx-index";
+import { Magnetic } from "@/components/ui/magnetic";
+import { MagneticButton } from "@/components/ui/magnetic-button";
 
 interface ProjectFilterProps {
   onFilterChange: (
@@ -21,146 +17,54 @@ export function ProjectFilter({
   onFilterChange,
   className = "",
 }: ProjectFilterProps) {
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [selectedDifficulty, setSelectedDifficulty] = useState<string>("");
-  const [selectedTechnologies, setSelectedTechnologies] = useState<string[]>(
-    []
-  );
   const [searchTerm, setSearchTerm] = useState<string>("");
 
   // Get all available filter options
-  const categories = getCategories();
   const tags = getTags();
-  const difficulties = getDifficulties();
-  const technologies = getTechnologies();
 
   // Apply filters and notify parent with useEffect to avoid render-time state updates
   useEffect(() => {
-    // Check if there are any active filters
-    const hasActiveFilters =
-      selectedCategory ||
-      selectedTags.length > 0 ||
-      selectedDifficulty ||
-      selectedTechnologies.length > 0 ||
-      searchTerm;
-
-    if (!hasActiveFilters) {
-      // Don't call onFilterChange when there are no active filters to avoid clearing all projects
-      return;
-    }
-
     const results = filterProjects({
-      category: selectedCategory || undefined,
       tags: selectedTags.length > 0 ? selectedTags : undefined,
-      difficulty:
-        (selectedDifficulty as
-          | "beginner"
-          | "intermediate"
-          | "advanced"
-          | "expert") || undefined,
-      technologies:
-        selectedTechnologies.length > 0 ? selectedTechnologies : undefined,
       search: searchTerm || undefined,
     });
 
     onFilterChange(results.projects);
-  }, [
-    selectedCategory,
-    selectedTags,
-    selectedDifficulty,
-    selectedTechnologies,
-    searchTerm,
-    onFilterChange,
-  ]);
+  }, [selectedTags, searchTerm, onFilterChange]);
 
   // Get filtered results for display
   const filteredProjects = useMemo(() => {
     return filterProjects({
-      category: selectedCategory || undefined,
       tags: selectedTags.length > 0 ? selectedTags : undefined,
-      difficulty:
-        (selectedDifficulty as
-          | "beginner"
-          | "intermediate"
-          | "advanced"
-          | "expert") || undefined,
-      technologies:
-        selectedTechnologies.length > 0 ? selectedTechnologies : undefined,
       search: searchTerm || undefined,
     });
-  }, [
-    selectedCategory,
-    selectedTags,
-    selectedDifficulty,
-    selectedTechnologies,
-    searchTerm,
-  ]);
+  }, [selectedTags, searchTerm]);
+
+  // Get total count of all projects for comparison
+  const allProjectsCount = useMemo(() => {
+    return filterProjects({}).total;
+  }, []);
 
   const clearFilters = () => {
-    setSelectedCategory("");
     setSelectedTags([]);
-    setSelectedDifficulty("");
-    setSelectedTechnologies([]);
     setSearchTerm("");
   };
 
-  const hasActiveFilters =
-    selectedCategory ||
-    selectedTags.length > 0 ||
-    selectedDifficulty ||
-    selectedTechnologies.length > 0 ||
-    searchTerm;
+  const hasActiveFilters = selectedTags.length > 0 || searchTerm;
 
   return (
     <div className={`space-y-6 ${className}`}>
       {/* Search */}
       <div className="space-y-2">
-        <label htmlFor="search" className="text-sm font-medium text-zinc-300">
-          Search Projects
-        </label>
         <input
           id="search"
           type="text"
-          placeholder="Search by title, description, tags, or technologies..."
+          placeholder="Search..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+          className="w-full px-4 py-2 glass-layer-hoverable text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-100/50 focus:border-transparent"
         />
-      </div>
-
-      {/* Category Filter */}
-      <div className="space-y-2">
-        <label className="text-sm font-medium text-zinc-300">Category</label>
-        <select
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-          className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-        >
-          <option value="">All Categories</option>
-          {categories.map((category) => (
-            <option key={category} value={category}>
-              {category}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Difficulty Filter */}
-      <div className="space-y-2">
-        <label className="text-sm font-medium text-zinc-300">Difficulty</label>
-        <select
-          value={selectedDifficulty}
-          onChange={(e) => setSelectedDifficulty(e.target.value)}
-          className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-        >
-          <option value="">All Difficulties</option>
-          {difficulties.map((difficulty) => (
-            <option key={difficulty} value={difficulty}>
-              {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
-            </option>
-          ))}
-        </select>
       </div>
 
       {/* Tags Filter */}
@@ -168,51 +72,30 @@ export function ProjectFilter({
         <label className="text-sm font-medium text-zinc-300">Tags</label>
         <div className="flex flex-wrap gap-2">
           {tags.map((tag) => (
-            <button
+            <Magnetic
               key={tag}
-              onClick={() => {
-                setSelectedTags((prev) =>
-                  prev.includes(tag)
-                    ? prev.filter((t) => t !== tag)
-                    : [...prev, tag]
-                );
-              }}
-              className={`px-3 py-1 text-sm rounded-full border transition-colors ${
-                selectedTags.includes(tag)
-                  ? "bg-cyan-500 border-cyan-500 text-white"
-                  : "bg-zinc-800 border-zinc-700 text-zinc-300 hover:border-zinc-600"
-              }`}
+              intensity={0.2}
+              range={200}
+              actionArea={{ type: "self" }}
+              springOptions={{ stiffness: 500, damping: 50 }}
             >
-              {tag}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Technologies Filter */}
-      <div className="space-y-2">
-        <label className="text-sm font-medium text-zinc-300">
-          Technologies
-        </label>
-        <div className="flex flex-wrap gap-2">
-          {technologies.map((tech) => (
-            <button
-              key={tech}
-              onClick={() => {
-                setSelectedTechnologies((prev) =>
-                  prev.includes(tech)
-                    ? prev.filter((t) => t !== tech)
-                    : [...prev, tech]
-                );
-              }}
-              className={`px-3 py-1 text-sm rounded-full border transition-colors ${
-                selectedTechnologies.includes(tech)
-                  ? "bg-purple-500 border-purple-500 text-white"
-                  : "bg-zinc-800 border-zinc-700 text-zinc-300 hover:border-zinc-600"
-              }`}
-            >
-              {tech}
-            </button>
+              <button
+                onClick={() => {
+                  setSelectedTags((prev) =>
+                    prev.includes(tag)
+                      ? prev.filter((t) => t !== tag)
+                      : [...prev, tag]
+                  );
+                }}
+                className={`px-3 py-1 text-sm rounded-full transition-colors cursor-pointer text-white ${
+                  selectedTags.includes(tag)
+                    ? "glass-layer-light-hoverable"
+                    : "glass-layer-hoverable"
+                }`}
+              >
+                {tag}
+              </button>
+            </Magnetic>
           ))}
         </div>
       </div>
@@ -220,16 +103,12 @@ export function ProjectFilter({
       {/* Results and Clear */}
       <div className="flex items-center justify-between pt-4 border-t border-zinc-700">
         <div className="text-sm text-zinc-400">
-          {filteredProjects.total} project
-          {filteredProjects.total !== 1 ? "s" : ""} found
+          {filteredProjects.total === allProjectsCount
+            ? `All ${allProjectsCount} projects`
+            : `${filteredProjects.total} of ${allProjectsCount} projects`}
         </div>
         {hasActiveFilters && (
-          <button
-            onClick={clearFilters}
-            className="px-4 py-2 text-sm bg-zinc-700 hover:bg-zinc-600 text-zinc-300 rounded-lg transition-colors"
-          >
-            Clear Filters
-          </button>
+          <MagneticButton onClick={clearFilters}>Clear Filters</MagneticButton>
         )}
       </div>
     </div>

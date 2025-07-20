@@ -4,15 +4,23 @@ import Link from "next/link";
 import Image from "next/image";
 import { Magnetic } from "@/components/ui/magnetic";
 import { Project } from "@/generated/project-index";
+import { type MDXContent } from "@/generated/project-mdx-index";
 import { useClampCSS } from "@/hooks/useClampCSS";
 
 interface ProjectCardProps {
   project: Project;
   hideTags?: boolean;
+  showDetails?: boolean;
+  mdxContent?: MDXContent | null;
 }
 
 export const ProjectCard = React.memo(
-  ({ project, hideTags = true }: ProjectCardProps) => {
+  ({
+    project,
+    hideTags = true,
+    showDetails = false,
+    mdxContent,
+  }: ProjectCardProps) => {
     // Create a ref for the Link element
     const linkRef = useRef<HTMLAnchorElement>(null);
 
@@ -111,6 +119,57 @@ export const ProjectCard = React.memo(
                   </h3>
                 </Magnetic>
 
+                {/* Details Section */}
+                {showDetails && mdxContent && (
+                  <div className="mt-3 space-y-2">
+                    {/* Read Time */}
+                    {mdxContent.metadata.readTime && (
+                      <Magnetic
+                        intensity={0.05}
+                        range={1000}
+                        actionArea={{
+                          type: "ref",
+                          ref: linkRef as React.RefObject<HTMLElement>,
+                        }}
+                        springOptions={{ stiffness: 300, damping: 30 }}
+                      >
+                        <div className="flex items-center gap-1 text-zinc-400 text-xs">
+                          <svg
+                            className="w-3 h-3"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                          {mdxContent.metadata.readTime} min read
+                        </div>
+                      </Magnetic>
+                    )}
+
+                    {/* Description Preview */}
+                    {mdxContent.metadata.description && (
+                      <Magnetic
+                        intensity={0.05}
+                        range={1000}
+                        actionArea={{
+                          type: "ref",
+                          ref: linkRef as React.RefObject<HTMLElement>,
+                        }}
+                        springOptions={{ stiffness: 300, damping: 30 }}
+                      >
+                        <p className="text-zinc-300 text-xs line-clamp-2 leading-relaxed">
+                          {mdxContent.metadata.description}
+                        </p>
+                      </Magnetic>
+                    )}
+                  </div>
+                )}
                 {/* Tags */}
                 <div
                   className={`${
@@ -120,7 +179,7 @@ export const ProjectCard = React.memo(
                   {project.tags.map((tag, index) => (
                     <Magnetic
                       key={tag}
-                      intensity={0.1}
+                      intensity={0.05}
                       range={1000}
                       actionArea={{
                         type: "ref",
@@ -131,7 +190,7 @@ export const ProjectCard = React.memo(
                       <span
                         className="px-2 py-1 text-zinc-300 text-xs rounded-full glass-layer"
                         style={{
-                          animationDelay: `${index * 100}ms`,
+                          animationDelay: `${index * 200}ms`,
                           animationDuration: "2s",
                         }}
                       >

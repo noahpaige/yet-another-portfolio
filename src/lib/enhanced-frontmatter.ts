@@ -6,18 +6,11 @@ export const BaseFrontmatterSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().min(1, "Description is required"),
   date: z.string().optional(),
-  author: z.string().optional(),
   readTime: z.number().min(1).optional(),
-  category: z.string().optional(),
   tags: z.array(z.string()).optional(),
   slug: z.string().optional(),
   featured: z.boolean().optional(),
   featuredOrder: z.number().optional(),
-  status: z
-    .enum(["draft", "published", "archived"])
-    .optional()
-    .default("published"),
-  lastModified: z.string().optional(),
   version: z.string().optional(),
   seo: z
     .object({
@@ -28,50 +21,11 @@ export const BaseFrontmatterSchema = z.object({
       canonical: z.string().optional(),
     })
     .optional(),
-  social: z
-    .object({
-      twitter: z
-        .object({
-          title: z.string().optional(),
-          description: z.string().optional(),
-          image: z.string().optional(),
-        })
-        .optional(),
-      og: z
-        .object({
-          title: z.string().optional(),
-          description: z.string().optional(),
-          image: z.string().optional(),
-          type: z.string().optional(),
-        })
-        .optional(),
-    })
-    .optional(),
 });
 
 // Project-specific frontmatter schema
 export const ProjectFrontmatterSchema = BaseFrontmatterSchema.extend({
   type: z.literal("project"),
-  technologies: z.array(z.string()).optional(),
-  github: z.string().url().optional(),
-  demo: z.string().url().optional(),
-  difficulty: z
-    .enum(["beginner", "intermediate", "advanced", "expert"])
-    .optional(),
-  completionDate: z.string().optional(),
-  teamSize: z.number().min(1).optional(),
-  role: z.string().optional(),
-  duration: z.string().optional(),
-  budget: z.string().optional(),
-  client: z.string().optional(),
-  awards: z.array(z.string()).optional(),
-  media: z
-    .object({
-      thumbnail: z.string().optional(),
-      gallery: z.array(z.string()).optional(),
-      video: z.string().optional(),
-    })
-    .optional(),
 });
 
 // Blog-specific frontmatter schema (for future use)
@@ -128,12 +82,8 @@ export function createDefaultFrontmatter(
     title: "Untitled",
     description: "No description provided",
     date: new Date().toISOString(),
-    author: "Unknown Author",
     readTime: 5,
-    category: "Uncategorized",
     tags: [],
-    status: "draft",
-    lastModified: new Date().toISOString(),
     version: "1.0.0",
     ...overrides,
   };
@@ -145,13 +95,6 @@ export function createDefaultProjectFrontmatter(
   return {
     ...createDefaultFrontmatter(overrides),
     type: "project",
-    technologies: [],
-    difficulty: "intermediate",
-    teamSize: 1,
-    role: "Developer",
-    duration: "Unknown",
-    awards: [],
-    media: {},
     ...overrides,
   };
 }
@@ -192,11 +135,6 @@ export function enhanceMetadata(metadata: Frontmatter): Frontmatter {
     enhanced.slug = generateSlug(metadata.title);
   }
 
-  // Set last modified if not provided
-  if (!enhanced.lastModified) {
-    enhanced.lastModified = new Date().toISOString();
-  }
-
   return enhanced;
 }
 
@@ -229,20 +167,6 @@ export function sortByReadTime(metadata: Frontmatter[]): Frontmatter[] {
   return [...metadata].sort((a, b) => (b.readTime || 0) - (a.readTime || 0));
 }
 
-export function filterByStatus(
-  metadata: Frontmatter[],
-  status: "draft" | "published" | "archived"
-): Frontmatter[] {
-  return metadata.filter((item) => item.status === status);
-}
-
-export function filterByCategory(
-  metadata: Frontmatter[],
-  category: string
-): Frontmatter[] {
-  return metadata.filter((item) => item.category === category);
-}
-
 export function filterByTags(
   metadata: Frontmatter[],
   tags: string[]
@@ -261,7 +185,6 @@ export function searchMetadata(
     (item) =>
       item.title.toLowerCase().includes(searchTerm) ||
       item.description.toLowerCase().includes(searchTerm) ||
-      item.tags?.some((tag) => tag.toLowerCase().includes(searchTerm)) ||
-      item.category?.toLowerCase().includes(searchTerm)
+      item.tags?.some((tag) => tag.toLowerCase().includes(searchTerm))
   );
 }

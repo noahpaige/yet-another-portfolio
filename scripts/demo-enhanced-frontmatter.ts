@@ -27,22 +27,7 @@ try {
       console.log(`      📝 Description: ${metadata.description}`);
       console.log(`      ⏱️ Read Time: ${metadata.readTime} minutes`);
       console.log(`      🏷️ Tags: ${metadata.tags?.join(", ") || "None"}`);
-      console.log(`      📂 Category: ${metadata.category || "Uncategorized"}`);
-      console.log(`      👤 Author: ${metadata.author || "Unknown"}`);
       console.log(`      📅 Date: ${metadata.date || "Unknown"}`);
-
-      if (metadata.type === "project") {
-        console.log(
-          `      🛠️ Technologies: ${
-            metadata.technologies?.join(", ") || "None"
-          }`
-        );
-        console.log(`      🎯 Difficulty: ${metadata.difficulty || "Unknown"}`);
-        console.log(`      👥 Team Size: ${metadata.teamSize || "Unknown"}`);
-        console.log(
-          `      🏆 Awards: ${metadata.awards?.join(", ") || "None"}`
-        );
-      }
     }
   });
 
@@ -57,14 +42,10 @@ try {
   );
   const avgReadTime = totalReadTime / allMetadata.length;
   const allTags = new Set(allMetadata.flatMap((m) => m?.tags || []));
-  const categories = new Set(
-    allMetadata.map((m) => m?.category).filter(Boolean)
-  );
 
   console.log(`   Total Read Time: ${totalReadTime} minutes`);
   console.log(`   Average Read Time: ${Math.round(avgReadTime)} minutes`);
   console.log(`   Unique Tags: ${allTags.size}`);
-  console.log(`   Categories: ${Array.from(categories).join(", ")}`);
 
   console.log("\n🔍 Search Demo:");
   const searchTerm = "RPG";

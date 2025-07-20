@@ -2,12 +2,11 @@
 import {
   sortByDate,
   sortByReadTime,
-  filterByStatus,
-  filterByCategory,
   filterByTags,
   searchMetadata,
   type Frontmatter,
 } from "./enhanced-frontmatter";
+import { type MDXMetadata } from "../generated/project-mdx-index";
 import { getAllProjectMDX } from "./mdx";
 
 // Content management utilities
@@ -24,13 +23,9 @@ export class ContentManager {
       this.allContent = projectsWithMDX
         .map((project) => project.mdxContent?.metadata)
         .filter(
-          (metadata): metadata is Record<string, unknown> =>
+          (metadata): metadata is MDXMetadata =>
             metadata !== null && metadata !== undefined
-        )
-        .map((metadata) => ({
-          ...metadata,
-          type: metadata.type || "project", // Ensure type is set
-        }));
+        ) as Frontmatter[];
     } catch (error) {
       console.error("Error loading content:", error);
       this.allContent = [];
@@ -42,14 +37,9 @@ export class ContentManager {
     return [...this.allContent];
   }
 
-  // Get published content only
+  // Get all content (no status filtering)
   getPublishedContent(): Frontmatter[] {
-    return filterByStatus(this.allContent, "published");
-  }
-
-  // Get content by category
-  getContentByCategory(category: string): Frontmatter[] {
-    return filterByCategory(this.allContent, category);
+    return [...this.allContent];
   }
 
   // Get content by tags
@@ -79,37 +69,11 @@ export class ContentManager {
       .sort((a, b) => (a.featuredOrder || 0) - (b.featuredOrder || 0));
   }
 
-  // Get content by difficulty (for projects)
-  getContentByDifficulty(
-    difficulty: "beginner" | "intermediate" | "advanced" | "expert"
-  ): Frontmatter[] {
-    return this.allContent.filter(
-      (content) =>
-        content.type === "project" && content.difficulty === difficulty
-    );
-  }
-
-  // Get content by technology
-  getContentByTechnology(technology: string): Frontmatter[] {
-    return this.allContent.filter(
-      (content) =>
-        content.type === "project" &&
-        content.technologies?.some((tech) =>
-          tech.toLowerCase().includes(technology.toLowerCase())
-        )
-    );
-  }
-
   // Get content statistics
   getContentStats() {
     const total = this.allContent.length;
     const published = this.getPublishedContent().length;
-    const drafts = filterByStatus(this.allContent, "draft").length;
-    const archived = filterByStatus(this.allContent, "archived").length;
 
-    const categories = new Set(
-      this.allContent.map((c) => c.category).filter(Boolean)
-    );
     const tags = new Set(this.allContent.flatMap((c) => c.tags || []));
 
     const avgReadTime =
@@ -118,9 +82,6 @@ export class ContentManager {
     return {
       total,
       published,
-      drafts,
-      archived,
-      categories: Array.from(categories),
       uniqueTags: Array.from(tags),
       avgReadTime: Math.round(avgReadTime),
       totalReadTime: this.allContent.reduce(
@@ -165,11 +126,6 @@ export class ContentManager {
       score += commonTags.length * 2;
     }
 
-    // Category similarity
-    if (content1.category === content2.category) {
-      score += 3;
-    }
-
     // Type similarity
     if (content1.type === content2.type) {
       score += 1;
@@ -188,18 +144,6 @@ export function createContentManager(): ContentManager {
 export function getPublishedProjects(): Frontmatter[] {
   const manager = createContentManager();
   return manager.getPublishedContent().filter((c) => c.type === "project");
-}
-
-export function getProjectsByTechnology(technology: string): Frontmatter[] {
-  const manager = createContentManager();
-  return manager.getContentByTechnology(technology);
-}
-
-export function getProjectsByDifficulty(
-  difficulty: "beginner" | "intermediate" | "advanced" | "expert"
-): Frontmatter[] {
-  const manager = createContentManager();
-  return manager.getContentByDifficulty(difficulty);
 }
 
 export function searchProjects(query: string): Frontmatter[] {
@@ -222,8 +166,6 @@ export function testEnhancedFrontmatter() {
   console.log("📊 Content Statistics:");
   console.log(`   Total Content: ${stats.total}`);
   console.log(`   Published: ${stats.published}`);
-  console.log(`   Drafts: ${stats.drafts}`);
-  console.log(`   Categories: ${stats.categories.join(", ")}`);
   console.log(`   Unique Tags: ${stats.uniqueTags.length}`);
   console.log(`   Average Read Time: ${stats.avgReadTime} minutes`);
   console.log(`   Total Read Time: ${stats.totalReadTime} minutes`);
@@ -248,18 +190,6 @@ export function testEnhancedFrontmatter() {
   const longestContent = manager.getContentByReadTime().slice(0, 3);
   longestContent.forEach((content) => {
     console.log(`   - ${content.title} (${content.readTime} minutes)`);
-  });
-
-  console.log("\n🏷️ Content by Category:");
-  const categories = manager
-    .getAllContent()
-    .map((c) => c.category)
-    .filter(Boolean)
-    .filter((value, index, self) => self.indexOf(value) === index);
-
-  categories.forEach((category) => {
-    const categoryContent = manager.getContentByCategory(category);
-    console.log(`   ${category}: ${categoryContent.length} items`);
   });
 
   console.log("\n🎯 Recommendations for 'clair-obscur-expedition-33':");
