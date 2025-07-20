@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { filterProjects, getTags } from "@/lib/content-filtering";
 import { type MDXContent } from "@/generated/project-mdx-index";
 import { Magnetic } from "@/components/ui/magnetic";
@@ -51,7 +52,7 @@ export function ProjectFilter({
     setSearchTerm("");
   };
 
-  const hasActiveFilters = selectedTags.length > 0 || searchTerm;
+  const hasActiveFilters = selectedTags.length > 0 || searchTerm.length > 0;
 
   return (
     <div className={`space-y-4 glass-layer p-4 ${className}`}>
@@ -106,11 +107,26 @@ export function ProjectFilter({
             ? `All ${allProjectsCount} projects`
             : `${filteredProjects.total} of ${allProjectsCount} projects`}
         </div>
-        {hasActiveFilters && (
-          <MagneticButton onClick={clearFilters} className="tex">
-            Clear Filters
-          </MagneticButton>
-        )}
+        <AnimatePresence>
+          {hasActiveFilters && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8, y: 2 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.8, y: 2 }}
+              transition={{
+                duration: 0.1,
+                ease: "easeOut",
+                type: "spring",
+                stiffness: 700,
+                damping: 30,
+              }}
+            >
+              <MagneticButton onClick={clearFilters}>
+                Clear Filters
+              </MagneticButton>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
