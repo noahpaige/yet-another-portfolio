@@ -105,11 +105,11 @@ export default function ProjectsPage() {
       </ClientOnly>
 
       {/* Main Content */}
-      <div ref={scrollContainerRef} className="min-h-screen bg-black pt-14">
+      <div ref={scrollContainerRef} className="min-h-screen bg-black pt-18">
         <div className="container mx-auto px-4 py-8 relative z-10">
           {/* Page Header */}
-          <div className="text-center mb-12">
-            <h1 className="text-5xl md:text-6xl font-bold mb-6 text-zinc-100">
+          <div className="text-center mb-10">
+            <h1 className="text-5xl md:text-6xl font-bold text-zinc-100">
               Projects
             </h1>
           </div>
@@ -118,7 +118,7 @@ export default function ProjectsPage() {
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Sidebar with Filters */}
             <div className="lg:w-80 flex-shrink-0">
-              <div className="sticky top-24">
+              <div className="sticky top-26">
                 <ProjectFilter onFilterChange={handleFilterChange} />
               </div>
             </div>
