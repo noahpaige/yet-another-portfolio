@@ -10,7 +10,7 @@ interface TopNavbarProps {
 
 export function TopNavbar({ currentPage }: TopNavbarProps) {
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 p-4">
+    <nav className="fixed top-0 left-0 right-0 z-50 p-4 glass-layer rounded-none">
       <div className="container mx-auto flex items-center justify-between">
         {/* Logo/Home Link */}
         <Link
