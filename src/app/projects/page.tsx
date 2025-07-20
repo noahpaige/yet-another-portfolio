@@ -74,7 +74,7 @@ export default function ProjectsPage() {
       {/* Main Content */}
       <main
         ref={scrollContainerRef}
-        className="relative z-0 h-screen overflow-y-scroll overflow-x-hidden bg-black text-zinc-200"
+        className="relative z-0 h-screen overflow-y-scroll overflow-x-hidden scroll-smooth bg-black text-zinc-200"
       >
         {/* Animated Background and Noise Overlay */}
         <ClientOnly>
