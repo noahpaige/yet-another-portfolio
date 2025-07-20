@@ -2,10 +2,10 @@
 
 import React from "react";
 import Link from "next/link";
-import { Home, Folder } from "lucide-react";
+import { Home, Folder, Mail, MessageSquareQuote } from "lucide-react";
 
 interface TopNavbarProps {
-  currentPage?: "home" | "projects";
+  currentPage?: "home" | "projects" | "blog" | "/?section=CONTACT";
 }
 
 export function TopNavbar({ currentPage }: TopNavbarProps) {
@@ -21,7 +21,7 @@ export function TopNavbar({ currentPage }: TopNavbarProps) {
         </Link>
 
         {/* Navigation Links */}
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-2">
           <Link
             href="/"
             className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors duration-200 ${
@@ -44,6 +44,28 @@ export function TopNavbar({ currentPage }: TopNavbarProps) {
           >
             <Folder className="w-4 h-4" />
             <span className="hidden sm:inline">Projects</span>
+          </Link>
+          <Link
+            href="/blog"
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors duration-200 ${
+              currentPage === "blog"
+                ? "glass-layer-light-hoverable text-zinc-100"
+                : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50"
+            }`}
+          >
+            <MessageSquareQuote className="w-4 h-4" />
+            <span className="hidden sm:inline">Blog</span>
+          </Link>
+          <Link
+            href="/?section=CONTACT"
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors duration-200 ${
+              currentPage === "/?section=CONTACT"
+                ? "glass-layer-light-hoverable text-zinc-100"
+                : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50"
+            }`}
+          >
+            <Mail className="w-4 h-4" />
+            <span className="hidden sm:inline">Contact</span>
           </Link>
         </div>
       </div>
