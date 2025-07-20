@@ -105,10 +105,7 @@ export default function ProjectsPage() {
       </ClientOnly>
 
       {/* Main Content */}
-      <div
-        ref={scrollContainerRef}
-        className="min-h-screen bg-black overflow-x-hidden pt-20"
-      >
+      <div ref={scrollContainerRef} className="min-h-screen bg-black pt-20">
         <div className="container mx-auto px-4 py-8 relative z-10">
           {/* Page Header */}
           <div className="text-center mb-12">
