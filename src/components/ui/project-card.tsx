@@ -26,7 +26,7 @@ export const ProjectCard = React.memo(
 
     // Generate responsive font size based on container height
     const titleFontSize = useClampCSS(
-      16, // min font size (1rem)
+      24, // min font size (1rem)
       32, // max font size (2rem)
       96, // min screen height (24 * 4px = 96px)
       320, // max screen height (80 * 4px = 320px)
