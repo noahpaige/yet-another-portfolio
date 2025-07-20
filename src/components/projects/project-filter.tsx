@@ -54,7 +54,7 @@ export function ProjectFilter({
   const hasActiveFilters = selectedTags.length > 0 || searchTerm;
 
   return (
-    <div className={`space-y-6 ${className}`}>
+    <div className={`space-y-4 glass-layer p-4 ${className}`}>
       {/* Search */}
       <div className="space-y-2">
         <input
@@ -63,13 +63,12 @@ export function ProjectFilter({
           placeholder="Search..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full px-4 py-2 glass-layer-hoverable text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-100/50 focus:border-transparent"
+          className="w-full px-4 py-2 bg-slate-800/20 hover:bg-slate-800/50 ring-1 ring-slate-200/20 hover:ring-slate-200/40 rounded-lg text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-slate-200/70 focus:border-transparent transition-all duration-200 ease-in-out"
         />
       </div>
 
       {/* Tags Filter */}
       <div className="space-y-2">
-        <label className="text-sm font-medium text-zinc-300">Tags</label>
         <div className="flex flex-wrap gap-2">
           {tags.map((tag) => (
             <Magnetic
@@ -87,10 +86,10 @@ export function ProjectFilter({
                       : [...prev, tag]
                   );
                 }}
-                className={`px-3 py-1 text-sm rounded-full transition-colors cursor-pointer text-white ${
+                className={`px-3 py-1 text-sm rounded-full transition-colors cursor-pointer text-white transition-all duration-200 ease-in-out ${
                   selectedTags.includes(tag)
-                    ? "glass-layer-light-hoverable ring-1 ring-zinc-100/50"
-                    : "glass-layer-hoverable"
+                    ? "glass-layer-light-hoverable ring-2 ring-zinc-200/30"
+                    : "glass-layer-hoverable "
                 }`}
               >
                 {tag}
@@ -101,14 +100,16 @@ export function ProjectFilter({
       </div>
 
       {/* Results and Clear */}
-      <div className="flex items-center justify-between pt-4 border-t border-zinc-700">
+      <div className="flex items-center justify-between pt-3 border-t border-zinc-700 h-14">
         <div className="text-sm text-zinc-400">
           {filteredProjects.total === allProjectsCount
             ? `All ${allProjectsCount} projects`
             : `${filteredProjects.total} of ${allProjectsCount} projects`}
         </div>
         {hasActiveFilters && (
-          <MagneticButton onClick={clearFilters}>Clear Filters</MagneticButton>
+          <MagneticButton onClick={clearFilters} className="tex">
+            Clear Filters
+          </MagneticButton>
         )}
       </div>
     </div>
