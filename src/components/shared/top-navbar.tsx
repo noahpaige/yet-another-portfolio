@@ -1,7 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { Home, Folder, Mail, MessageSquareQuote } from "lucide-react";
 
 interface TopNavbarProps {
@@ -9,6 +10,32 @@ interface TopNavbarProps {
 }
 
 export function TopNavbar({ currentPage }: TopNavbarProps) {
+  const [hovered, setHovered] = useState<string | null>(null);
+  const [lockedHighlight, setLockedHighlight] = useState<string | null>(null);
+
+  const displayHighlight = lockedHighlight ?? hovered ?? currentPage;
+
+  const handleClick = (href: string, pageName: string) => {
+    setLockedHighlight(pageName);
+
+    // After animation completes, unlock highlight
+    setTimeout(() => {
+      setLockedHighlight(null);
+    }, 700);
+  };
+
+  const navItems = [
+    { href: "/", name: "home", icon: Home, label: "Home" },
+    { href: "/projects", name: "projects", icon: Folder, label: "Projects" },
+    { href: "/blog", name: "blog", icon: MessageSquareQuote, label: "Blog" },
+    {
+      href: "/?section=CONTACT",
+      name: "/?section=CONTACT",
+      icon: Mail,
+      label: "Contact",
+    },
+  ];
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 p-4 glass-layer rounded-none">
       <div className="container mx-auto flex items-center justify-between">
@@ -22,51 +49,50 @@ export function TopNavbar({ currentPage }: TopNavbarProps) {
 
         {/* Navigation Links */}
         <div className="flex items-center gap-2">
-          <Link
-            href="/"
-            className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors duration-200 ${
-              currentPage === "home"
-                ? "glass-layer-light-hoverable text-zinc-100"
-                : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50"
-            }`}
-          >
-            <Home className="w-4 h-4" />
-            <span className="hidden sm:inline">Home</span>
-          </Link>
+          {navItems.map((item) => {
+            const isActive = item.name === currentPage;
+            const isHovered = item.name === hovered;
+            const textColor =
+              isHovered || isActive ? "text-white" : "text-zinc-300/80";
+            const IconComponent = item.icon;
 
-          <Link
-            href="/projects"
-            className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors duration-200 ${
-              currentPage === "projects"
-                ? "glass-layer-light-hoverable text-zinc-100"
-                : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50"
-            }`}
-          >
-            <Folder className="w-4 h-4" />
-            <span className="hidden sm:inline">Projects</span>
-          </Link>
-          <Link
-            href="/blog"
-            className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors duration-200 ${
-              currentPage === "blog"
-                ? "glass-layer-light-hoverable text-zinc-100"
-                : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50"
-            }`}
-          >
-            <MessageSquareQuote className="w-4 h-4" />
-            <span className="hidden sm:inline">Blog</span>
-          </Link>
-          <Link
-            href="/?section=CONTACT"
-            className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors duration-200 ${
-              currentPage === "/?section=CONTACT"
-                ? "glass-layer-light-hoverable text-zinc-100"
-                : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50"
-            }`}
-          >
-            <Mail className="w-4 h-4" />
-            <span className="hidden sm:inline">Contact</span>
-          </Link>
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                onClick={() => handleClick(item.href, item.name)}
+                onMouseEnter={() => setHovered(item.name)}
+                onMouseLeave={() => setHovered(null)}
+                className={`
+                  relative px-3 py-2 rounded-lg text-sm font-medium z-10
+                  transition-colors duration-200
+                  ${textColor}
+                  cursor-pointer
+                `}
+              >
+                {displayHighlight === item.name && (
+                  <motion.div
+                    layoutId="topNavHighlight"
+                    className="absolute inset-0 glass-layer-light"
+                    transition={{
+                      type: "spring",
+                      stiffness: 300,
+                      damping: 30,
+                    }}
+                  />
+                )}
+                <span className="relative z-10 flex items-center gap-2">
+                  <IconComponent
+                    size={16}
+                    className={`shrink-0 transition-colors ${
+                      isActive && "stroke-3"
+                    }`}
+                  />
+                  <span className="hidden sm:inline">{item.label}</span>
+                </span>
+              </Link>
+            );
+          })}
         </div>
       </div>
     </nav>
