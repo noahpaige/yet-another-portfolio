@@ -241,3 +241,39 @@
     -webkit-backdrop-filter: blur(var(--glass-blur));
   }
 }
+
+/* Force backdrop-filter to work in all browsers - production fix */
+@supports (backdrop-filter: blur(1px)) {
+  .glass-layer,
+  .glass-layer-hoverable,
+  .glass-layer-light,
+  .glass-layer-light-hoverable,
+  .glass-hover-card {
+    backdrop-filter: blur(var(--glass-blur)) !important;
+  }
+}
+
+/* Additional production safeguards */
+.glass-layer,
+.glass-layer-hoverable,
+.glass-layer-light,
+.glass-layer-light-hoverable,
+.glass-hover-card {
+  /* Force both backdrop-filter properties */
+  backdrop-filter: blur(var(--glass-blur)) !important;
+  -webkit-backdrop-filter: blur(var(--glass-blur)) !important;
+
+  /* Ensure hardware acceleration */
+  transform: translate3d(0, 0, 0) !important;
+  -webkit-transform: translate3d(0, 0, 0) !important;
+  backface-visibility: hidden !important;
+  -webkit-backface-visibility: hidden !important;
+  perspective: 1000px !important;
+  -webkit-perspective: 1000px !important;
+
+  /* Ensure proper rendering */
+  background-clip: padding-box !important;
+  -webkit-background-clip: padding-box !important;
+  isolation: isolate !important;
+  will-change: backdrop-filter !important;
+}
