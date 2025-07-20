@@ -253,12 +253,11 @@
   }
 }
 
-/* Additional production safeguards */
-.glass-layer,
-.glass-layer-hoverable,
-.glass-layer-light,
-.glass-layer-light-hoverable,
-.glass-hover-card {
+/* Additional production safeguards - exclude animation classes */
+.glass-layer:not(.glass-layer-light),
+.glass-layer-hoverable:not(.glass-layer-light),
+.glass-layer-light-hoverable:not(.glass-layer-light),
+.glass-hover-card:not(.glass-layer-light) {
   /* Force both backdrop-filter properties */
   backdrop-filter: blur(var(--glass-blur)) !important;
   -webkit-backdrop-filter: blur(var(--glass-blur)) !important;
@@ -266,6 +265,25 @@
   /* Ensure hardware acceleration */
   transform: translate3d(0, 0, 0) !important;
   -webkit-transform: translate3d(0, 0, 0) !important;
+  backface-visibility: hidden !important;
+  -webkit-backface-visibility: hidden !important;
+  perspective: 1000px !important;
+  -webkit-perspective: 1000px !important;
+
+  /* Ensure proper rendering */
+  background-clip: padding-box !important;
+  -webkit-background-clip: padding-box !important;
+  isolation: isolate !important;
+  will-change: backdrop-filter !important;
+}
+
+/* Separate safeguards for glass-layer-light to preserve animations */
+.glass-layer-light {
+  /* Force both backdrop-filter properties but preserve transform for animations */
+  backdrop-filter: blur(var(--glass-blur)) !important;
+  -webkit-backdrop-filter: blur(var(--glass-blur)) !important;
+
+  /* Ensure hardware acceleration without overriding motion transforms */
   backface-visibility: hidden !important;
   -webkit-backface-visibility: hidden !important;
   perspective: 1000px !important;
