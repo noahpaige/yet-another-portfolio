@@ -89,7 +89,7 @@ export function ProjectFilter({
                 }}
                 className={`px-3 py-1 text-sm rounded-full transition-colors cursor-pointer text-white ${
                   selectedTags.includes(tag)
-                    ? "glass-layer-light-hoverable"
+                    ? "glass-layer-light-hoverable ring-1 ring-zinc-100/50"
                     : "glass-layer-hoverable"
                 }`}
               >
