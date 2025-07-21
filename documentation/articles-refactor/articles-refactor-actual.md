@@ -117,8 +117,19 @@ Both projects and blogs will be conceptualized as "articles" with different type
 
 **ACTUAL IMPLEMENTATION:**
 
-- ❌ **Not Started**: Unified article generator pending
-- 📋 **Dependencies**: Requires Step 2 schema consolidation first
+- ✅ **Completed**: Created unified article index generator
+- ✅ **Created**: `scripts/generate-article-index.ts` with article-agnostic scanning
+- ✅ **Implemented**: Type-aware metadata extraction from MDX frontmatter only
+- ✅ **Generated**: `src/generated/article-index.ts` with unified `Article` interface
+- ✅ **Added**: Comprehensive helper functions (search, filter by type/tag, statistics)
+- ✅ **Tested**: Successfully processes all 7 projects with fallback defaults
+- ✅ **Features**:
+  - Unified `Article` interface with type discrimination
+  - Support for both projects and blogs (blogs ready for future)
+  - Enhanced metadata processing with our schemas
+  - Comprehensive utility functions for filtering and search
+  - Statistics and reporting
+- 📋 **Next Action**: Ready for Step 4 (Update MDX Processing)
 
 ### Step 4: Update MDX Processing
 
@@ -381,13 +392,14 @@ Both projects and blogs will be conceptualized as "articles" with different type
 
 - ✅ Step 1: Audit Current MDX Frontmatter (100% complete)
 - ✅ Step 2: Consolidate Article Schema (100% complete)
+- ✅ Step 3: Create Unified Article Index Generator (100% complete)
 
 **Next Steps:**
 
-- 📋 Step 3: Create Unified Article Index Generator (Ready to start)
-- 📋 Step 4: Update MDX Processing (Pending Step 3)
-- 📋 Step 5: Enhance Unified Projects System (Pending Step 3)
+- 📋 Step 4: Update MDX Processing (Ready to start)
+- 📋 Step 5: Enhance Unified Projects System (Pending Step 4)
+- 📋 Step 6: Migrate Project Metadata (Pending Step 4)
 
-**Overall Progress:** 2/15 steps complete (13.3%)
+**Overall Progress:** 3/15 steps complete (20%)
 
-**Estimated Remaining Time:** 3-4 days
+**Estimated Remaining Time:** 2.5-3.5 days
