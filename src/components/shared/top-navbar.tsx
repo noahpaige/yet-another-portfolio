@@ -77,9 +77,7 @@ export function TopNavbar({ currentPage }: TopNavbarProps) {
 
           {navItems.map((item) => {
             const isActive = item.name === currentPage;
-            const isHovered = item.name === hovered;
-            const textColor =
-              isHovered || isActive ? "text-white" : "text-zinc-300/80";
+            const textColor = isActive ? "text-white" : "text-zinc-300/80";
             const IconComponent = item.icon;
 
             return (

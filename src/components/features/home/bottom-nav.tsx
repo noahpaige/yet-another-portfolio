@@ -33,10 +33,7 @@ export default function BottomNav({
       <div className="relative flex gap-2 glass-layer p-2">
         {options.map((option) => {
           const isActive = option.name === current;
-          const isHovered = option.name === hovered;
-
-          const textColor =
-            isHovered || isActive ? "text-white" : "text-zinc-300/80";
+          const textColor = isActive ? "text-white" : "text-zinc-300/80";
 
           const IconComponent = option.icon;
 
