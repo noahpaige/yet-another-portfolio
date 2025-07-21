@@ -25,7 +25,12 @@ export function TopNavbar({ currentPage }: TopNavbarProps) {
     },
   ];
 
-  const displayHighlight = lockedHighlight ?? hovered ?? currentPage;
+  // Find if current page matches any nav item
+  const currentNavItem = navItems.find((item) => item.name === currentPage);
+
+  // Use current page if it exists, otherwise use hovered state
+  const displayHighlight =
+    lockedHighlight ?? hovered ?? (currentNavItem ? currentPage : null);
 
   const handleClick = (href: string, pageName: string) => {
     setLockedHighlight(pageName);
@@ -48,7 +53,28 @@ export function TopNavbar({ currentPage }: TopNavbarProps) {
         </Link>
 
         {/* Navigation Links */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 relative">
+          {/* Hidden dummy element for animation reference when no current page */}
+          {!currentNavItem && !hovered && (
+            <motion.div
+              layoutId="topNavHighlight"
+              className="absolute opacity-0 pointer-events-none"
+              style={{
+                position: "absolute",
+                top: "0",
+                left: "0",
+                width: "90px",
+                height: "36px",
+                zIndex: -1,
+              }}
+              transition={{
+                type: "spring",
+                stiffness: 300,
+                damping: 30,
+              }}
+            />
+          )}
+
           {navItems.map((item) => {
             const isActive = item.name === currentPage;
             const isHovered = item.name === hovered;
