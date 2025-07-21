@@ -23,13 +23,12 @@ interface FilteredProject {
 // Color pairs for the animated background
 const colorPairs: [HSLColor, HSLColor][] = [
   [
-    { h: 145, s: 50, l: 20 },
-    { h: 290, s: 35, l: 10 },
+    { h: 15, s: 50, l: 20 },
+    { h: 200, s: 35, l: 10 },
   ],
-
   [
-    { h: 140, s: 20, l: 7 },
-    { h: 145, s: 80, l: 15 },
+    { h: 45, s: 35, l: 20 },
+    { h: 260, s: 50, l: 10 },
   ],
 ];
 
