@@ -403,21 +403,23 @@ const generateColorSteps = (
   colorPairs: [HSLColor, HSLColor][]
 ): { a: string; b: string }[] => {
   const colorSteps: { a: string; b: string }[] = [];
-  const numColors = ANIMATION_CONFIG.colorSteps;
-  const colorsPerPair = Math.floor(numColors / (colorPairs.length - 1));
+  const segments = colorPairs.length - 1;
+  const stepsPerSegment = ANIMATION_CONFIG.colorSteps / segments;
 
   const startTime = performance.now();
 
-  for (let j = 0; j < colorPairs.length - 1; j++) {
+  for (let j = 0; j < segments; j++) {
     const [c1, c2] = colorPairs[j];
     const [n1, n2] = colorPairs[j + 1];
 
-    for (let k = 0; k < colorsPerPair; k++) {
-      const mix = k / colorsPerPair;
+    for (let k = 0; k <= stepsPerSegment; k++) {
+      const mix = k / stepsPerSegment;
 
-      // Simplified interpolation without complex mathematical operations
       const interpolatedA = interpolateHSLSimple(c1, n1, mix);
       const interpolatedB = interpolateHSLSimple(c2, n2, mix);
+
+      // Avoid duplicating shared steps
+      if (j < segments - 1 && k === stepsPerSegment) continue;
 
       colorSteps.push({
         a: hslToString(interpolatedA),
@@ -428,7 +430,6 @@ const generateColorSteps = (
 
   const endTime = performance.now();
 
-  // Log color generation performance in development
   if (process.env.NODE_ENV === "development") {
     console.log(
       `🎨 Color Generation: ${colorSteps.length} colors in ${(
@@ -740,7 +741,14 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
     }, [qualitySettings.blobCount, colorPairs]);
 
     useMotionValueEvent(scrollYProgress, "change", (latest) => {
-      colorIndex.current = 0;
+      // Calculate color index based on scroll progress
+      // Map scroll progress (0-1) to color index (0 to colorSteps-1)
+      const colorSteps =
+        blobs.current[0]?.colors?.length || ANIMATION_CONFIG.colorSteps;
+      colorIndex.current = Math.min(
+        Math.floor(latest * colorSteps),
+        colorSteps - 1
+      );
 
       if (prevScrollY.current === null) prevScrollY.current = latest;
       scrollDirection.current = latest > prevScrollY.current ? -1 : 1;
