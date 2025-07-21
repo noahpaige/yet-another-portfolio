@@ -13,17 +13,6 @@ export function TopNavbar({ currentPage }: TopNavbarProps) {
   const [hovered, setHovered] = useState<string | null>(null);
   const [lockedHighlight, setLockedHighlight] = useState<string | null>(null);
 
-  const displayHighlight = lockedHighlight ?? hovered ?? currentPage;
-
-  const handleClick = (href: string, pageName: string) => {
-    setLockedHighlight(pageName);
-
-    // After animation completes, unlock highlight
-    setTimeout(() => {
-      setLockedHighlight(null);
-    }, 700);
-  };
-
   const navItems = [
     { href: "/", name: "home", icon: Home, label: "Home" },
     { href: "/projects", name: "projects", icon: Folder, label: "Projects" },
@@ -35,6 +24,17 @@ export function TopNavbar({ currentPage }: TopNavbarProps) {
       label: "Contact",
     },
   ];
+
+  const displayHighlight = lockedHighlight ?? hovered ?? currentPage;
+
+  const handleClick = (href: string, pageName: string) => {
+    setLockedHighlight(pageName);
+
+    // After animation completes, unlock highlight
+    setTimeout(() => {
+      setLockedHighlight(null);
+    }, 700);
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 p-4 glass-layer rounded-none">
