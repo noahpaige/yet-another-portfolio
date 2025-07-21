@@ -402,11 +402,34 @@ const interpolateHSLSimple = (
 const generateColorSteps = (
   colorPairs: [HSLColor, HSLColor][]
 ): { a: string; b: string }[] => {
+  const startTime = performance.now();
+
+  // Special case for single color pair - no interpolation needed
+  if (colorPairs.length === 1) {
+    const [c1, c2] = colorPairs[0];
+    const colorSteps = [
+      {
+        a: hslToString(c1),
+        b: hslToString(c2),
+      },
+    ];
+
+    const endTime = performance.now();
+    if (process.env.NODE_ENV === "development") {
+      console.log(
+        `🎨 Color Generation: ${colorSteps.length} colors in ${(
+          endTime - startTime
+        ).toFixed(2)}ms (single color pair)`
+      );
+    }
+
+    return colorSteps;
+  }
+
+  // Original interpolation logic for multiple color pairs
   const colorSteps: { a: string; b: string }[] = [];
   const segments = colorPairs.length - 1;
   const stepsPerSegment = ANIMATION_CONFIG.colorSteps / segments;
-
-  const startTime = performance.now();
 
   for (let j = 0; j < segments; j++) {
     const [c1, c2] = colorPairs[j];
@@ -490,6 +513,17 @@ const generateBlobs = (
  *
  * @example
  * ```tsx
+ * // Single color pair (no interpolation)
+ * <AnimatedBackground
+ *   scrollYProgress={scrollYProgress}
+ *   colorPairs={[
+ *     [{ h: 0, s: 50, l: 50 }, { h: 180, s: 50, l: 50 }]
+ *   ]}
+ *   numBlobs={12}
+ *   renderSize={32}
+ * />
+ *
+ * // Multiple color pairs (with interpolation)
  * <AnimatedBackground
  *   scrollYProgress={scrollYProgress}
  *   colorPairs={[
@@ -547,8 +581,8 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
       const warnings: string[] = [];
 
       // Critical errors that could cause crashes
-      if (!colorPairs || !Array.isArray(colorPairs) || colorPairs.length < 2) {
-        errors.push("colorPairs must be an array with at least 2 color pairs");
+      if (!colorPairs || !Array.isArray(colorPairs) || colorPairs.length < 1) {
+        errors.push("colorPairs must be an array with at least 1 color pair");
       } else {
         // Validate color structure
         colorPairs.forEach((pair, index) => {
