@@ -53,7 +53,7 @@ const WelcomeSection = React.memo(() => {
               Hey, I&apos;m
             </motion.h2>
             <motion.div
-              className="text-[clamp(48px,12vw,400px)] z-10 font-extrabold leading-[1.1] text-white font-ibm-plex-mono font-extralight cursor-default select-none flex gap-1/2"
+              className="text-[clamp(56px,12vw,400px)] z-10 font-extrabold leading-[1.1] text-white font-ibm-plex-mono font-extralight cursor-default select-none flex gap-1/2"
               variants={itemVariants}
             >
               {"NOAH PAIGE".split("").map((char, index) =>
