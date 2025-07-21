@@ -144,8 +144,20 @@ Both projects and blogs will be conceptualized as "articles" with different type
 
 **ACTUAL IMPLEMENTATION:**
 
-- ❌ **Not Started**: MDX processing updates pending
-- 📋 **Dependencies**: Requires Step 2 schema consolidation first
+- ✅ **Completed**: Updated MDX processing for unified articles
+- ✅ **Enhanced**: `scripts/generate-mdx-index.ts` to be article-type agnostic
+- ✅ **Implemented**: Article type detection and unified metadata extraction
+- ✅ **Created**: Article-type specific processing pipelines
+- ✅ **Generated**: `src/generated/article-mdx-index.ts` with unified MDX content
+- ✅ **Added**: Comprehensive helper functions for MDX content access
+- ✅ **Features**:
+  - Unified MDX content storage for all articles
+  - Type-specific MDX content collections (projects/blogs)
+  - Enhanced helper functions for content access
+  - Statistics and reporting
+  - Support for both project and blog MDX content
+- ✅ **Tested**: Successfully processes all 7 projects with proper article IDs
+- 📋 **Next Action**: Ready for Step 5 (Enhance Unified Projects System)
 
 ### Step 5: Enhance Unified Projects System
 
@@ -393,13 +405,14 @@ Both projects and blogs will be conceptualized as "articles" with different type
 - ✅ Step 1: Audit Current MDX Frontmatter (100% complete)
 - ✅ Step 2: Consolidate Article Schema (100% complete)
 - ✅ Step 3: Create Unified Article Index Generator (100% complete)
+- ✅ Step 4: Update MDX Processing (100% complete)
 
 **Next Steps:**
 
-- 📋 Step 4: Update MDX Processing (Ready to start)
-- 📋 Step 5: Enhance Unified Projects System (Pending Step 4)
-- 📋 Step 6: Migrate Project Metadata (Pending Step 4)
+- 📋 Step 5: Enhance Unified Projects System (Ready to start)
+- 📋 Step 6: Migrate Project Metadata (Pending Step 5)
+- 📋 Step 7: Update Generated Files (Pending Step 5)
 
-**Overall Progress:** 3/15 steps complete (20%)
+**Overall Progress:** 4/15 steps complete (26.7%)
 
-**Estimated Remaining Time:** 2.5-3.5 days
+**Estimated Remaining Time:** 2-3 days
