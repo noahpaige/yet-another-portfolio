@@ -9,13 +9,13 @@ import {
   getProjectById,
   type Project,
 } from "@/generated/project-index";
-import { type ProjectWithMDX } from "@/lib/unified-projects";
+import { type ProjectWithMDX } from "@/lib/unified-articles";
 
 // Re-export types from generated index
 export type { MDXMetadata, MDXContent } from "@/generated/project-mdx-index";
 
 // Re-export unified interface
-export type { UnifiedProject } from "@/lib/unified-projects";
+export type { UnifiedProject } from "@/lib/unified-articles";
 
 // Interface for project metadata (from existing index.ts files)
 export type ProjectMetadata = Project;
