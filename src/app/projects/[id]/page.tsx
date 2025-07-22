@@ -1,6 +1,6 @@
 import React from "react";
-import { getProjectById } from "@/generated/project-index";
-import { getProjectMDXContent } from "@/lib/mdx";
+import { getArticleById } from "@/generated/article-index";
+import { getArticleMDXContent } from "@/generated/article-mdx-index";
 import ArticleLayout from "@/components/articles/article-layout";
 import MDXRenderer from "@/components/mdx/mdx-renderer";
 import { notFound } from "next/navigation";
@@ -14,17 +14,17 @@ interface ProjectPageProps {
 
 export default async function ProjectPage({ params }: ProjectPageProps) {
   const { id } = await params;
-  const project = getProjectById(id);
+  const article = getArticleById(id);
 
-  if (!project) {
+  if (!article) {
     notFound();
   }
 
-  // Get MDX content for the project
-  const mdxContent = getProjectMDXContent(id);
+  // Get MDX content for the article
+  const mdxContent = getArticleMDXContent(id);
 
   if (!mdxContent) {
-    console.error(`No MDX content found for project ${id}`);
+    console.error(`No MDX content found for article ${id}`);
     notFound();
   }
 
@@ -40,12 +40,16 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
     ],
   ];
 
-  const colorPairs = project.colorPairs || defaultColorPairs;
+  // Use colorPairs from article if available (for projects), otherwise use defaults
+  const colorPairs =
+    article.type === "project" && article.colorPairs
+      ? (article.colorPairs as [HSLColor, HSLColor][])
+      : defaultColorPairs;
 
   return (
     <ArticleLayout
-      header={project.title}
-      tags={project.tags}
+      header={article.title}
+      tags={article.tags || []}
       colorPairs={colorPairs}
     >
       <MDXRenderer content={mdxContent} />

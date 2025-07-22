@@ -1,5 +1,5 @@
 import { MDXRemote } from "next-mdx-remote/rsc";
-import type { MDXContent } from "@/generated/project-mdx-index";
+import type { MDXContent } from "@/generated/article-mdx-index";
 import { mdxComponents } from "./mdx-provider";
 
 interface MDXRendererProps {
