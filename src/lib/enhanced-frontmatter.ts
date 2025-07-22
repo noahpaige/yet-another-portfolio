@@ -12,7 +12,7 @@ export const BaseFrontmatterSchema = z.object({
   featured: z.boolean().optional(),
   featuredOrder: z.number().optional(),
   version: z.string().optional(),
-  id: z.string().optional(),
+  id: z.string().optional(), // Will be made required in ProjectFrontmatterSchema
   seo: z
     .object({
       title: z.string().optional(),
@@ -27,7 +27,7 @@ export const BaseFrontmatterSchema = z.object({
 // Project-specific frontmatter schema
 export const ProjectFrontmatterSchema = BaseFrontmatterSchema.extend({
   type: z.literal("project"),
-  // Project-specific fields
+  // Required fields for projects
   image: z.string().min(1, "Image path is required"),
   imageAltText: z.string().min(1, "Image alt text is required"),
   // Optional fields for enhanced functionality
@@ -186,10 +186,8 @@ export function enhanceMetadata(metadata: Frontmatter): Frontmatter {
     enhanced.slug = generateSlug(metadata.title);
   }
 
-  // Auto-generate ID from slug if not provided (for project articles)
-  if (enhanced.type === "project" && !enhanced.id) {
-    enhanced.id = enhanced.slug;
-  }
+  // Note: ID is now derived from folder name during content generation
+  // This ensures URL consistency and eliminates duplication
 
   return enhanced;
 }

@@ -4,7 +4,6 @@ import matter from "gray-matter";
 import {
   processFrontmatter,
   enhanceMetadata,
-  frontmatterToArticle,
 } from "../src/lib/enhanced-frontmatter";
 
 interface ArticleTypeConfig {
@@ -163,9 +162,8 @@ function generateUnifiedMDXIndex() {
           const processedMetadata = processFrontmatter(data);
           const enhancedMetadata = enhanceMetadata(processedMetadata);
 
-          // Convert to unified article format to get the ID
-          const article = frontmatterToArticle(enhancedMetadata);
-          const articleId = article.id;
+          // Derive ID from folder name for URL consistency
+          const articleId = contentDir;
 
           const mdxContent = {
             metadata: enhancedMetadata,

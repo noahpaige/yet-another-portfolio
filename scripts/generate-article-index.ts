@@ -149,6 +149,9 @@ function generateArticleIndex(config: ArticleTypeConfig) {
         // Convert to unified article format
         const article = frontmatterToArticle(enhancedMetadata);
 
+        // Derive ID from folder name for URL consistency
+        article.id = contentDir;
+
         // Ensure the article has the correct type
         if (article.type !== type) {
           console.warn(
