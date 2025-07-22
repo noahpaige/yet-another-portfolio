@@ -3,79 +3,183 @@ title: "Masters Thesis"
 description: "Academic research and thesis work"
 type: "project"
 date: "2024-12-01"
-readTime: 5
+readTime: 20
 tags: ["Research", "Academic", "Thesis"]
 image: "/masters-thesis.png"
 imageAltText: "Masters thesis research and academic work"
 featured: true
 featuredOrder: 1
+colorPairs:
+  [
+    [{ h: 15, s: 30, l: 10 }, { h: 235, s: 5, l: 8 }],
+    [{ h: 25, s: 60, l: 10 }, { h: 235, s: 10, l: 8 }],
+  ]
 ---
 
-<div className="text-zinc-100 max-w-4xl mx-auto space-y-8">
-  <div className="space-y-4">
-    <h1 className="text-4xl font-bold text-center">Masters Thesis</h1>
-          <div className="text-xl text-center text-zinc-300">
-        Academic research and thesis work
-      </div>
-  </div>
+# 🧠 Personality and Mood for Non-Player Characters
 
-  <div className="space-y-6">
-    <section className="space-y-4">
-      <h2 className="text-2xl font-semibold">Abstract</h2>
-      <div className="text-zinc-300 leading-relaxed">
-        [Your thesis abstract goes here. This should provide a concise
-        summary of your research question, methodology, findings, and
-        conclusions.]
-      </div>
-    </section>
+### A Method for Behavior Simulation in a Maze Environment
 
-    <section className="space-y-4">
-      <h2 className="text-2xl font-semibold">Research Question</h2>
-      <div className="text-zinc-300 leading-relaxed">
-        [Describe your main research question and the motivation behind it.]
-      </div>
-    </section>
+#### **By Noah Paige**
 
-    <section className="space-y-4">
-      <h2 className="text-2xl font-semibold">Methodology</h2>
-      <div className="text-zinc-300 leading-relaxed">
-        [Explain your research methodology, data collection methods, and
-        analytical approach.]
-      </div>
-    </section>
+---
 
-    <section className="space-y-4">
-      <h2 className="text-2xl font-semibold">Key Findings</h2>
-      <div className="text-zinc-300 leading-relaxed">
-        [Summarize your main findings and their significance.]
-      </div>
-    </section>
+This project explores how to make non-player characters (NPCs) in video games feel more lifelike and believable—not just visually, but in how they behave and react emotionally. Drawing from real psychological models of personality and mood, I created a system where NPCs make decisions based on a mix of their personality traits and current emotional state. These traits impact how they act in a maze simulation, how they interact with each other, and even how their faces animate in real time. The result is a system where NPCs don’t just follow rigid, scripted behaviors—they respond dynamically and sometimes unpredictably, creating more immersive, emergent gameplay. This kind of model could make future games more expressive and storytelling richer, while also saving time with procedural animation instead of manual animation work.
 
-    <section className="space-y-4">
-      <h2 className="text-2xl font-semibold">Conclusions</h2>
-      <div className="text-zinc-300 leading-relaxed">
-        [Discuss the implications of your research and potential future
-        work.]
-      </div>
-    </section>
+---
 
-    <section className="space-y-4">
-      <h2 className="text-2xl font-semibold">Technologies & Tools</h2>
-      <div className="flex flex-wrap gap-2">
-        <span className="px-3 py-1 bg-zinc-800 rounded-full text-sm">
-          Research Methods
-        </span>
-        <span className="px-3 py-1 bg-zinc-800 rounded-full text-sm">
-          Data Analysis
-        </span>
-        <span className="px-3 py-1 bg-zinc-800 rounded-full text-sm">
-          Academic Writing
-        </span>
-        <span className="px-3 py-1 bg-zinc-800 rounded-full text-sm">
-          Literature Review
-        </span>
-      </div>
-    </section>
+### Introduction
 
-  </div>
-</div>
+Non-player characters (NPCs) are a staple in most modern games, yet they are often criticized for their lack of believability and emotional realism. This thesis tackles that problem by proposing a behavior model for NPCs that integrates psychological models—specifically, the **Five-Factor Model of Personality** and the **Circumplex Model of Affect**—to create more dynamic and emotionally responsive NPCs.
+
+The goal was to explore how personality and mood can be combined to produce emergent, unscripted behaviors in NPCs, which could enhance player immersion and narrative depth. To test the system, a maze simulation environment was built in Unity, where NPCs would navigate and interact based on their personalities and emotional states.
+
+---
+
+### Background
+
+#### Role of NPCs in Games
+
+NPCs play various roles in games—quest-givers, enemies, companions, or vendors. Yet many behave in limited, rigid ways due to reliance on traditional **finite state machines**, which lack flexibility in unpredictable situations. This leads to behavior that feels artificial and breaks immersion.
+
+#### Five-Factor Model of Personality
+
+Often referred to as the “Big Five,” this model breaks personality into:
+
+- **Openness**
+- **Conscientiousness**
+- **Extraversion**
+- **Agreeableness**
+- **Neuroticism**
+
+Each NPC is assigned a numerical value (0–1) for each trait, which influences their behavior.
+_Table 2.1 and Table 2.2 explain traits and their facets._
+
+#### Circumplex Model of Affect
+
+This 2D model places emotions on a graph with axes for **pleasantness** and **activation** (energy). NPCs’ current moods are represented as points on this graph, which shift over time based on their experiences. This model allows mood to fluctuate realistically.
+
+📍 _\[TODO Figure 2.2 goes here]_ — Russell’s Circumplex Model of Affect
+
+#### Procedural Animation
+
+Instead of using pre-recorded animations, this system uses **blendshapes**—facial expressions generated algorithmically based on mood. This approach saves time and produces more varied, reactive NPCs.
+
+---
+
+### Related Work
+
+Previous projects like Mac Namee’s AI system, Li and MacDonnell’s emotion-based models, and Georgeson’s “Extreme AI Personality Engine” laid the groundwork. However, these often used simplified personality models or didn’t combine personality with mood in real-time decision-making.
+
+This thesis builds on those ideas but integrates personality and mood into a **behavior tree traversal** and links it directly to real-time facial animation.
+
+---
+
+### Proposed Method
+
+Three main components were developed:
+
+1. **A behavior model** driven by personality and mood.
+2. **A procedural facial animation system** that reflects NPC mood.
+3. **A maze simulation** to observe emergent behaviors and interactions.
+
+#### Behavior Model
+
+NPCs choose from actions like "Go To Node", "Greet", "Follow", "Share", "Wait", and "Scan" based on:
+
+- What they can see
+- Their current mood and personality
+- A **potential value heuristic** that estimates how a given action might move their mood closer to their "desired mood"
+
+📍 _\[TODO Figure 6.4 goes here]_ — Flowchart of a behavior update cycle
+
+Each action computes:
+
+- **EFactor**: effect on energy
+- **PFactor**: effect on pleasantness
+
+These influence the NPC’s mood, which updates after each action.
+
+#### Mood and Personality in Action
+
+- Personality traits determine an NPC’s desired emotional state.
+- Actions impact their current mood.
+- The **potential value** of an action is how close it brings the NPC to their desired mood.
+- NPCs prefer actions with high potential value and may interrupt actions mid-way to switch to something better.
+
+---
+
+### Simulation Environment
+
+A custom maze was built in Unity. Each NPC starts in a common area and tries to reach the exit, either alone or by collaborating with others.
+
+📍 _\[TODO Figure 6.1 goes here]_ — Maze Overview
+📍 _\[TODO Figure 6.2 goes here]_ — NPC in the Maze
+📍 _\[TODO Figure 6.3 goes here]_ — Maze Nodes
+
+NPCs:
+
+- Maintain a memory of visited nodes
+- Have a perception score for each other NPC (ranging -1 to +1)
+- Can share knowledge, follow others, or wait for companions
+
+This setup allows rich social dynamics to emerge, such as friendship, avoidance, or teamwork.
+
+---
+
+### Procedural Animation
+
+Mood-driven facial expressions are rendered using blendshapes. The NPC’s mood coordinates on the circumplex graph determine which facial expressions are blended and displayed.
+
+📍 _\[TODO Figure 6.5 goes here]_ — Mood Graph with Emotions
+📍 _\[TODO Figure 6.6 goes here]_ — Facial Expression Examples
+
+This enables real-time visual feedback of internal emotional states without manual animation.
+
+---
+
+### Results
+
+#### Emergent Behavior
+
+100 iterations of the simulation showed clear correlations between personality traits and behavior choices. For example:
+
+- NPCs high in **conscientiousness** explored more of the maze.
+- NPCs high in **extraversion** were more likely to greet or follow others.
+- **Neurotic** NPCs had stronger emotional fluctuations.
+
+📍 _\[TODO Table 7.1 goes here]_ — Action vs. Trait Correlation
+📍 _\[TODO Table 7.2 goes here]_ — Trait vs. Mood Distance
+
+#### Procedural Animation Evaluation
+
+The facial animation system successfully reflected mood changes. NPCs showed more lifelike expressions, helping viewers intuitively understand their emotional state.
+
+📍 _\[TODO Figure 7.1 goes here]_ — Maze Simulation UI
+📍 _\[TODO Figure 7.2 goes here]_ — NPC Status and Face
+
+---
+
+### Applications
+
+This system could be applied to any game genre. Two specific examples are discussed:
+
+- **The Elder Scrolls V: Skyrim** — Could enhance storytelling and quest design by making NPCs react differently based on their personality and mood.
+- **NBA 2K** — Teammates and opponents could have unique playstyles and moods, changing how games unfold.
+
+---
+
+### Future Work
+
+Ideas for future development include:
+
+- Using more granular personality traits (facets)
+- Expanding mood models
+- Improving procedural animations for body language, not just facial expressions
+- Testing in more complex or varied environments
+
+---
+
+### Conclusion
+
+This thesis demonstrated that combining personality and mood models from psychology can dramatically improve the believability and behavior of NPCs. The integration of real-time emotion simulation and procedural facial animation creates characters that not only act differently but also feel emotionally alive—bringing us one step closer to the immersive realism often promised but rarely delivered in video games.
