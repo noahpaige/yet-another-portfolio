@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { filterArticles, getTags } from "@/lib/content-filtering";
+import { filterArticles, getTagsByType } from "@/lib/content-filtering";
 import { type MDXContent } from "@/generated/article-mdx-index";
 import { Magnetic } from "@/components/ui/magnetic";
 import { MagneticButton } from "@/components/ui/magnetic-button";
@@ -23,8 +23,8 @@ export function ArticleFilter({
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>("");
 
-  // Get all available filter options
-  const tags = getTags();
+  // Get all available filter options for the specific article type
+  const tags = getTagsByType(articleType);
 
   // Apply filters and notify parent with useEffect to avoid render-time state updates
   useEffect(() => {

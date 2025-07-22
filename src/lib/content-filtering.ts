@@ -119,6 +119,32 @@ export function getTags(): string[] {
 }
 
 /**
+ * Get tags for a specific article type
+ */
+export function getTagsByType(
+  type: "project" | "blog" | "all" = "all"
+): string[] {
+  const allArticles =
+    type === "all"
+      ? getArticleTypeMDXContent("project") // Currently only projects
+      : getArticleTypeMDXContent(type);
+
+  const tags = new Set<string>();
+  allArticles.forEach(({ content }) => {
+    const contentTags = getMetadataArray(content, "tags");
+    if (contentTags) {
+      contentTags.forEach((tag) => {
+        if (typeof tag === "string") {
+          tags.add(tag);
+        }
+      });
+    }
+  });
+
+  return Array.from(tags).sort();
+}
+
+/**
  * Search articles by text
  */
 export function searchArticles(
