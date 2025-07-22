@@ -70,86 +70,87 @@ export function TopNavbar({ currentPage }: TopNavbarProps) {
   };
 
   return (
-    <nav
-      ref={navbarRef}
-      className="fixed top-0 left-0 right-0 z-50 p-4 glass-layer rounded-none"
-    >
-      <div className="container mx-auto flex items-center justify-between">
-        {/* Logo/Home Link */}
-        <Link
-          href="/"
-          className="text-zinc-100 hover:text-zinc-300 transition-colors duration-200"
-        >
-          <span className="font-space-mono font-bold text-lg">Noah Paige</span>
-        </Link>
+    <div className="fixed top-0 left-0 right-0 z-50 shadow-lg shadow-slate-950/60">
+      <nav ref={navbarRef} className="p-4 glass-layer rounded-none">
+        <div className="container mx-auto flex items-center justify-between">
+          {/* Logo/Home Link */}
+          <Link
+            href="/"
+            className="text-zinc-100 hover:text-zinc-300 transition-colors duration-200"
+          >
+            <span className="font-space-mono font-bold text-lg">
+              Noah Paige
+            </span>
+          </Link>
 
-        {/* Navigation Links */}
-        <div className="flex items-center gap-2 relative">
-          {/* Hidden dummy element for animation reference when no current page */}
-          {!currentNavItem && !hovered && (
-            <motion.div
-              layoutId="topNavHighlight"
-              className="absolute opacity-0 pointer-events-none"
-              style={{
-                position: "absolute",
-                top: "0",
-                left: "0",
-                width: "90px",
-                height: "36px",
-                zIndex: -1,
-              }}
-              transition={{
-                type: "spring",
-                stiffness: 300,
-                damping: 30,
-              }}
-            />
-          )}
+          {/* Navigation Links */}
+          <div className="flex items-center gap-2 relative">
+            {/* Hidden dummy element for animation reference when no current page */}
+            {!currentNavItem && !hovered && (
+              <motion.div
+                layoutId="topNavHighlight"
+                className="absolute opacity-0 pointer-events-none"
+                style={{
+                  position: "absolute",
+                  top: "0",
+                  left: "0",
+                  width: "90px",
+                  height: "36px",
+                  zIndex: -1,
+                }}
+                transition={{
+                  type: "spring",
+                  stiffness: 300,
+                  damping: 30,
+                }}
+              />
+            )}
 
-          {navItems.map((item) => {
-            const isActive = item.name === currentPage;
-            const textColor = isActive ? "text-white" : "text-zinc-300/80";
-            const IconComponent = item.icon;
+            {navItems.map((item) => {
+              const isActive = item.name === currentPage;
+              const textColor = isActive ? "text-white" : "text-zinc-300/80";
+              const IconComponent = item.icon;
 
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                onClick={() => handleClick(item.href, item.name)}
-                onMouseEnter={() => setHovered(item.name)}
-                onMouseLeave={() => setHovered(null)}
-                className={`
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  onClick={() => handleClick(item.href, item.name)}
+                  onMouseEnter={() => setHovered(item.name)}
+                  onMouseLeave={() => setHovered(null)}
+                  className={`
                   relative px-3 py-2 rounded-lg text-sm font-medium z-10
                   transition-colors duration-200
                   ${textColor}
                   cursor-pointer
                 `}
-              >
-                {displayHighlight === item.name && (
-                  <motion.div
-                    layoutId="topNavHighlight"
-                    className="absolute inset-0 glass-layer-light"
-                    transition={{
-                      type: "spring",
-                      stiffness: 300,
-                      damping: 30,
-                    }}
-                  />
-                )}
-                <span className="relative z-10 flex items-center gap-2">
-                  <IconComponent
-                    size={16}
-                    className={`shrink-0 transition-colors ${
-                      isActive && "stroke-3"
-                    }`}
-                  />
-                  <span className="hidden sm:inline">{item.label}</span>
-                </span>
-              </Link>
-            );
-          })}
+                >
+                  {displayHighlight === item.name && (
+                    <motion.div
+                      layoutId="topNavHighlight"
+                      className="absolute inset-0 glass-layer-light"
+                      transition={{
+                        type: "spring",
+                        stiffness: 300,
+                        damping: 30,
+                      }}
+                    />
+                  )}
+                  <span className="relative z-10 flex items-center gap-2">
+                    <IconComponent
+                      size={16}
+                      className={`shrink-0 transition-colors ${
+                        isActive && "stroke-3"
+                      }`}
+                    />
+                    <span className="hidden sm:inline">{item.label}</span>
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+    </div>
   );
 }
