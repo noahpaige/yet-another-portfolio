@@ -18,15 +18,14 @@ interface ArticleTypeConfig {
 const articleTypes: ArticleTypeConfig[] = [
   {
     name: "projects",
-    sourceDir: "src/projects", // Will be migrated to src/articles/projects/ later
+    sourceDir: "src/articles/projects",
     type: "project",
   },
-  // Future: Add blog configuration here
-  // {
-  //   name: "blogs",
-  //   sourceDir: "src/articles/blogs",
-  //   type: "blog",
-  // }
+  {
+    name: "blogs",
+    sourceDir: "src/articles/blogs",
+    type: "blog",
+  },
 ];
 
 // Ensure the generated directory exists
