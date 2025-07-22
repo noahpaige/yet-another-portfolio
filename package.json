@@ -11,8 +11,7 @@
     "generate-mdx-index": "tsx scripts/generate-mdx-index.ts",
     "test-enhanced-frontmatter": "tsx scripts/test-enhanced-frontmatter.ts",
     "demo-enhanced-frontmatter": "tsx scripts/demo-enhanced-frontmatter.ts",
-    "test-content-filtering": "tsx scripts/test-content-filtering.ts",
-    "generate-project-index": "tsx scripts/generate-project-index.ts"
+    "test-content-filtering": "tsx scripts/test-content-filtering.ts"
   },
   "dependencies": {
     "@radix-ui/react-hover-card": "^1.1.14",

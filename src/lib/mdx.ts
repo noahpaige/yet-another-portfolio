@@ -1,88 +1,86 @@
 // Import generated MDX content (build-time)
 import {
-  getProjectMDXContent as getProjectMDXContentFromIndex,
-  getProjectsWithMDX,
+  getArticleMDXContent as getArticleMDXContentFromIndex,
+  getArticleTypeMDXContent,
   type MDXContent,
-} from "@/generated/project-mdx-index";
+} from "@/generated/article-mdx-index";
 import {
-  projects,
-  getProjectById,
-  type Project,
-} from "@/generated/project-index";
-import { type ProjectWithMDX } from "@/lib/unified-articles";
+  getArticleById,
+  projectArticles,
+  type Article,
+} from "@/generated/article-index";
+import { type UnifiedArticle } from "@/lib/unified-articles";
 
 // Re-export types from generated index
-export type { MDXMetadata, MDXContent } from "@/generated/project-mdx-index";
+export type { MDXContent } from "@/generated/article-mdx-index";
 
 // Re-export unified interface
-export type { UnifiedProject } from "@/lib/unified-articles";
+export type { UnifiedArticle } from "@/lib/unified-articles";
 
-// Interface for project metadata (from existing index.ts files)
-export type ProjectMetadata = Project;
+// Interface for article metadata (from unified article system)
+export type ArticleMetadata = Article;
 
 /**
- * Get MDX content for a specific project (fast, build-time data)
+ * Get MDX content for a specific article (fast, build-time data)
  */
-export function getProjectMDXContent(projectId: string): MDXContent | null {
-  return getProjectMDXContentFromIndex(projectId);
+export function getArticleMDXContent(articleId: string): MDXContent | null {
+  return getArticleMDXContentFromIndex(articleId);
 }
 
 /**
- * Get project metadata from the generated index (fast, build-time data)
+ * Get article metadata from the generated index (fast, build-time data)
  */
-export function getProjectMetadata(
-  projectId: string
-): ProjectMetadata | undefined {
-  return getProjectById(projectId);
+export function getArticleMetadata(
+  articleId: string
+): ArticleMetadata | undefined {
+  return getArticleById(articleId);
 }
 
 /**
  * Get all projects from the generated index (fast, build-time data)
  */
-export function getAllProjects(): ProjectMetadata[] {
-  return projects;
+export function getAllProjects(): ArticleMetadata[] {
+  return projectArticles;
 }
 
 /**
  * Get featured projects from the generated index (fast, build-time data)
  */
-export function getFeaturedProjects(): ProjectMetadata[] {
-  return projects
+export function getFeaturedProjects(): ArticleMetadata[] {
+  return projectArticles
     .filter((p) => p.featured)
     .sort((a, b) => (a.featuredOrder || 0) - (b.featuredOrder || 0));
 }
 
 /**
- * Get project with both metadata and MDX content
+ * Get article with both metadata and MDX content
  */
-export function getProjectWithMDX(projectId: string): ProjectWithMDX | null {
-  const projectMetadata = getProjectMetadata(projectId);
-  const mdxContent = getProjectMDXContent(projectId);
+export function getArticleWithMDX(articleId: string): UnifiedArticle | null {
+  const articleMetadata = getArticleMetadata(articleId);
+  const mdxContent = getArticleMDXContent(articleId);
 
-  if (!projectMetadata) {
+  if (!articleMetadata) {
     return null;
   }
 
   return {
-    id: projectId,
+    ...articleMetadata,
     mdxContent,
-    projectMetadata,
   };
 }
 
 /**
  * Get all projects with MDX content (combines fast metadata + MDX)
  */
-export function getAllProjectMDX(): ProjectWithMDX[] {
+export function getAllProjectMDX(): UnifiedArticle[] {
   const allProjects = getAllProjects();
-  const projectsWithMDX: ProjectWithMDX[] = [];
+  const projectsWithMDX: UnifiedArticle[] = [];
 
   for (const project of allProjects) {
-    const mdxContent = getProjectMDXContent(project.id);
+    const mdxContent = getArticleMDXContent(project.id);
     projectsWithMDX.push({
-      id: project.id,
+      ...project,
       mdxContent,
-      projectMetadata: project,
     });
   }
 
@@ -93,7 +91,7 @@ export function getAllProjectMDX(): ProjectWithMDX[] {
  * Get all projects that have MDX content
  */
 export function getProjectsWithMDXContent(): string[] {
-  return getProjectsWithMDX();
+  return getArticleTypeMDXContent("project").map(({ id }) => id);
 }
 
 /**
@@ -104,7 +102,7 @@ export function testMDXIntegration() {
 
   // Test individual project MDX
   console.log("--- Testing Individual Project MDX ---");
-  const testProject = getProjectMDXContent("masters-thesis");
+  const testProject = getArticleMDXContent("masters-thesis");
   if (testProject) {
     console.log("✅ MDX file found and parsed");
     console.log("📄 Title:", testProject.metadata.title);
@@ -113,7 +111,7 @@ export function testMDXIntegration() {
 
   // Test project metadata
   console.log("\n--- Testing Project Metadata ---");
-  const projectMetadata = getProjectMetadata("masters-thesis");
+  const projectMetadata = getArticleMetadata("masters-thesis");
   if (projectMetadata) {
     console.log("✅ Project metadata found");
     console.log("📄 Title:", projectMetadata.title);

@@ -6,7 +6,6 @@ import {
   searchMetadata,
   type Frontmatter,
 } from "./enhanced-frontmatter";
-import { type MDXMetadata } from "../generated/project-mdx-index";
 import { getAllProjectMDX } from "./mdx";
 
 // Content management utilities
@@ -23,7 +22,7 @@ export class ContentManager {
       this.allContent = projectsWithMDX
         .map((project) => project.mdxContent?.metadata)
         .filter(
-          (metadata): metadata is MDXMetadata =>
+          (metadata): metadata is Record<string, unknown> =>
             metadata !== null && metadata !== undefined
         ) as Frontmatter[];
     } catch (error) {
