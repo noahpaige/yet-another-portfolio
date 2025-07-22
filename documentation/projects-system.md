@@ -9,7 +9,7 @@ The projects system in this portfolio app is designed to automatically generate 
 ### Core Components
 
 1. **Project Folders** (`src/projects/`) - Individual project definitions
-2. **Generated Index** (`src/generated/project-index.ts`) - Auto-generated project registry
+2. **Generated Index** (`src/generated/article-index.ts`) - Auto-generated unified article registry
 3. **Dynamic Routes** (`src/app/projects/[id]/page.tsx`) - Individual project pages
 4. **Article Template** (`src/components/articles/article-layout.tsx`) - Single layout template for all projects
 5. **Project Cards** (`src/components/ui/project-card.tsx`) - Reusable project preview cards
@@ -71,7 +71,7 @@ export default function ProjectContent() {
 
 ### 2. Automatic Index Generation
 
-The `scripts/generate-project-index.ts` script automatically scans all project folders and generates a centralized index file.
+The `scripts/generate-article-index.ts` script automatically scans all project folders and generates a centralized unified article index file.
 
 #### What the Script Does:
 
@@ -84,7 +84,7 @@ The `scripts/generate-project-index.ts` script automatically scans all project f
    - Helper functions for project lookup
    - TypeScript interfaces for type safety
 
-#### Generated Output (`src/generated/project-index.ts`):
+#### Generated Output (`src/generated/article-index.ts`):
 
 ```typescript
 // Auto-generated file - do not edit manually
@@ -347,16 +347,17 @@ The `ProjectCard` component provides consistent project previews across the app:
 ### Generate Project Index
 
 ```bash
-npm run generate-project-index
+npm run generate-article-index
 ```
 
 This script:
 
 - Scans all project directories
-- Extracts and validates metadata
-- Generates TypeScript index file
-- Sorts projects by timestamp
-- Creates featured projects list
+- Extracts and validates metadata from MDX frontmatter
+- Generates TypeScript unified article index file
+- Sorts articles by date
+- Creates featured articles list
+- Supports both projects and blogs (future)
 
 ### Development Workflow
 
@@ -368,13 +369,13 @@ This script:
 
 ### Build Integration
 
-The project index generation is automatically integrated into the build process:
+The unified article index generation is automatically integrated into the build process:
 
 ```json
 {
   "scripts": {
-    "dev": "npm run generate-project-index && next dev",
-    "build": "npm run generate-project-index && next build"
+    "dev": "npm run generate-article-index && npm run generate-mdx-index && next dev",
+    "build": "npm run generate-article-index && npm run generate-mdx-index && next build"
   }
 }
 ```
@@ -406,7 +407,8 @@ src/
 │   │   └── content.tsx         # Project content
 │   └── ...
 ├── generated/                   # Auto-generated files
-│   └── project-index.ts        # Project registry
+│   ├── article-index.ts        # Unified article registry
+│   └── article-mdx-index.ts    # MDX content registry
 ├── app/projects/               # Next.js routes
 │   ├── page.tsx                # Projects listing
 │   └── [id]/page.tsx           # Individual project pages
@@ -417,7 +419,8 @@ src/
 │   └── ui/
 │       └── project-card.tsx    # Project preview cards
 └── scripts/
-    └── generate-project-index.ts  # Index generation script
+    ├── generate-article-index.ts   # Unified article index generation script
+└── generate-mdx-index.ts       # MDX content generation script
 ```
 
 This system provides a powerful, flexible, and maintainable way to manage portfolio projects with minimal manual configuration and maximum automation. The simplified template system ensures consistency across all projects while still allowing for customization through background colors.

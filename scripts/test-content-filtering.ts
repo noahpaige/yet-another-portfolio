@@ -1,10 +1,10 @@
 // Test script for content filtering functionality
 import {
-  filterProjects,
+  filterArticles,
   getTags,
-  searchProjects,
-  getProjectsByTag,
-  getFeaturedProjects,
+  searchArticles,
+  getArticlesByTag,
+  getFeaturedArticles,
 } from "../src/lib/content-filtering";
 
 console.log("🔍 Testing Content Filtering System...\n");
@@ -19,7 +19,7 @@ try {
   // Test 2: Filter by tags
   console.log("\n🏷️ Filter by Tags:");
   tags.forEach((tag) => {
-    const results = getProjectsByTag(tag);
+    const results = getArticlesByTag(tag, "project");
     console.log(`   🏷️ ${tag}: ${results.length} projects`);
     results.forEach(({ id, content }) => {
       console.log(`      • ${id} - ${content.metadata.title}`);
@@ -30,16 +30,16 @@ try {
   console.log("\n🔍 Search Functionality:");
   const searchTerms = ["RPG", "React", "Gaming", "Analysis"];
   searchTerms.forEach((term) => {
-    const results = searchProjects(term);
+    const results = searchArticles(term, "project");
     console.log(`   🔍 "${term}": ${results.length} results`);
     results.forEach(({ id, content }) => {
       console.log(`      • ${id} - ${content.metadata.title}`);
     });
   });
 
-  // Test 6: Featured projects
-  console.log("\n⭐ Featured Projects:");
-  const featured = getFeaturedProjects();
+  // Test 6: Featured articles
+  console.log("\n⭐ Featured Articles:");
+  const featured = getFeaturedArticles("project");
   console.log(`   ⭐ Featured: ${featured.length} projects`);
   featured.forEach(({ id, content }) => {
     console.log(
@@ -51,14 +51,15 @@ try {
 
   // Test 7: Content statistics
   console.log("\n📈 Content Statistics:");
-  const allResults = filterProjects();
+  const allResults = filterArticles({ type: "project" });
   console.log(`   📊 Total Published Projects: ${allResults.total}`);
   console.log(`   🏷️ Tags: ${allResults.tags.length}`);
 
   // Test 8: Empty filter results
   console.log("\n🚫 Empty Filter Results:");
-  const emptyResults = filterProjects({
+  const emptyResults = filterArticles({
     tags: ["NonExistentTag"],
+    type: "project",
   });
   console.log(`   🚫 Non-existent tag: ${emptyResults.total} projects`);
 

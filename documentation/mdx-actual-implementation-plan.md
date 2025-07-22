@@ -93,8 +93,8 @@ description: "Project description from frontmatter"
 
 #### **Generated Files:**
 
-- `src/generated/project-index.ts` - Project metadata (auto-generated)
-- `src/generated/project-mdx-index.ts` - Project MDX content (auto-generated)
+- `src/generated/article-index.ts` - Unified article metadata (auto-generated)
+- `src/generated/article-mdx-index.ts` - Unified article MDX content (auto-generated)
 
 #### **Core Libraries:**
 
