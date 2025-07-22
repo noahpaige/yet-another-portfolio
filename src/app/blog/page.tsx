@@ -23,12 +23,12 @@ interface FilteredBlog {
 // Color pairs for the animated background (different from projects)
 const colorPairs: [HSLColor, HSLColor][] = [
   [
-    { h: 280, s: 60, l: 25 },
-    { h: 120, s: 40, l: 15 },
+    { h: 225, s: 45, l: 40 },
+    { h: 260, s: 60, l: 8 },
   ],
   [
-    { h: 320, s: 50, l: 25 },
-    { h: 180, s: 45, l: 15 },
+    { h: 225, s: 60, l: 30 },
+    { h: 260, s: 70, l: 10 },
   ],
 ];
 
