@@ -88,55 +88,56 @@ export default function BlogsPage() {
           </div>
         </ClientOnly>
 
-        <div className="pt-18">
-          <div className="container mx-auto px-4 py-8 relative z-10">
-            {/* Page Header */}
-            <div className="text-center mb-10">
-              <h1 className="text-5xl md:text-6xl font-bold text-zinc-100">
-                Blog
-              </h1>
+        <div
+          className="container mx-auto px-4 py-8 relative z-10"
+          style={{ paddingTop: "var(--navbar-height, 80px)" }}
+        >
+          {/* Page Header */}
+          <div className="text-center my-8">
+            <h1 className="text-5xl md:text-6xl font-bold text-zinc-100">
+              Blog
+            </h1>
+          </div>
+
+          {/* Main Layout */}
+          <div className="flex flex-col lg:flex-row gap-8">
+            {/* Sidebar with Filters */}
+            <div className="lg:w-80 flex-shrink-0">
+              <div className="sticky top-26">
+                <ArticleFilter
+                  onFilterChange={handleFilterChange}
+                  articleType="blog"
+                />
+              </div>
             </div>
 
-            {/* Main Layout */}
-            <div className="flex flex-col lg:flex-row gap-8">
-              {/* Sidebar with Filters */}
-              <div className="lg:w-80 flex-shrink-0">
-                <div className="sticky top-26">
-                  <ArticleFilter
-                    onFilterChange={handleFilterChange}
-                    articleType="blog"
-                  />
+            {/* Blogs Grid */}
+            <div className="flex-1">
+              {filteredBlogs.length > 0 ? (
+                <div className="grid grid-cols-1 gap-6">
+                  {filteredBlogs.map(({ id, content }) => {
+                    const blog = getArticleById(id);
+                    if (!blog) return null;
+
+                    return (
+                      <ArticleCard
+                        key={id}
+                        article={blog}
+                        hideTags={false}
+                        showReadTime={isSmallScreen}
+                        showDesc={isSmallScreen}
+                        mdxContent={content}
+                      />
+                    );
+                  })}
                 </div>
-              </div>
-
-              {/* Blogs Grid */}
-              <div className="flex-1">
-                {filteredBlogs.length > 0 ? (
-                  <div className="grid grid-cols-1 gap-6">
-                    {filteredBlogs.map(({ id, content }) => {
-                      const blog = getArticleById(id);
-                      if (!blog) return null;
-
-                      return (
-                        <ArticleCard
-                          key={id}
-                          article={blog}
-                          hideTags={false}
-                          showReadTime={isSmallScreen}
-                          showDesc={isSmallScreen}
-                          mdxContent={content}
-                        />
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <p className="text-zinc-400 text-lg">
-                      No blogs found matching your filters.
-                    </p>
-                  </div>
-                )}
-              </div>
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-zinc-400 text-lg">
+                    No blogs found matching your filters.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>

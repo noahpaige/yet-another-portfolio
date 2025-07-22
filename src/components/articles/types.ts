@@ -5,4 +5,5 @@ export interface ArticleLayoutProps {
   tags: string[];
   colorPairs: [HSLColor, HSLColor][];
   children: React.ReactNode;
+  currentPage?: "home" | "projects" | "blog" | "/?section=CONTACT";
 }

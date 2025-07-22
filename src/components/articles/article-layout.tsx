@@ -5,6 +5,7 @@ import { useScroll } from "framer-motion";
 import AnimatedBackground from "@/components/animated-background";
 import ClientOnly from "@/components/client-only";
 import NoiseOverlay from "@/components/noise-overlay";
+import { TopNavbar } from "@/components/shared/top-navbar";
 import type { ArticleLayoutProps } from "./types";
 
 export default function ArticleLayout({
@@ -12,6 +13,7 @@ export default function ArticleLayout({
   tags,
   colorPairs,
   children,
+  currentPage,
 }: ArticleLayoutProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -49,8 +51,12 @@ export default function ArticleLayout({
         ref={scrollContainerRef}
         className="min-h-screen bg-black overflow-x-hidden"
       >
+        <TopNavbar currentPage={currentPage} />
         {/* Header */}
-        <div className="container mx-auto px-4 py-12 relative z-10">
+        <div
+          className="container mx-auto px-4 py-12 relative z-10"
+          style={{ paddingTop: "calc(var(--navbar-height, 80px) + 3rem)" }}
+        >
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-16">
               <h1 className="text-5xl md:text-6xl font-bold mb-6 text-zinc-100">

@@ -44,7 +44,10 @@ export default function NotFound() {
         </ClientOnly>
 
         {/* Content */}
-        <div className="min-h-screen flex items-center justify-center relative z-10">
+        <div
+          className="min-h-screen flex items-center justify-center relative z-10"
+          style={{ paddingTop: "var(--navbar-height, 80px)" }}
+        >
           <div className="text-center">
             <h1 className="text-9xl font-bold text-zinc-100 pb-4">404</h1>
             <p className="text-zinc-400 text-3xl mb-30">Page not found</p>

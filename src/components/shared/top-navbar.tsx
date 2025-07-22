@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Home, Folder, Mail, MessageSquareQuote } from "lucide-react";
@@ -12,6 +12,34 @@ interface TopNavbarProps {
 export function TopNavbar({ currentPage }: TopNavbarProps) {
   const [hovered, setHovered] = useState<string | null>(null);
   const [lockedHighlight, setLockedHighlight] = useState<string | null>(null);
+  const navbarRef = useRef<HTMLElement>(null);
+
+  // Set CSS custom property for navbar height
+  useEffect(() => {
+    const updateNavbarHeight = () => {
+      if (navbarRef.current) {
+        const height = navbarRef.current.offsetHeight;
+        document.documentElement.style.setProperty(
+          "--navbar-height",
+          `${height}px`
+        );
+      }
+    };
+
+    // Update on mount
+    updateNavbarHeight();
+
+    // Update on window resize
+    window.addEventListener("resize", updateNavbarHeight);
+
+    // Update after a short delay to ensure all styles are applied
+    const timeoutId = setTimeout(updateNavbarHeight, 100);
+
+    return () => {
+      window.removeEventListener("resize", updateNavbarHeight);
+      clearTimeout(timeoutId);
+    };
+  }, []);
 
   const navItems = [
     { href: "/", name: "home", icon: Home, label: "Home" },
@@ -42,7 +70,10 @@ export function TopNavbar({ currentPage }: TopNavbarProps) {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 p-4 glass-layer rounded-none">
+    <nav
+      ref={navbarRef}
+      className="fixed top-0 left-0 right-0 z-50 p-4 glass-layer rounded-none"
+    >
       <div className="container mx-auto flex items-center justify-between">
         {/* Logo/Home Link */}
         <Link
