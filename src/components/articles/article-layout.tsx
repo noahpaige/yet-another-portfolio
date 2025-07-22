@@ -77,9 +77,7 @@ export default function ArticleLayout({
             </div>
 
             {/* Content */}
-            <main className="prose prose-invert max-w-none prose-headings:text-zinc-100 prose-p:text-zinc-300 prose-strong:text-zinc-200 prose-code:text-cyan-300 prose-pre:bg-zinc-900/50 prose-pre:border prose-pre:border-zinc-700">
-              {children}
-            </main>
+            <main className="">{children}</main>
           </div>
         </div>
       </div>

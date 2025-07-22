@@ -47,7 +47,7 @@ export function TopNavbar({ currentPage }: TopNavbarProps) {
     { href: "/blog", name: "blog", icon: MessageSquareQuote, label: "Blog" },
     {
       href: "/?section=CONTACT",
-      name: "/?section=CONTACT",
+      name: "contact",
       icon: Mail,
       label: "Contact",
     },
