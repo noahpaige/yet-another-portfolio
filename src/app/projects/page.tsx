@@ -124,7 +124,8 @@ export default function ProjectsPage() {
                           key={id}
                           project={project}
                           hideTags={false}
-                          showDetails={isSmallScreen}
+                          showReadTime={false}
+                          showDesc={isSmallScreen}
                           mdxContent={content}
                         />
                       );

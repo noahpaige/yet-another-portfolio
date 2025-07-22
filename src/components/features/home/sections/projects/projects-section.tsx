@@ -64,7 +64,11 @@ export default function ProjectsSection() {
                         : "col-span-1"
                     }`}
                   >
-                    <ProjectCard project={project} showDetails={false} />
+                    <ProjectCard
+                      project={project}
+                      showReadTime={false}
+                      showDesc={false}
+                    />
                   </motion.div>
                 ))}
             </motion.div>

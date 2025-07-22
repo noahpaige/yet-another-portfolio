@@ -122,7 +122,8 @@ export default function BlogsPage() {
                           key={id}
                           project={blog}
                           hideTags={false}
-                          showDetails={isSmallScreen}
+                          showReadTime={isSmallScreen}
+                          showDesc={isSmallScreen}
                           mdxContent={content}
                         />
                       );

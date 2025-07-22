@@ -10,7 +10,8 @@ import { useClampCSS } from "@/hooks/useClampCSS";
 interface ProjectCardProps {
   project: Article;
   hideTags?: boolean;
-  showDetails?: boolean;
+  showReadTime?: boolean;
+  showDesc?: boolean;
   mdxContent?: MDXContent | null;
 }
 
@@ -18,7 +19,8 @@ export const ProjectCard = React.memo(
   ({
     project,
     hideTags = true,
-    showDetails = false,
+    showReadTime = false,
+    showDesc = false,
     mdxContent,
   }: ProjectCardProps) => {
     // Helper function to safely get metadata values
@@ -134,10 +136,10 @@ export const ProjectCard = React.memo(
                 </Magnetic>
 
                 {/* Details Section */}
-                {showDetails && mdxContent && (
+                {(showReadTime || showDesc) && mdxContent && (
                   <div className="mt-3 space-y-2">
                     {/* Read Time */}
-                    {readTime && (
+                    {showReadTime && readTime && (
                       <Magnetic
                         intensity={0.05}
                         range={1000}
@@ -167,7 +169,7 @@ export const ProjectCard = React.memo(
                     )}
 
                     {/* Description Preview */}
-                    {description && (
+                    {showDesc && description && (
                       <Magnetic
                         intensity={0.05}
                         range={1000}
