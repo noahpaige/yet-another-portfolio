@@ -3,12 +3,12 @@ import React, { useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Magnetic } from "@/components/ui/magnetic";
-import { Project } from "@/generated/project-index";
-import { type MDXContent } from "@/generated/project-mdx-index";
+import { Article } from "@/generated/article-index";
+import { type MDXContent } from "@/generated/article-mdx-index";
 import { useClampCSS } from "@/hooks/useClampCSS";
 
 interface ProjectCardProps {
-  project: Project;
+  project: Article;
   hideTags?: boolean;
   showDetails?: boolean;
   mdxContent?: MDXContent | null;
@@ -21,6 +21,20 @@ export const ProjectCard = React.memo(
     showDetails = false,
     mdxContent,
   }: ProjectCardProps) => {
+    // Helper function to safely get metadata values
+    const getMetadataValue = (
+      key: string,
+      type: "string" | "number"
+    ): string | number | null => {
+      if (!mdxContent?.metadata) return null;
+      const value = mdxContent.metadata[key];
+      if (type === "string" && typeof value === "string") return value;
+      if (type === "number" && typeof value === "number") return value;
+      return null;
+    };
+
+    const readTime = getMetadataValue("readTime", "number");
+    const description = getMetadataValue("description", "string");
     // Create a ref for the Link element
     const linkRef = useRef<HTMLAnchorElement>(null);
 
@@ -78,8 +92,8 @@ export const ProjectCard = React.memo(
                     style={{ height: cardHeight }}
                   >
                     <Image
-                      src={project.image}
-                      alt=""
+                      src={project.image || "/default-project-image.png"}
+                      alt={project.imageAltText || ""}
                       fill
                       className="object-cover rounded-lg"
                       onError={() => {
@@ -95,7 +109,7 @@ export const ProjectCard = React.memo(
                       className="image-fallback hidden w-full h-full items-center justify-center bg-gray-800 text-slate-400 text-sm rounded-lg text-center"
                       style={{ height: cardHeight }}
                     >
-                      {project.imageAltText}
+                      {project.imageAltText || "Project image"}
                     </div>
                   </div>
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
@@ -123,7 +137,7 @@ export const ProjectCard = React.memo(
                 {showDetails && mdxContent && (
                   <div className="mt-3 space-y-2">
                     {/* Read Time */}
-                    {mdxContent.metadata.readTime && (
+                    {readTime && (
                       <Magnetic
                         intensity={0.05}
                         range={1000}
@@ -147,13 +161,13 @@ export const ProjectCard = React.memo(
                               d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                             />
                           </svg>
-                          {mdxContent.metadata.readTime} min read
+                          {readTime} min read
                         </div>
                       </Magnetic>
                     )}
 
                     {/* Description Preview */}
-                    {mdxContent.metadata.description && (
+                    {description && (
                       <Magnetic
                         intensity={0.05}
                         range={1000}
@@ -164,7 +178,7 @@ export const ProjectCard = React.memo(
                         springOptions={{ stiffness: 300, damping: 30 }}
                       >
                         <p className="text-zinc-300 text-xs line-clamp-2 leading-relaxed">
-                          {mdxContent.metadata.description}
+                          {description}
                         </p>
                       </Magnetic>
                     )}
@@ -176,7 +190,7 @@ export const ProjectCard = React.memo(
                     hideTags ? "hidden md:flex" : "flex"
                   } flex-wrap gap-2 mt-1`}
                 >
-                  {project.tags.map((tag, index) => (
+                  {project.tags?.map((tag, index) => (
                     <Magnetic
                       key={tag}
                       intensity={0.05}

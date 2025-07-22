@@ -51,11 +51,7 @@ export interface ArticleWithMDX {
 }
 
 // Unified MDX content for all articles
-export const articlesMDXContent: Record<string, MDXContent | null> = {};
-
 // MDX content by article type
-export const projectMDXContent: Record<string, MDXContent | null> = {};
-export const blogMDXContent: Record<string, MDXContent | null> = {};
 
 // Helper function to get MDX content by article ID
 export function getArticleMDXContent(articleId: string): MDXContent | null {

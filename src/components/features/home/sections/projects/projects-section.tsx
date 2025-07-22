@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useInView } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { ProjectCard } from "@/components/ui/project-card";
-import { featuredProjects } from "@/generated/project-index";
+import { getFeaturedArticlesByType } from "@/generated/article-index";
 import { motion, AnimatePresence } from "motion/react";
 import { MagneticButton } from "@/components/ui/magnetic-button";
 import { ArrowRight } from "lucide-react";
@@ -52,19 +52,21 @@ export default function ProjectsSection() {
               animate="show"
               exit="exit"
             >
-              {featuredProjects.slice().map((project, i) => (
-                <motion.div
-                  key={i}
-                  variants={itemVariants}
-                  className={`row-span-1 ${
-                    i === 0 || i === 3 || i === 4
-                      ? "sm:col-span-2"
-                      : "col-span-1"
-                  }`}
-                >
-                  <ProjectCard project={project} showDetails={false} />
-                </motion.div>
-              ))}
+              {getFeaturedArticlesByType("project")
+                .slice(0, 6)
+                .map((project, i) => (
+                  <motion.div
+                    key={i}
+                    variants={itemVariants}
+                    className={`row-span-1 ${
+                      i === 0 || i === 3 || i === 4
+                        ? "sm:col-span-2"
+                        : "col-span-1"
+                    }`}
+                  >
+                    <ProjectCard project={project} showDetails={false} />
+                  </motion.div>
+                ))}
             </motion.div>
           )}
         </AnimatePresence>

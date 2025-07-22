@@ -46,17 +46,9 @@ import type { Article, Frontmatter } from '@/lib/enhanced-frontmatter';
 export type { Article } from '@/lib/enhanced-frontmatter';
 
 // All articles sorted by date (newest first)
-export const articles: Article[] = [];
-
 // Articles by type
-export const projectArticles: Article[] = [];
-export const blogArticles: Article[] = [];
-
 // Featured articles sorted by featuredOrder
-export const featuredArticles: Article[] = [];
-
 // Article IDs
-export const articleIds: string[] = [];
 
 // Helper function to get article by ID
 export function getArticleById(id: string): Article | undefined {

@@ -2,9 +2,9 @@
 
 import React, { useRef, useState, useMemo } from "react";
 import { useScroll } from "framer-motion";
-import { projects } from "@/generated/project-index";
-import { getAllProjectMDXContent } from "@/generated/project-mdx-index";
-import { type MDXContent } from "@/generated/project-mdx-index";
+import { projectArticles } from "@/generated/article-index";
+import { getArticleTypeMDXContent } from "@/generated/article-mdx-index";
+import { type MDXContent } from "@/generated/article-mdx-index";
 import { ProjectCard } from "@/components/ui/project-card";
 import { ProjectFilter } from "@/components/projects/project-filter";
 import { TopNavbar } from "@/components/shared/top-navbar";
@@ -48,7 +48,7 @@ export default function ProjectsPage() {
 
   // Get all projects with MDX content
   const allProjectsWithMDX = useMemo(() => {
-    return getAllProjectMDXContent();
+    return getArticleTypeMDXContent("project");
   }, []);
 
   // Initialize filtered projects with all projects
@@ -113,7 +113,7 @@ export default function ProjectsPage() {
                 {filteredProjects.length > 0 ? (
                   <div className="grid grid-cols-1 gap-6">
                     {filteredProjects.map(({ id, content }) => {
-                      const project = projects.find((p) => p.id === id);
+                      const project = projectArticles.find((p) => p.id === id);
                       if (!project) return null;
 
                       return (
