@@ -235,8 +235,14 @@ Both projects and blogs will be conceptualized as "articles" with different type
 
 **ACTUAL IMPLEMENTATION:**
 
-- ❌ **Not Started**: Generated files update pending
-- 📋 **Dependencies**: Requires Steps 3-6 infrastructure and migration first
+- ✅ **Completed**: Updated build process to use unified article system
+- ✅ **Updated**: `package.json` to use `generate-article-index` instead of `generate-content-index`
+- ✅ **Tested**: New generation scripts working correctly with folder-based IDs
+- ✅ **Validated**: Build successful with unified article system
+- ✅ **Cleaned**: Generated files with proper structure and no duplicates
+- ✅ **Confirmed**: All 7 projects processed correctly with folder-based IDs
+- ✅ **Verified**: MDX content properly indexed and accessible
+- 📋 **Next Action**: Ready for Step 8 (Update Content Display Components)
 
 ## Phase 4: Component & Page Updates
 
@@ -438,13 +444,14 @@ Both projects and blogs will be conceptualized as "articles" with different type
 - ✅ Step 4: Update MDX Processing (100% complete)
 - ✅ Step 5: Enhance Unified Projects System (100% complete)
 - ✅ Step 6: Migrate Project Metadata (100% complete)
+- ✅ Step 7: Update Generated Files (100% complete)
 
 **Next Steps:**
 
-- 📋 Step 7: Update Generated Files (Ready to start)
-- 📋 Step 8: Update Content Display Components (Pending Step 7)
-- 📋 Step 9: Update Filtering System (Pending Step 7)
+- 📋 Step 8: Update Content Display Components (Ready to start)
+- 📋 Step 9: Update Filtering System (Pending Step 8)
+- 📋 Step 10: Update Pages & Routes (Pending Step 8)
 
-**Overall Progress:** 6/15 steps complete (40%)
+**Overall Progress:** 7/15 steps complete (46.7%)
 
-**Estimated Remaining Time:** 1-2 days
+**Estimated Remaining Time:** 0.5-1.5 days
