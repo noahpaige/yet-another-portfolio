@@ -84,7 +84,13 @@ export default function BlogsPage() {
               scrollYProgress={scrollYProgress}
               colorPairs={colorPairs}
             />
-            <NoiseOverlay opacity={0.04} resolution={1} />
+          </div>
+          <div className="z-0 h-full w-full absolute">
+            <NoiseOverlay
+              opacity={0.03}
+              resolution={1}
+              scrollContainerRef={scrollContainerRef}
+            />
           </div>
         </ClientOnly>
 

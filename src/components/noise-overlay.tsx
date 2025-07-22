@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useRef, useCallback } from "react";
-import { useHardwareCapability } from "@/context/HardwareCapabilityContext";
 
 interface NoiseOverlayProps {
   opacity?: number;
@@ -11,28 +10,7 @@ interface NoiseOverlayProps {
 
 const NoiseOverlay = React.memo<NoiseOverlayProps>(
   ({ opacity = 0.05, resolution = 1, scrollContainerRef }) => {
-    const { performanceTier, loading } = useHardwareCapability();
     const canvasRef = useRef<HTMLCanvasElement>(null);
-
-    // Adjust quality based on device capabilities
-    const getQualitySettings = () => {
-      if (loading) return { resolution: 1, opacity: 1 };
-
-      switch (performanceTier) {
-        case "low":
-          return { resolution: 0.75, opacity: 0.8 };
-        case "medium":
-          return { resolution: 1, opacity: 1 };
-        case "high":
-          return { resolution: 1, opacity: 1 };
-        default:
-          return { resolution: 1, opacity: 1 };
-      }
-    };
-
-    const qualitySettings = getQualitySettings();
-    const effectiveResolution = resolution * qualitySettings.resolution;
-    const effectiveOpacity = opacity * qualitySettings.opacity;
 
     const getContainerSize = () => {
       if (scrollContainerRef && scrollContainerRef.current) {
@@ -47,7 +25,7 @@ const NoiseOverlay = React.memo<NoiseOverlayProps>(
       };
     };
 
-    // Debounced resize handler
+    // Debounced resize handler - only for window resize, not scroll
     const debouncedResize = useRef<NodeJS.Timeout | null>(null);
     const handleResize = useCallback(() => {
       if (debouncedResize.current) {
@@ -58,8 +36,8 @@ const NoiseOverlay = React.memo<NoiseOverlayProps>(
         if (canvas) {
           const ctx = canvas.getContext("2d")!;
           const { width, height } = getContainerSize();
-          const effWidth = width * effectiveResolution;
-          const effHeight = height * effectiveResolution;
+          const effWidth = width * resolution;
+          const effHeight = height * resolution;
 
           canvas.width = effWidth;
           canvas.height = effHeight;
@@ -75,28 +53,7 @@ const NoiseOverlay = React.memo<NoiseOverlayProps>(
           ctx.putImageData(imageData, 0, 0);
         }
       }, 100); // 100ms debounce delay
-    }, [effectiveResolution, scrollContainerRef]);
-
-    // Log hardware detection and quality settings
-    useEffect(() => {
-      if (!loading) {
-        console.table({
-          "📺 NoiseOverlay - Hardware Detection": {
-            performanceTier,
-            resolution: qualitySettings.resolution,
-            opacity: qualitySettings.opacity,
-            effectiveResolution: effectiveResolution,
-            effectiveOpacity: effectiveOpacity,
-          },
-        });
-      }
-    }, [
-      performanceTier,
-      loading,
-      qualitySettings,
-      effectiveResolution,
-      effectiveOpacity,
-    ]);
+    }, [resolution, scrollContainerRef]);
 
     useEffect(() => {
       const canvas = canvasRef.current!;
@@ -104,8 +61,8 @@ const NoiseOverlay = React.memo<NoiseOverlayProps>(
 
       const drawStaticNoise = () => {
         const { width, height } = getContainerSize();
-        const effWidth = width * effectiveResolution;
-        const effHeight = height * effectiveResolution;
+        const effWidth = width * resolution;
+        const effHeight = height * resolution;
 
         canvas.width = effWidth;
         canvas.height = effHeight;
@@ -123,22 +80,14 @@ const NoiseOverlay = React.memo<NoiseOverlayProps>(
 
       drawStaticNoise();
       window.addEventListener("resize", handleResize);
-      if (scrollContainerRef && scrollContainerRef.current) {
-        scrollContainerRef.current.addEventListener("scroll", handleResize);
-      }
+      // Removed scroll event listener to prevent temporal incoherence
       return () => {
         window.removeEventListener("resize", handleResize);
-        if (scrollContainerRef && scrollContainerRef.current) {
-          scrollContainerRef.current.removeEventListener(
-            "scroll",
-            handleResize
-          );
-        }
         if (debouncedResize.current) {
           clearTimeout(debouncedResize.current);
         }
       };
-    }, [effectiveResolution, scrollContainerRef]);
+    }, [resolution, scrollContainerRef]);
 
     return (
       <canvas
@@ -150,7 +99,7 @@ const NoiseOverlay = React.memo<NoiseOverlayProps>(
           width: "100%",
           zIndex: -1,
           pointerEvents: "none",
-          opacity: effectiveOpacity,
+          opacity: opacity,
           imageRendering: "pixelated",
         }}
       />

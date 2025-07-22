@@ -96,8 +96,10 @@ export default function HomePage() {
               scrollYProgress={scrollYProgress}
               colorPairs={colorPairs}
             />
+          </div>
+          <div className="z-0 h-full w-full absolute">
             <NoiseOverlay
-              opacity={0.04}
+              opacity={0.03}
               resolution={1}
               scrollContainerRef={scrollContainerRef}
             />

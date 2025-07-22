@@ -40,8 +40,10 @@ export default function ArticleLayout({
             scrollYProgress={scrollYProgress}
             colorPairs={colorPairs}
           />
+        </div>
+        <div className="z-0 h-full w-full absolute">
           <NoiseOverlay
-            opacity={0.04}
+            opacity={0.03}
             resolution={1}
             scrollContainerRef={scrollContainerRef}
           />
@@ -67,7 +69,7 @@ export default function ArticleLayout({
                   {tags.map((tag) => (
                     <span
                       key={tag}
-                      className="px-3 py-1 bg-zinc-800/50 text-zinc-300 rounded-full text-sm backdrop-blur-sm"
+                      className="glass-layer px-3 py-1 text-zinc-100"
                     >
                       {tag}
                     </span>
