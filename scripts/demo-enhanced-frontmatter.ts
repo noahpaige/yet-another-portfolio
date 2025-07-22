@@ -9,11 +9,10 @@ try {
   console.log("📊 Project Statistics:");
   console.log(`   Total Projects: ${projectsWithMDX.length}`);
 
-  const projectsWithEnhancedMetadata = projectsWithMDX.filter(
-    (project) =>
-      project.mdxContent?.metadata.readTime &&
-      project.mdxContent?.metadata.readTime > 5
-  );
+  const projectsWithEnhancedMetadata = projectsWithMDX.filter((project) => {
+    const readTime = project.mdxContent?.metadata.readTime;
+    return typeof readTime === "number" && readTime > 5;
+  });
 
   console.log(
     `   Projects with Enhanced Metadata: ${projectsWithEnhancedMetadata.length}`
@@ -23,11 +22,23 @@ try {
   projectsWithEnhancedMetadata.forEach((project) => {
     const metadata = project.mdxContent?.metadata;
     if (metadata) {
-      console.log(`\n   📄 ${metadata.title}`);
-      console.log(`      📝 Description: ${metadata.description}`);
-      console.log(`      ⏱️ Read Time: ${metadata.readTime} minutes`);
-      console.log(`      🏷️ Tags: ${metadata.tags?.join(", ") || "None"}`);
-      console.log(`      📅 Date: ${metadata.date || "Unknown"}`);
+      const title =
+        typeof metadata.title === "string" ? metadata.title : "Unknown";
+      const description =
+        typeof metadata.description === "string"
+          ? metadata.description
+          : "No description";
+      const readTime =
+        typeof metadata.readTime === "number" ? metadata.readTime : 0;
+      const tags = Array.isArray(metadata.tags) ? metadata.tags : [];
+      const date =
+        typeof metadata.date === "string" ? metadata.date : "Unknown";
+
+      console.log(`\n   📄 ${title}`);
+      console.log(`      📝 Description: ${description}`);
+      console.log(`      ⏱️ Read Time: ${readTime} minutes`);
+      console.log(`      🏷️ Tags: ${tags.join(", ") || "None"}`);
+      console.log(`      📅 Date: ${date}`);
     }
   });
 
@@ -36,12 +47,21 @@ try {
     .map((p) => p.mdxContent?.metadata)
     .filter(Boolean);
 
-  const totalReadTime = allMetadata.reduce(
-    (sum, m) => sum + (m?.readTime || 0),
-    0
-  );
+  const totalReadTime = allMetadata.reduce((sum, m) => {
+    const readTime = typeof m?.readTime === "number" ? m.readTime : 0;
+    return sum + readTime;
+  }, 0);
   const avgReadTime = totalReadTime / allMetadata.length;
-  const allTags = new Set(allMetadata.flatMap((m) => m?.tags || []));
+  const allTags = new Set<string>();
+  allMetadata.forEach((m) => {
+    if (Array.isArray(m?.tags)) {
+      m.tags.forEach((tag) => {
+        if (typeof tag === "string") {
+          allTags.add(tag);
+        }
+      });
+    }
+  });
 
   console.log(`   Total Read Time: ${totalReadTime} minutes`);
   console.log(`   Average Read Time: ${Math.round(avgReadTime)} minutes`);
@@ -49,14 +69,22 @@ try {
 
   console.log("\n🔍 Search Demo:");
   const searchTerm = "RPG";
-  const searchResults = allMetadata.filter(
-    (m) =>
-      m?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      m?.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      m?.tags?.some((tag) =>
-        tag.toLowerCase().includes(searchTerm.toLowerCase())
+  const searchResults = allMetadata.filter((m) => {
+    const title = typeof m?.title === "string" ? m.title.toLowerCase() : "";
+    const description =
+      typeof m?.description === "string" ? m.description.toLowerCase() : "";
+    const tags = Array.isArray(m?.tags) ? m.tags : [];
+    const searchLower = searchTerm.toLowerCase();
+
+    return (
+      title.includes(searchLower) ||
+      description.includes(searchLower) ||
+      tags.some(
+        (tag: unknown) =>
+          typeof tag === "string" && tag.toLowerCase().includes(searchLower)
       )
-  );
+    );
+  });
 
   console.log(`   Search for "${searchTerm}": ${searchResults.length} results`);
   searchResults.forEach((m) => {

@@ -40,7 +40,7 @@ const interfaces = `
 // This file is auto-generated. Do not edit manually.
 // Run: npm run generate-article-index
 
-import type { Article, Frontmatter } from '@/lib/enhanced-frontmatter';
+import type { Article } from '@/lib/enhanced-frontmatter';
 
 // Unified article interface (re-exported for convenience)
 export type { Article } from '@/lib/enhanced-frontmatter';

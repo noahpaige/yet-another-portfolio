@@ -38,8 +38,6 @@ const interfaces = `
 // This file is auto-generated. Do not edit manually.
 // Run: npm run generate-mdx-index
 
-import type { Article } from '@/lib/enhanced-frontmatter';
-
 export interface MDXContent {
   metadata: Record<string, unknown>;
   content: string;
