@@ -5,7 +5,7 @@ import { useScroll } from "framer-motion";
 import { projectArticles } from "@/generated/article-index";
 import { getArticleTypeMDXContent } from "@/generated/article-mdx-index";
 import { type MDXContent } from "@/generated/article-mdx-index";
-import { ProjectCard } from "@/components/ui/project-card";
+import { ArticleCard } from "@/components/ui/article-card";
 import { ArticleFilter } from "@/components/projects/article-filter";
 import { TopNavbar } from "@/components/shared/top-navbar";
 import AnimatedBackground from "@/components/animated-background";
@@ -120,9 +120,9 @@ export default function ProjectsPage() {
                       if (!project) return null;
 
                       return (
-                        <ProjectCard
+                        <ArticleCard
                           key={id}
-                          project={project}
+                          article={project}
                           hideTags={false}
                           showReadTime={false}
                           showDesc={isSmallScreen}

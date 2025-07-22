@@ -1,5 +1,5 @@
 "use client";
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Magnetic } from "@/components/ui/magnetic";
@@ -7,22 +7,24 @@ import { Article } from "@/generated/article-index";
 import { type MDXContent } from "@/generated/article-mdx-index";
 import { useClampCSS } from "@/hooks/useClampCSS";
 
-interface ProjectCardProps {
-  project: Article;
+interface ArticleCardProps {
+  article: Article;
   hideTags?: boolean;
   showReadTime?: boolean;
   showDesc?: boolean;
   mdxContent?: MDXContent | null;
+  customPath?: string; // Allow custom routing override
 }
 
-export const ProjectCard = React.memo(
+export const ArticleCard = React.memo(
   ({
-    project,
+    article,
     hideTags = true,
     showReadTime = false,
     showDesc = false,
     mdxContent,
-  }: ProjectCardProps) => {
+    customPath,
+  }: ArticleCardProps) => {
     // Helper function to safely get metadata values
     const getMetadataValue = (
       key: string,
@@ -39,6 +41,25 @@ export const ProjectCard = React.memo(
     const description = getMetadataValue("description", "string");
     // Create a ref for the Link element
     const linkRef = useRef<HTMLAnchorElement>(null);
+    // State for image error handling
+    const [imageError, setImageError] = useState(false);
+
+    // Determine the correct route based on article type or custom path
+    const getArticlePath = (article: Article): string => {
+      if (customPath) return customPath;
+
+      switch (article.type) {
+        case "project":
+          return `/projects/${article.id}`;
+        case "blog":
+          return `/blog/${article.id}`;
+        default:
+          return `/projects/${article.id}`; // fallback
+      }
+    };
+
+    // Simple boolean check for image display
+    const hasImage = !!article.image;
 
     // Generate responsive font size based on container height
     const titleFontSize = useClampCSS(
@@ -68,7 +89,7 @@ export const ProjectCard = React.memo(
         springOptions={{ stiffness: 500, damping: 50 }}
       >
         {/* Attach the ref to the Link */}
-        <Link href={`/projects/${project.id}`} ref={linkRef}>
+        <Link href={getArticlePath(article)} ref={linkRef}>
           <div className="group relative overflow-hidden rounded-xl glass-layer-hoverable transition-all duration-300 p-1.5">
             <div
               className="relative rounded-lg overflow-hidden"
@@ -88,33 +109,34 @@ export const ProjectCard = React.memo(
                   className="w-full scale-115"
                   style={{ height: cardHeight }}
                 >
-                  {/* Project Image */}
-                  <div
-                    className="relative w-full rounded-lg"
-                    style={{ height: cardHeight }}
-                  >
-                    <Image
-                      src={project.image || "/default-project-image.png"}
-                      alt={project.imageAltText || ""}
-                      fill
-                      className="object-cover rounded-lg"
-                      onError={() => {
-                        const fallback = document.querySelector(
-                          ".image-fallback"
-                        ) as HTMLElement;
-                        if (fallback) {
-                          fallback.style.display = "flex";
-                        }
-                      }}
-                    />
+                  {/* Article Image - Only render if image exists */}
+                  {hasImage && (
                     <div
-                      className="image-fallback hidden w-full h-full items-center justify-center bg-gray-800 text-slate-400 text-sm rounded-lg text-center"
+                      className="relative w-full rounded-lg"
                       style={{ height: cardHeight }}
                     >
-                      {project.imageAltText || "Project image"}
+                      {!imageError ? (
+                        <Image
+                          src={article.image!}
+                          alt={article.imageAltText || ""}
+                          fill
+                          className="object-cover rounded-lg"
+                          onError={() => setImageError(true)}
+                        />
+                      ) : (
+                        <div
+                          className="w-full h-full items-center justify-center bg-gray-800 text-slate-400 text-sm rounded-lg text-center flex"
+                          style={{ height: cardHeight }}
+                        >
+                          {article.imageAltText || "Article image"}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
+                  )}
+                  {/* Gradient overlay - only show if image exists */}
+                  {hasImage && (
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
+                  )}
                 </div>
               </Magnetic>
               <div className="p-2 sm:p-3 md:p-6 absolute bottom-0 left-0">
@@ -131,7 +153,7 @@ export const ProjectCard = React.memo(
                     className="font-space-mono font-bold text-zinc-100 transition-colors"
                     style={{ fontSize: titleFontSize }}
                   >
-                    {project.title}
+                    {article.title}
                   </h3>
                 </Magnetic>
 
@@ -192,7 +214,7 @@ export const ProjectCard = React.memo(
                     hideTags ? "hidden md:flex" : "flex"
                   } flex-wrap gap-2 mt-1`}
                 >
-                  {project.tags?.map((tag, index) => (
+                  {article.tags?.map((tag, index) => (
                     <Magnetic
                       key={tag}
                       intensity={0.05}
@@ -224,4 +246,4 @@ export const ProjectCard = React.memo(
   }
 );
 
-ProjectCard.displayName = "ProjectCard";
+ArticleCard.displayName = "ArticleCard";

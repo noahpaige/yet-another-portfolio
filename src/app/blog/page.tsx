@@ -5,7 +5,7 @@ import { useScroll } from "framer-motion";
 import { getArticleById } from "@/generated/article-index";
 import { getArticleTypeMDXContent } from "@/generated/article-mdx-index";
 import { type MDXContent } from "@/generated/article-mdx-index";
-import { ProjectCard } from "@/components/ui/project-card";
+import { ArticleCard } from "@/components/ui/article-card";
 import { ArticleFilter } from "@/components/projects/article-filter";
 import { TopNavbar } from "@/components/shared/top-navbar";
 import AnimatedBackground from "@/components/animated-background";
@@ -118,9 +118,9 @@ export default function BlogsPage() {
                       if (!blog) return null;
 
                       return (
-                        <ProjectCard
+                        <ArticleCard
                           key={id}
-                          project={blog}
+                          article={blog}
                           hideTags={false}
                           showReadTime={isSmallScreen}
                           showDesc={isSmallScreen}

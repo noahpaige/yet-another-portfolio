@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useInView } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { ProjectCard } from "@/components/ui/project-card";
+import { ArticleCard } from "@/components/ui/article-card";
 import { getFeaturedArticlesByType } from "@/generated/article-index";
 import { motion, AnimatePresence } from "motion/react";
 import { MagneticButton } from "@/components/ui/magnetic-button";
@@ -64,8 +64,8 @@ export default function ProjectsSection() {
                         : "col-span-1"
                     }`}
                   >
-                    <ProjectCard
-                      project={project}
+                    <ArticleCard
+                      article={project}
                       showReadTime={false}
                       showDesc={false}
                     />
