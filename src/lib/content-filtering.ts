@@ -1,67 +1,112 @@
-// Content filtering utilities for portfolio organization
+// Content filtering utilities for unified article system
 import {
-  getAllProjectMDXContent,
+  getArticleTypeMDXContent,
   type MDXContent,
-} from "@/generated/project-mdx-index";
+} from "@/generated/article-mdx-index";
+import { getAllTags } from "@/generated/article-index";
 
 export interface FilterOptions {
   tags?: string[];
   search?: string;
   featured?: boolean;
+  type?: "project" | "blog" | "all";
 }
 
 export interface FilterResults {
-  projects: Array<{ id: string; content: MDXContent }>;
+  articles: Array<{ id: string; content: MDXContent }>;
   total: number;
   tags: string[];
 }
 
+// Helper function to safely access metadata properties
+function getMetadataValue(content: MDXContent, key: string): unknown {
+  return content.metadata[key];
+}
+
+function getMetadataString(content: MDXContent, key: string): string | null {
+  const value = getMetadataValue(content, key);
+  return typeof value === "string" ? value : null;
+}
+
+function getMetadataNumber(content: MDXContent, key: string): number | null {
+  const value = getMetadataValue(content, key);
+  return typeof value === "number" ? value : null;
+}
+
+function getMetadataArray(content: MDXContent, key: string): unknown[] | null {
+  const value = getMetadataValue(content, key);
+  return Array.isArray(value) ? value : null;
+}
+
 /**
- * Filter projects based on various criteria
+ * Filter articles based on various criteria
  */
-export function filterProjects(options: FilterOptions = {}): FilterResults {
-  const allProjects = getAllProjectMDXContent();
-  let filteredProjects = allProjects;
+export function filterArticles(options: FilterOptions = {}): FilterResults {
+  // Get articles based on type filter
+  let allArticles: Array<{ id: string; content: MDXContent }> = [];
+
+  if (options.type === "project" || options.type === "blog") {
+    allArticles = getArticleTypeMDXContent(options.type);
+  } else {
+    // Default to all articles (currently only projects, will include blogs later)
+    allArticles = getArticleTypeMDXContent("project");
+  }
+
+  let filteredArticles = allArticles;
 
   // Filter by tags (any of the specified tags)
   if (options.tags && options.tags.length > 0) {
-    filteredProjects = filteredProjects.filter(({ content }) =>
-      content.metadata.tags?.some((tag) => options.tags!.includes(tag))
-    );
+    filteredArticles = filteredArticles.filter(({ content }) => {
+      const tags = getMetadataArray(content, "tags");
+      return tags?.some(
+        (tag) => typeof tag === "string" && options.tags!.includes(tag)
+      );
+    });
   }
 
   // Filter by search term
   if (options.search) {
     const searchTerm = options.search.toLowerCase();
-    filteredProjects = filteredProjects.filter(
-      ({ content }) =>
-        content.metadata.title?.toLowerCase().includes(searchTerm) ||
-        content.metadata.description?.toLowerCase().includes(searchTerm) ||
-        content.metadata.tags?.some((tag) =>
-          tag.toLowerCase().includes(searchTerm)
+    filteredArticles = filteredArticles.filter(({ content }) => {
+      const title = getMetadataString(content, "title");
+      const description = getMetadataString(content, "description");
+      const tags = getMetadataArray(content, "tags");
+
+      return (
+        (title && title.toLowerCase().includes(searchTerm)) ||
+        (description && description.toLowerCase().includes(searchTerm)) ||
+        tags?.some(
+          (tag) =>
+            typeof tag === "string" && tag.toLowerCase().includes(searchTerm)
         )
-    );
+      );
+    });
   }
 
   // Filter by featured status
   if (options.featured !== undefined) {
-    filteredProjects = filteredProjects.filter(
-      ({ content }) => content.metadata.featured === options.featured
-    );
+    filteredArticles = filteredArticles.filter(({ content }) => {
+      const featured = getMetadataValue(content, "featured");
+      return featured === options.featured;
+    });
   }
 
-  // Get all available filter options from remaining projects
+  // Get all available tags from the filtered articles
   const tags = new Set<string>();
-
-  allProjects.forEach(({ content }) => {
-    if (content.metadata.tags) {
-      content.metadata.tags.forEach((tag) => tags.add(tag));
+  filteredArticles.forEach(({ content }) => {
+    const contentTags = getMetadataArray(content, "tags");
+    if (contentTags) {
+      contentTags.forEach((tag) => {
+        if (typeof tag === "string") {
+          tags.add(tag);
+        }
+      });
     }
   });
 
   return {
-    projects: filteredProjects,
-    total: filteredProjects.length,
+    articles: filteredArticles,
+    total: filteredArticles.length,
     tags: Array.from(tags).sort(),
   };
 }
@@ -70,64 +115,75 @@ export function filterProjects(options: FilterOptions = {}): FilterResults {
  * Get all available tags
  */
 export function getTags(): string[] {
-  const allProjects = getAllProjectMDXContent();
-  const tags = new Set<string>();
-
-  allProjects.forEach(({ content }) => {
-    if (content.metadata.tags) {
-      content.metadata.tags.forEach((tag) => tags.add(tag));
-    }
-  });
-
-  return Array.from(tags).sort();
+  return getAllTags();
 }
 
 /**
- * Search projects by text
+ * Search articles by text
  */
-export function searchProjects(
-  query: string
+export function searchArticles(
+  query: string,
+  type: "project" | "blog" | "all" = "all"
 ): Array<{ id: string; content: MDXContent }> {
-  const allProjects = getAllProjectMDXContent();
+  const allArticles =
+    type === "all"
+      ? getArticleTypeMDXContent("project") // Currently only projects
+      : getArticleTypeMDXContent(type);
   const searchTerm = query.toLowerCase();
 
-  return allProjects.filter(
-    ({ content }) =>
-      content.metadata.title?.toLowerCase().includes(searchTerm) ||
-      content.metadata.description?.toLowerCase().includes(searchTerm) ||
-      content.metadata.tags?.some((tag) =>
-        tag.toLowerCase().includes(searchTerm)
+  return allArticles.filter(({ content }) => {
+    const title = getMetadataString(content, "title");
+    const description = getMetadataString(content, "description");
+    const tags = getMetadataArray(content, "tags");
+
+    return (
+      (title && title.toLowerCase().includes(searchTerm)) ||
+      (description && description.toLowerCase().includes(searchTerm)) ||
+      tags?.some(
+        (tag) =>
+          typeof tag === "string" && tag.toLowerCase().includes(searchTerm)
       )
-  );
-}
-
-/**
- * Get projects by tag
- */
-export function getProjectsByTag(
-  tag: string
-): Array<{ id: string; content: MDXContent }> {
-  const allProjects = getAllProjectMDXContent();
-
-  return allProjects.filter(({ content }) =>
-    content.metadata.tags?.includes(tag)
-  );
-}
-
-/**
- * Get featured projects
- */
-export function getFeaturedProjects(): Array<{
-  id: string;
-  content: MDXContent;
-}> {
-  const allProjects = getAllProjectMDXContent();
-
-  return allProjects
-    .filter(({ content }) => content.metadata.featured)
-    .sort(
-      (a, b) =>
-        (a.content.metadata.featuredOrder || 0) -
-        (b.content.metadata.featuredOrder || 0)
     );
+  });
+}
+
+/**
+ * Get articles by tag
+ */
+export function getArticlesByTag(
+  tag: string,
+  type: "project" | "blog" | "all" = "all"
+): Array<{ id: string; content: MDXContent }> {
+  const allArticles =
+    type === "all"
+      ? getArticleTypeMDXContent("project") // Currently only projects
+      : getArticleTypeMDXContent(type);
+
+  return allArticles.filter(({ content }) => {
+    const tags = getMetadataArray(content, "tags");
+    return tags?.some((t) => typeof t === "string" && t === tag);
+  });
+}
+
+/**
+ * Get featured articles
+ */
+export function getFeaturedArticles(
+  type: "project" | "blog" | "all" = "all"
+): Array<{ id: string; content: MDXContent }> {
+  const allArticles =
+    type === "all"
+      ? getArticleTypeMDXContent("project") // Currently only projects
+      : getArticleTypeMDXContent(type);
+
+  return allArticles
+    .filter(({ content }) => {
+      const featured = getMetadataValue(content, "featured");
+      return featured === true;
+    })
+    .sort((a, b) => {
+      const orderA = getMetadataNumber(a.content, "featuredOrder") || 0;
+      const orderB = getMetadataNumber(b.content, "featuredOrder") || 0;
+      return orderA - orderB;
+    });
 }

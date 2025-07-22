@@ -6,7 +6,7 @@ import { projectArticles } from "@/generated/article-index";
 import { getArticleTypeMDXContent } from "@/generated/article-mdx-index";
 import { type MDXContent } from "@/generated/article-mdx-index";
 import { ProjectCard } from "@/components/ui/project-card";
-import { ProjectFilter } from "@/components/projects/project-filter";
+import { ArticleFilter } from "@/components/projects/article-filter";
 import { TopNavbar } from "@/components/shared/top-navbar";
 import AnimatedBackground from "@/components/animated-background";
 import ClientOnly from "@/components/client-only";
@@ -104,7 +104,10 @@ export default function ProjectsPage() {
               {/* Sidebar with Filters */}
               <div className="lg:w-80 flex-shrink-0">
                 <div className="sticky top-26">
-                  <ProjectFilter onFilterChange={handleFilterChange} />
+                  <ArticleFilter
+                    onFilterChange={handleFilterChange}
+                    articleType="project"
+                  />
                 </div>
               </div>
 

@@ -2,22 +2,24 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { filterProjects, getTags } from "@/lib/content-filtering";
-import { type MDXContent } from "@/generated/project-mdx-index";
+import { filterArticles, getTags } from "@/lib/content-filtering";
+import { type MDXContent } from "@/generated/article-mdx-index";
 import { Magnetic } from "@/components/ui/magnetic";
 import { MagneticButton } from "@/components/ui/magnetic-button";
 
-interface ProjectFilterProps {
+interface ArticleFilterProps {
   onFilterChange: (
-    filteredProjects: Array<{ id: string; content: MDXContent }>
+    filteredArticles: Array<{ id: string; content: MDXContent }>
   ) => void;
+  articleType: "project" | "blog" | "all";
   className?: string;
 }
 
-export function ProjectFilter({
+export function ArticleFilter({
   onFilterChange,
+  articleType,
   className = "",
-}: ProjectFilterProps) {
+}: ArticleFilterProps) {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>("");
 
@@ -26,26 +28,28 @@ export function ProjectFilter({
 
   // Apply filters and notify parent with useEffect to avoid render-time state updates
   useEffect(() => {
-    const results = filterProjects({
+    const results = filterArticles({
       tags: selectedTags.length > 0 ? selectedTags : undefined,
       search: searchTerm || undefined,
+      type: articleType,
     });
 
-    onFilterChange(results.projects);
-  }, [selectedTags, searchTerm, onFilterChange]);
+    onFilterChange(results.articles);
+  }, [selectedTags, searchTerm, articleType, onFilterChange]);
 
   // Get filtered results for display
-  const filteredProjects = useMemo(() => {
-    return filterProjects({
+  const filteredArticles = useMemo(() => {
+    return filterArticles({
       tags: selectedTags.length > 0 ? selectedTags : undefined,
       search: searchTerm || undefined,
+      type: articleType,
     });
-  }, [selectedTags, searchTerm]);
+  }, [selectedTags, searchTerm, articleType]);
 
-  // Get total count of all projects for comparison
-  const allProjectsCount = useMemo(() => {
-    return filterProjects({}).total;
-  }, []);
+  // Get total count of all articles for comparison
+  const allArticlesCount = useMemo(() => {
+    return filterArticles({ type: articleType }).total;
+  }, [articleType]);
 
   const clearFilters = () => {
     setSelectedTags([]);
@@ -103,9 +107,21 @@ export function ProjectFilter({
       {/* Results and Clear */}
       <div className="flex items-center justify-between pt-3 border-t border-zinc-700 h-14">
         <div className="text-sm text-zinc-400">
-          {filteredProjects.total === allProjectsCount
-            ? `All ${allProjectsCount} projects`
-            : `${filteredProjects.total} of ${allProjectsCount} projects`}
+          {filteredArticles.total === allArticlesCount
+            ? `All ${allArticlesCount} ${
+                articleType === "project"
+                  ? "projects"
+                  : articleType === "blog"
+                  ? "blogs"
+                  : "articles"
+              }`
+            : `${filteredArticles.total} of ${allArticlesCount} ${
+                articleType === "project"
+                  ? "projects"
+                  : articleType === "blog"
+                  ? "blogs"
+                  : "articles"
+              }`}
         </div>
         <AnimatePresence>
           {hasActiveFilters && (
