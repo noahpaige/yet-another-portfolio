@@ -9,6 +9,7 @@
     "lint": "next lint",
     "generate-article-index": "tsx scripts/generate-article-index.ts",
     "generate-mdx-index": "tsx scripts/generate-mdx-index.ts",
+    "regenerate-content": "npm run generate-article-index && npm run generate-mdx-index",
     "test-enhanced-frontmatter": "tsx scripts/test-enhanced-frontmatter.ts",
     "demo-enhanced-frontmatter": "tsx scripts/demo-enhanced-frontmatter.ts",
     "test-unified-system": "tsx scripts/test-unified-article-system.ts",
