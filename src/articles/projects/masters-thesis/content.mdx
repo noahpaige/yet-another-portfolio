@@ -16,17 +16,11 @@ colorPairs:
   ]
 ---
 
-I completed this project in 2020 as part of my Masters in Computer Science at California Polytechnic State University, San Luis Obispo. You can download a full copy of my thesis [here](/Noah_Paige_Masters_Thesis.pdf).
+I completed this project in 2020 as part of my Masters in Computer Science at California Polytechnic State University, San Luis Obispo. You can download a full copy of my thesis [here](/Noah_Paige_Masters_Thesis.pdf). It's also available on [Cal Poly Digital Commons](https://digitalcommons.calpoly.edu/theses/2406/).
 
-<br />
+If you're lazy, check out the [TL;DR](#tldr). For everyone else, go on down to the [Introduction](#introduction) section.
 
-If you're lazy, check out the [TL;DR](#tldr).
-
-For the more academically inclined, go on down to the [Introduction](#introduction) section.
-
-For the brave and the maidenless, check out the [full thesis pdf](/Noah_Paige_Masters_Thesis.pdf).
-
-For my visual learners, check out the [presentation video](#presentation-video) below (sorry, no audio for now).
+For my visual learners, watch the [presentation video](#presentation-video) at the bottom of the page.
 
 ---
 
@@ -36,23 +30,21 @@ How do you make NPCs in video games feel more lifelike and believable? No, the a
 
 These traits drive not just their decisions, but their facial expressions too. As they make choices, their emotions show up on their faces in real time — no more dead-eyed robots doing the same thing over and over. Their feelings affect their behavior, and their behavior changes how they feel. It’s a loop with emotional consequences.
 
-To test the system, I built a simple maze where NPCs had to navigate the space. Each one behaved differently depending on their personality, and even small tweaks in group dynamics led to different outcomes — who finished first, who helped or avoided others, etc.
+To test the system, I built a simple maze environment in Unity. For each NPC, the goal was simple: reach the end of the maze. The way they went about solving it was completely up to them. Each one behaved differently depending on their personality, and even small tweaks in group dynamics led to different outcomes — who finished first, who helped or avoided others, etc.
 
-I'd love to see this approach in a real game someday. Imagine an innkeeper in Elder Scrolls who remembers you stole all of his things, or teammates in NBA 2K who act differently when you hog the ball.
-
----
-
-This project explores how to make non-player characters (NPCs) in video games feel more lifelike and believable—not just visually, but in how they behave and react emotionally. Drawing from real psychological models of personality and mood, I created a system where NPCs make decisions based on a mix of their personality traits and current emotional state. These traits impact how they act in a maze simulation, how they interact with each other, and even how their faces animate in real time. The result is a system where NPCs don’t just follow rigid, scripted behaviors—they respond dynamically and sometimes unpredictably, creating more immersive, emergent gameplay. This kind of model could make future games more expressive and storytelling richer, while also saving time with procedural animation instead of manual animation work.
+While this work was constrained by the time and resources available to me as a student researcher, I love to imagine how this could be expanded upon with a larger team and more resources. Picture an innkeeper in Elder Scrolls who remembers you stole all of his things the last time you visited, or teammates in NBA 2K who act differently when you hog the ball.
 
 ---
+
+# one
+
+## two
 
 ### Introduction
 
 Non-player characters (NPCs) are a staple in most modern games, yet they are often criticized for their lack of believability and emotional realism. This thesis tackles that problem by proposing a behavior model for NPCs that integrates psychological models—specifically, the **Five-Factor Model of Personality** and the **Circumplex Model of Affect**—to create more dynamic and emotionally responsive NPCs.
 
 The goal was to explore how personality and mood can be combined to produce emergent, unscripted behaviors in NPCs, which could enhance player immersion and narrative depth. To test the system, a maze simulation environment was built in Unity, where NPCs would navigate and interact based on their personalities and emotional states.
-
----
 
 ### Background
 
@@ -83,15 +75,11 @@ This 2D model places emotions on a graph with axes for **pleasantness** and **ac
 
 Instead of using pre-recorded animations, this system uses **blendshapes**—facial expressions generated algorithmically based on mood. This approach saves time and produces more varied, reactive NPCs.
 
----
-
 ### Related Work
 
 Previous projects like Mac Namee’s AI system, Li and MacDonnell’s emotion-based models, and Georgeson’s “Extreme AI Personality Engine” laid the groundwork. However, these often used simplified personality models or didn’t combine personality with mood in real-time decision-making.
 
 This thesis builds on those ideas but integrates personality and mood into a **behavior tree traversal** and links it directly to real-time facial animation.
-
----
 
 ### Proposed Method
 
@@ -125,8 +113,6 @@ These influence the NPC’s mood, which updates after each action.
 - The **potential value** of an action is how close it brings the NPC to their desired mood.
 - NPCs prefer actions with high potential value and may interrupt actions mid-way to switch to something better.
 
----
-
 ### Simulation Environment
 
 A custom maze was built in Unity. Each NPC starts in a common area and tries to reach the exit, either alone or by collaborating with others.
@@ -143,8 +129,6 @@ NPCs:
 
 This setup allows rich social dynamics to emerge, such as friendship, avoidance, or teamwork.
 
----
-
 ### Procedural Animation
 
 Mood-driven facial expressions are rendered using blendshapes. The NPC’s mood coordinates on the circumplex graph determine which facial expressions are blended and displayed.
@@ -153,8 +137,6 @@ Mood-driven facial expressions are rendered using blendshapes. The NPC’s mood 
 📍 _\[TODO Figure 6.6 goes here]_ — Facial Expression Examples
 
 This enables real-time visual feedback of internal emotional states without manual animation.
-
----
 
 ### Results
 
@@ -176,16 +158,12 @@ The facial animation system successfully reflected mood changes. NPCs showed mor
 📍 _\[TODO Figure 7.1 goes here]_ — Maze Simulation UI
 📍 _\[TODO Figure 7.2 goes here]_ — NPC Status and Face
 
----
-
 ### Applications
 
 This system could be applied to any game genre. Two specific examples are discussed:
 
 - **The Elder Scrolls V: Skyrim** — Could enhance storytelling and quest design by making NPCs react differently based on their personality and mood.
 - **NBA 2K** — Teammates and opponents could have unique playstyles and moods, changing how games unfold.
-
----
 
 ### Future Work
 
@@ -196,8 +174,19 @@ Ideas for future development include:
 - Improving procedural animations for body language, not just facial expressions
 - Testing in more complex or varied environments
 
----
-
 ### Conclusion
 
 This thesis demonstrated that combining personality and mood models from psychology can dramatically improve the believability and behavior of NPCs. The integration of real-time emotion simulation and procedural facial animation creates characters that not only act differently but also feel emotionally alive—bringing us one step closer to the immersive realism often promised but rarely delivered in video games.
+
+---
+
+## Presentation Video
+
+This is a screen recording of the presentation I gave when I defended my thesis. If you want me to upload a version with audio, help me get 500 likes on the video!
+
+<YouTubeVideo
+  videoId="cK4MgCyOVPQ?si=PMUNEr0Zzjr_OEdV"
+  title="Masters Thesis Presentation"
+  maxHeight={400}
+  horizontalAlign="center"
+/>

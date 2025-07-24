@@ -139,6 +139,63 @@ const Divider: React.FC<{ className?: string }> = ({ className = "" }) => {
   return <hr className={`border-zinc-700 my-8 ${className}`} />;
 };
 
+// Custom YouTube Video component for MDX
+const YouTubeVideo: React.FC<{
+  videoId: string;
+  title?: string;
+  maxHeight?: number;
+  className?: string;
+  aspectRatio?: "16:9" | "4:3" | "21:9";
+  horizontalAlign?: "left" | "center" | "right";
+}> = ({
+  videoId,
+  title = "YouTube Video",
+  maxHeight = 400,
+  className = "",
+  aspectRatio = "16:9",
+  horizontalAlign = "center",
+}) => {
+  // Calculate aspect ratio
+  const aspectRatioMultipliers = {
+    "16:9": 16 / 9, // width = height * (16/9)
+    "4:3": 4 / 3, // width = height * (4/3)
+    "21:9": 21 / 9, // width = height * (21/9)
+  };
+
+  const aspectRatioValue = aspectRatioMultipliers[aspectRatio];
+
+  // Determine alignment classes
+  const alignmentClasses = {
+    left: "flex justify-start",
+    center: "flex justify-center",
+    right: "flex justify-end",
+  };
+
+  return (
+    <div className={`my-6 ${className}`}>
+      <div className={alignmentClasses[horizontalAlign]}>
+        <div
+          className="rounded-lg shadow-lg overflow-hidden"
+          style={{
+            width: "100%",
+            maxWidth: `${maxHeight * aspectRatioValue}px`,
+            aspectRatio: aspectRatioValue,
+          }}
+        >
+          <iframe
+            src={`https://www.youtube.com/embed/${videoId}`}
+            title={title}
+            frameBorder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            className="w-full h-full"
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Export the component mapping for use in MDX
 export const mdxComponents = {
   // Custom components
@@ -148,6 +205,7 @@ export const mdxComponents = {
   Link: MDXLink,
   Quote,
   Divider,
+  YouTubeVideo,
 
   // Override default HTML elements with enhanced styling
   h1: (props: React.HTMLAttributes<HTMLHeadingElement>) => (
@@ -226,4 +284,5 @@ export {
   MDXLink as Link,
   Quote,
   Divider,
+  YouTubeVideo,
 };
