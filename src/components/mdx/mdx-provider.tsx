@@ -1,5 +1,16 @@
 import React from "react";
 import Image from "next/image";
+import { ArticleH1, ArticleH2, ArticleH3, ArticleH4 } from "./article-headings";
+
+// Utility function to generate unique fragment IDs from heading text
+const generateHeadingId = (text: string): string => {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "") // Remove special characters except spaces and hyphens
+    .replace(/\s+/g, "-") // Replace spaces with hyphens
+    .replace(/-+/g, "-") // Replace multiple hyphens with single hyphen
+    .replace(/^-|-$/g, ""); // Remove leading/trailing hyphens
+};
 
 // Custom Callout component for MDX
 const Callout: React.FC<{
@@ -89,7 +100,7 @@ const MDXLink: React.FC<{
   return (
     <a
       href={href}
-      className={`text-cyan-400 hover:text-cyan-300 underline transition-colors ${className}`}
+      className={`text-zinc-200 hover:text-zinc-100 underline transition-colors duration-200 ${className}`}
       target={isExternal ? "_blank" : undefined}
       rel={isExternal ? "noopener noreferrer" : undefined}
     >
@@ -140,44 +151,44 @@ export const mdxComponents = {
 
   // Override default HTML elements with enhanced styling
   h1: (props: React.HTMLAttributes<HTMLHeadingElement>) => (
-    <h1 className="text-4xl font-bold text-zinc-100 mb-6 mt-8" {...props} />
+    <ArticleH1 id={generateHeadingId(props.children as string)} {...props} />
   ),
   h2: (props: React.HTMLAttributes<HTMLHeadingElement>) => (
-    <h2 className="text-3xl font-semibold text-zinc-100 mb-4 mt-6" {...props} />
+    <ArticleH2 id={generateHeadingId(props.children as string)} {...props} />
   ),
   h3: (props: React.HTMLAttributes<HTMLHeadingElement>) => (
-    <h3 className="text-2xl font-semibold text-zinc-100 mb-3 mt-5" {...props} />
+    <ArticleH3 id={generateHeadingId(props.children as string)} {...props} />
   ),
   h4: (props: React.HTMLAttributes<HTMLHeadingElement>) => (
-    <h4 className="text-xl font-semibold text-zinc-100 mb-2 mt-4" {...props} />
+    <ArticleH4 id={generateHeadingId(props.children as string)} {...props} />
   ),
   p: (props: React.HTMLAttributes<HTMLParagraphElement>) => (
-    <p className="text-zinc-300 leading-relaxed mb-4" {...props} />
+    <p className="text-zinc-400 leading-relaxed mb-4" {...props} />
   ),
   ul: (props: React.HTMLAttributes<HTMLUListElement>) => (
     <ul
-      className="list-disc list-inside text-zinc-300 mb-4 space-y-1"
+      className="list-disc list-inside text-zinc-200 mb-4 space-y-1"
       {...props}
     />
   ),
   ol: (props: React.HTMLAttributes<HTMLOListElement>) => (
     <ol
-      className="list-decimal list-inside text-zinc-300 mb-4 space-y-1"
+      className="list-decimal list-inside text-zinc-200 mb-4 space-y-1"
       {...props}
     />
   ),
   li: (props: React.HTMLAttributes<HTMLLIElement>) => (
-    <li className="text-zinc-300" {...props} />
+    <li className="text-zinc-200" {...props} />
   ),
   strong: (props: React.HTMLAttributes<HTMLElement>) => (
     <strong className="font-semibold text-zinc-200" {...props} />
   ),
   em: (props: React.HTMLAttributes<HTMLElement>) => (
-    <em className="italic text-zinc-300" {...props} />
+    <em className="italic text-zinc-200" {...props} />
   ),
   code: (props: React.HTMLAttributes<HTMLElement>) => (
     <code
-      className="bg-zinc-800 text-cyan-300 px-1 py-0.5 rounded text-sm font-mono"
+      className="bg-zinc-800 text-cyan-200 px-1 py-0.5 rounded text-sm font-mono"
       {...props}
     />
   ),
@@ -195,7 +206,13 @@ export const mdxComponents = {
   ),
   a: (props: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
     <a
-      className="text-cyan-400 hover:text-cyan-300 underline transition-colors"
+      className="text-zinc-200 hover:text-zinc-100 underline transition-colors duration-200"
+      {...props}
+    />
+  ),
+  hr: (props: React.HTMLAttributes<HTMLHRElement>) => (
+    <hr
+      className="border-zinc-500/50 my-10 mx-15 md:mx-20 lg:mx-30"
       {...props}
     />
   ),
