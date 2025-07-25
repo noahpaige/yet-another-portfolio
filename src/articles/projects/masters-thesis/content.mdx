@@ -28,7 +28,7 @@ For everyone else, go on down to the [Thesis Summary](#thesis-summary).
 
 ## TL;DR
 
-How do you make NPCs in video games feel more lifelike and believable? No, the answer is not to use an LLM! For one, I did this in the dark ages before ChatGPT. But more importantly, it’s the wrong tool—like a square peg in a round hole. Instead, I turned to real psychology research: things like the Five-Factor Model of Personality and the Circumplex Model of Affect. With these concepts, I built a system that gives NPCs actual personality traits and emotional states. Think of it as giving them a brain that’s not necessarily smarter, but more emotional. They get happy, they get grumpy, they make friends, and they avoid people they don't like.
+How do you make NPCs in video games feel more lifelike and believable? No, the answer is not to use an LLM! For one, I did this in the dark ages before ChatGPT. But more importantly, it’s the wrong tool—like a square peg in a round hole. Instead, I turned to real psychology research: things like the [**Five-Factor Model of Personality**](#five-factor-model-of-personality) and the [Circumplex Model of Affect](#circumplex-model-of-affect). With these concepts, I built a system that gives NPCs actual personality traits and emotional states. Think of it as giving them a brain that’s not necessarily smarter, but more emotional. They get happy, they get grumpy, they make friends, and they avoid people they don't like.
 
 These traits drive not just their decisions but also their facial expressions. As they make choices, their emotions show up on their faces in real time with procedural animation based on their mood. No more dead-eyed robots doing the same thing over and over. Their feelings affect their behavior, and their behavior changes how they feel. It’s a loop with emotional consequences.
 
@@ -58,8 +58,9 @@ This is a screen recording of the presentation I gave when I defended my thesis.
 Here's a video of the maze simulation from start to finish. TODO send da video
 
 <YouTubeVideo
-  videoId="cK4MgCyOVPQ?si=PMUNEr0Zzjr_OEdV"
+  videoId="20RuUF9LnNA?si=bPFH-DJ0spAlYtrN"
   title="Masters Thesis Presentation"
+  aspectRatio="1920:1000"
   maxHeight={300}
   horizontalAlign="center"
 />
@@ -72,7 +73,7 @@ Here's a video of the maze simulation from start to finish. TODO send da video
 
 ### Introduction
 
-Non-player characters (NPCs) are a staple in most modern games, yet they are often criticized for their lack of believability and emotional realism. This thesis tackles that problem by proposing a behavior model for NPCs that integrates psychological models—specifically, the **Five-Factor Model of Personality** and the **Circumplex Model of Affect**—to create more dynamic and emotionally responsive NPCs.
+Non-player characters (NPCs) are a staple in most modern games, yet they are often criticized for their lack of believability and emotional realism. This thesis tackles that problem by proposing a behavior model for NPCs that integrates psychological models—specifically, the [**Five-Factor Model of Personality**](#five-factor-model-of-personality) and the [**Circumplex Model of Affect**](#circumplex-model-of-affect)—to create more dynamic and emotionally responsive NPCs.
 
 The goal was to explore how personality and mood can be combined to produce emergent, unscripted behaviors in NPCs, which could enhance player immersion and narrative depth. To test the system, a maze simulation environment was built in Unity, where NPCs would navigate and interact based on their personalities and emotional states.
 
@@ -86,21 +87,36 @@ NPCs play various roles in games—quest-givers, enemies, companions, or vendors
 
 #### Five-Factor Model of Personality
 
-Often referred to as the “Big Five,” this model breaks personality into:
+Often referred to as the “Big Five,” this model breaks personality into five traits: **Openness**, **Conscientiousness**, **Extraversion**, **Agreeableness**, and **Neuroticism**. Each NPC is assigned a numerical value (0–1) for each trait, which influences their behavior.
 
-- **Openness**
-- **Conscientiousness**
-- **Extraversion**
-- **Agreeableness**
-- **Neuroticism**
+Each NPC is assigned a numerical value (0–1) for each trait, which combine to define their personality.
 
-Each NPC is assigned a numerical value (0–1) for each trait, which influences their behavior.
-_Table 2.1 and Table 2.2 explain traits and their facets._
+<Image
+  src="/big-five.webp"
+  alt="Five-Factor Model of Personality Image"
+  width={500}
+  captionText="Five-Factor Model of Personality"
+/>
 
 #### Circumplex Model of Affect
 
-This 2D model places emotions on a graph with axes for **pleasantness** and **activation** (energy). NPCs’ current moods are represented as points on this graph, which shift over time based on their experiences. This model allows mood to fluctuate realistically.
+This 2D model places emotions on a graph with axes for **pleasantness** and **activation** (energy). NPCs’ current moods are represented as points on this graph, which shift over time based on their experiences. The direction and magnitude of the shift is determined by a combination of the NPC's personality and the actions they take.
 
+<Image
+  src="/circumplex_model.png"
+  alt="Circumplex Model of Affect Image"
+  width={500}
+  captionText="Russell’s Circumplex Model of Affect"
+/>
+<ImageGrid>
+  <Image
+    src="/choom.png"
+    alt="Circumplex Model of Affect"
+    captionText="My Choom!!!"
+  />
+  <Image src="/control.jpg" alt="FBC" captionText="ANSWER IT" />
+  <Image src="/kojima.jpg" alt="KOKIMA" captionText="WOOOO KOJIMA" />
+</ImageGrid>
 📍 _\[TODO Figure 2.2 goes here]_ — Russell’s Circumplex Model of Affect
 
 #### Procedural Animation
