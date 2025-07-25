@@ -8,9 +8,9 @@ import { type MDXContent } from "@/generated/article-mdx-index";
 
 interface ArticleCardProps {
   article: Article;
-  hideTags?: boolean;
-  showReadTime?: boolean;
-  showDesc?: boolean;
+  showTags?: "show" | "hide" | "auto";
+  showReadTime?: "show" | "hide" | "auto";
+  showDesc?: "show" | "hide" | "auto";
   mdxContent?: MDXContent | null;
   customPath?: string; // Allow custom routing override
   height?: string | "auto" | "fit"; // Updated height prop
@@ -20,9 +20,9 @@ interface ArticleCardProps {
 export const ArticleCard = React.memo(
   ({
     article,
-    hideTags = true,
-    showReadTime = false,
-    showDesc = false,
+    showTags = "auto",
+    showReadTime = "auto",
+    showDesc = "auto",
     mdxContent,
     customPath,
     height = "auto", // Default to auto
@@ -38,6 +38,23 @@ export const ArticleCard = React.memo(
       if (type === "string" && typeof value === "string") return value;
       if (type === "number" && typeof value === "number") return value;
       return null;
+    };
+
+    // Helper function to get visibility classes based on mode
+    const getVisibilityClasses = (
+      mode: "show" | "hide" | "auto",
+      autoClasses: string
+    ): string => {
+      switch (mode) {
+        case "show":
+          return "flex"; // Always show
+        case "hide":
+          return "hidden"; // Always hide
+        case "auto":
+          return autoClasses; // Use responsive classes
+        default:
+          return autoClasses;
+      }
     };
 
     const readTime = getMetadataValue("readTime", "number");
@@ -150,61 +167,64 @@ export const ArticleCard = React.memo(
                   </Magnetic>
 
                   {/* Details Section */}
-                  {(showReadTime || showDesc) && mdxContent && (
-                    <div className="mt-3 space-y-2">
-                      {/* Read Time */}
-                      {showReadTime && readTime && (
-                        <Magnetic
-                          intensity={0.05}
-                          range={1000}
-                          actionArea={{
-                            type: "ref",
-                            ref: linkRef as React.RefObject<HTMLElement>,
-                          }}
-                          springOptions={{ stiffness: 300, damping: 30 }}
-                        >
-                          <div className="flex items-center gap-1 text-zinc-400 text-xs">
-                            <svg
-                              className="w-3 h-3"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                              />
-                            </svg>
-                            {readTime} min read
-                          </div>
-                        </Magnetic>
-                      )}
+                  {((showReadTime !== "hide" && readTime) ||
+                    (showDesc !== "hide" && description)) &&
+                    mdxContent && (
+                      <div className="mt-3 space-y-2">
+                        {/* Read Time */}
+                        {showReadTime !== "hide" && readTime && (
+                          <Magnetic
+                            intensity={0.05}
+                            range={1000}
+                            actionArea={{
+                              type: "ref",
+                              ref: linkRef as React.RefObject<HTMLElement>,
+                            }}
+                            springOptions={{ stiffness: 300, damping: 30 }}
+                          >
+                            <div className="flex items-center gap-1 text-zinc-400 text-xs">
+                              <svg
+                                className="w-3 h-3"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                />
+                              </svg>
+                              {readTime} min read
+                            </div>
+                          </Magnetic>
+                        )}
 
-                      {/* Description Preview */}
-                      {showDesc && description && (
-                        <Magnetic
-                          intensity={0.05}
-                          range={1000}
-                          actionArea={{
-                            type: "ref",
-                            ref: linkRef as React.RefObject<HTMLElement>,
-                          }}
-                          springOptions={{ stiffness: 300, damping: 30 }}
-                        >
-                          <p className="text-zinc-300 text-xs line-clamp-2 leading-relaxed">
-                            {description}
-                          </p>
-                        </Magnetic>
-                      )}
-                    </div>
-                  )}
+                        {/* Description Preview */}
+                        {showDesc !== "hide" && description && (
+                          <Magnetic
+                            intensity={0.05}
+                            range={1000}
+                            actionArea={{
+                              type: "ref",
+                              ref: linkRef as React.RefObject<HTMLElement>,
+                            }}
+                            springOptions={{ stiffness: 300, damping: 30 }}
+                          >
+                            <p className="text-zinc-300 text-xs line-clamp-2 leading-relaxed">
+                              {description}
+                            </p>
+                          </Magnetic>
+                        )}
+                      </div>
+                    )}
                   {/* Tags */}
                   <div
-                    className={`${
-                      hideTags ? "hidden md:flex" : "flex"
-                    } flex-wrap gap-2 mt-1`}
+                    className={`${getVisibilityClasses(
+                      showTags,
+                      "hidden md:flex"
+                    )} flex-wrap gap-2 mt-1`}
                   >
                     {article.tags?.slice(0, 3).map((tag, index) => (
                       <Magnetic
@@ -310,61 +330,64 @@ export const ArticleCard = React.memo(
                   </Magnetic>
 
                   {/* Details Section */}
-                  {(showReadTime || showDesc) && mdxContent && (
-                    <div className="mt-3 space-y-2">
-                      {/* Read Time */}
-                      {showReadTime && readTime && (
-                        <Magnetic
-                          intensity={0.05}
-                          range={1000}
-                          actionArea={{
-                            type: "ref",
-                            ref: linkRef as React.RefObject<HTMLElement>,
-                          }}
-                          springOptions={{ stiffness: 300, damping: 30 }}
-                        >
-                          <div className="flex items-center gap-1 text-zinc-400 text-xs">
-                            <svg
-                              className="w-3 h-3"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                              />
-                            </svg>
-                            {readTime} min read
-                          </div>
-                        </Magnetic>
-                      )}
+                  {((showReadTime !== "hide" && readTime) ||
+                    (showDesc !== "hide" && description)) &&
+                    mdxContent && (
+                      <div className="mt-3 space-y-2">
+                        {/* Read Time */}
+                        {showReadTime !== "hide" && readTime && (
+                          <Magnetic
+                            intensity={0.05}
+                            range={1000}
+                            actionArea={{
+                              type: "ref",
+                              ref: linkRef as React.RefObject<HTMLElement>,
+                            }}
+                            springOptions={{ stiffness: 300, damping: 30 }}
+                          >
+                            <div className="flex items-center gap-1 text-zinc-400 text-xs">
+                              <svg
+                                className="w-3 h-3"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                />
+                              </svg>
+                              {readTime} min read
+                            </div>
+                          </Magnetic>
+                        )}
 
-                      {/* Description Preview */}
-                      {showDesc && description && (
-                        <Magnetic
-                          intensity={0.05}
-                          range={1000}
-                          actionArea={{
-                            type: "ref",
-                            ref: linkRef as React.RefObject<HTMLElement>,
-                          }}
-                          springOptions={{ stiffness: 300, damping: 30 }}
-                        >
-                          <p className="text-zinc-300 text-xs line-clamp-2 leading-relaxed">
-                            {description}
-                          </p>
-                        </Magnetic>
-                      )}
-                    </div>
-                  )}
+                        {/* Description Preview */}
+                        {showDesc !== "hide" && description && (
+                          <Magnetic
+                            intensity={0.05}
+                            range={1000}
+                            actionArea={{
+                              type: "ref",
+                              ref: linkRef as React.RefObject<HTMLElement>,
+                            }}
+                            springOptions={{ stiffness: 300, damping: 30 }}
+                          >
+                            <p className="text-zinc-300 text-xs line-clamp-2 leading-relaxed">
+                              {description}
+                            </p>
+                          </Magnetic>
+                        )}
+                      </div>
+                    )}
                   {/* Tags */}
                   <div
-                    className={`${
-                      hideTags ? "hidden md:flex" : "flex"
-                    } flex-wrap gap-2 mt-1`}
+                    className={`${getVisibilityClasses(
+                      showTags,
+                      "hidden md:flex"
+                    )} flex-wrap gap-2 mt-1`}
                   >
                     {article.tags?.slice(0, 3).map((tag, index) => (
                       <Magnetic

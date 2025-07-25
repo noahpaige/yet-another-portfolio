@@ -5,6 +5,7 @@ import { useInView } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { ArticleCard } from "@/components/ui/article-card";
 import { getFeaturedArticlesByType } from "@/generated/article-index";
+import { getArticleMDXContent } from "@/generated/article-mdx-index";
 import { motion, AnimatePresence } from "motion/react";
 import { MagneticButton } from "@/components/ui/magnetic-button";
 import { ArrowRight } from "lucide-react";
@@ -64,21 +65,26 @@ export default function BlogSection() {
             >
               {getFeaturedArticlesByType("blog")
                 .slice(0, 6)
-                .map((blog, i) => (
-                  <motion.div
-                    key={i}
-                    variants={itemVariants}
-                    className="w-full"
-                  >
-                    <ArticleCard
-                      article={blog}
-                      showReadTime={false}
-                      showDesc={false}
-                      height={"fit"}
-                      titleFontSize={titleFontSize}
-                    />
-                  </motion.div>
-                ))}
+                .map((blog, i) => {
+                  const mdxContent = getArticleMDXContent(blog.id);
+                  return (
+                    <motion.div
+                      key={i}
+                      variants={itemVariants}
+                      className="w-full"
+                    >
+                      <ArticleCard
+                        article={blog}
+                        showReadTime="show"
+                        showDesc="show"
+                        showTags="hide"
+                        height={"fit"}
+                        titleFontSize={titleFontSize}
+                        mdxContent={mdxContent}
+                      />
+                    </motion.div>
+                  );
+                })}
             </motion.div>
           )}
         </AnimatePresence>

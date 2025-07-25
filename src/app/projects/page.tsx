@@ -136,9 +136,9 @@ export default function ProjectsPage() {
                       <ArticleCard
                         key={id}
                         article={project}
-                        hideTags={false}
-                        showReadTime={false}
-                        showDesc={isSmallScreen}
+                        showTags="show"
+                        showReadTime="hide"
+                        showDesc={isSmallScreen ? "show" : "auto"}
                         mdxContent={content}
                       />
                     );

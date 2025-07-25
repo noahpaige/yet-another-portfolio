@@ -134,9 +134,9 @@ export default function BlogsPage() {
                       <ArticleCard
                         key={id}
                         article={blog}
-                        hideTags={false}
-                        showReadTime={isSmallScreen}
-                        showDesc={isSmallScreen}
+                        showTags="show"
+                        showReadTime={isSmallScreen ? "show" : "auto"}
+                        showDesc={isSmallScreen ? "show" : "auto"}
                         mdxContent={content}
                         height="fit"
                       />

@@ -5,6 +5,7 @@ import { useInView } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { ArticleCard } from "@/components/ui/article-card";
 import { getFeaturedArticlesByType } from "@/generated/article-index";
+import { getArticleMDXContent } from "@/generated/article-mdx-index";
 import { motion, AnimatePresence } from "motion/react";
 import { MagneticButton } from "@/components/ui/magnetic-button";
 import { ArrowRight } from "lucide-react";
@@ -75,25 +76,29 @@ export default function ProjectsSection() {
             >
               {getFeaturedArticlesByType("project")
                 .slice(0, 6)
-                .map((project, i) => (
-                  <motion.div
-                    key={i}
-                    variants={itemVariants}
-                    className={`row-span-1 ${
-                      i === 0 || i === 3 || i === 4
-                        ? "sm:col-span-2"
-                        : "col-span-1"
-                    }`}
-                  >
-                    <ArticleCard
-                      article={project}
-                      showReadTime={false}
-                      showDesc={false}
-                      height={cardHeight}
-                      titleFontSize={titleFontSize}
-                    />
-                  </motion.div>
-                ))}
+                .map((project, i) => {
+                  const mdxContent = getArticleMDXContent(project.id);
+                  return (
+                    <motion.div
+                      key={i}
+                      variants={itemVariants}
+                      className={`row-span-1 ${
+                        i === 0 || i === 3 || i === 4
+                          ? "sm:col-span-2"
+                          : "col-span-1"
+                      }`}
+                    >
+                      <ArticleCard
+                        article={project}
+                        showReadTime="hide"
+                        showDesc="hide"
+                        height={cardHeight}
+                        titleFontSize={titleFontSize}
+                        mdxContent={mdxContent}
+                      />
+                    </motion.div>
+                  );
+                })}
             </motion.div>
           )}
         </AnimatePresence>
