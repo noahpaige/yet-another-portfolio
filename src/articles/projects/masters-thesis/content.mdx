@@ -87,15 +87,13 @@ NPCs play various roles in games—quest-givers, enemies, companions, or vendors
 
 #### Five-Factor Model of Personality
 
-Often referred to as the “Big Five,” this model breaks personality into five traits: **Openness**, **Conscientiousness**, **Extraversion**, **Agreeableness**, and **Neuroticism**. Each NPC is assigned a numerical value (0–1) for each trait, which influences their behavior.
-
-Each NPC is assigned a numerical value (0–1) for each trait, which combine to define their personality.
+Often referred to as the “Big Five,” this model breaks personality into five traits: **Openness**, **Conscientiousness**, **Extraversion**, **Agreeableness**, and **Neuroticism**. Each NPC is assigned a numerical value (0–1) for each trait, which combine to define their personality.
 
 <Image
   src="/big-five.webp"
   alt="Five-Factor Model of Personality Image"
   width={500}
-  captionText="Five-Factor Model of Personality"
+  captionText="The Five-Factor Model of Personality, AKA the Big Five Personality Traits."
 />
 
 #### Circumplex Model of Affect
@@ -108,16 +106,6 @@ This 2D model places emotions on a graph with axes for **pleasantness** and **ac
   width={500}
   captionText="Russell’s Circumplex Model of Affect"
 />
-<ImageGrid>
-  <Image
-    src="/choom.png"
-    alt="Circumplex Model of Affect"
-    captionText="My Choom!!!"
-  />
-  <Image src="/control.jpg" alt="FBC" captionText="ANSWER IT" />
-  <Image src="/kojima.jpg" alt="KOKIMA" captionText="WOOOO KOJIMA" />
-</ImageGrid>
-📍 _\[TODO Figure 2.2 goes here]_ — Russell’s Circumplex Model of Affect
 
 #### Procedural Animation
 
@@ -141,8 +129,12 @@ NPCs choose from actions like "Go To Node", "Greet", "Follow", "Share", "Wait", 
 - Their current mood and personality
 - A **potential value heuristic** that estimates how a given action might move their mood closer to their "desired mood"
 
-📍 _\[TODO Figure 6.4 goes here]_ — Flowchart of a behavior update cycle
-
+<Image
+  src="/npc-flowchart.png"
+  alt="Flowchart of a behavior update cycle"
+  width={300}
+  captionText="The flowchart describing a single update cycle of the behavior controller for our NPCs. Behaviour is determined using a heuristic to perform a greedy selection of actions."
+/>
 Each action computes:
 
 - **EFactor**: effect on energy
@@ -163,15 +155,41 @@ These influence the NPC’s mood, which updates after each action.
 
 A custom maze was built in Unity. Each NPC starts in a common area and tries to reach the exit, either alone or by collaborating with others.
 
-📍 _\[TODO Figure 6.1 goes here]_ — Maze Overview
-📍 _\[TODO Figure 6.2 goes here]_ — NPC in the Maze
-📍 _\[TODO Figure 6.3 goes here]_ — Maze Nodes
+<ImageGrid>
+  <Image
+    src="/npc-maze.png"
+    alt="Maze Overview"
+    width={500}
+    captionText="Maze Overview"
+  />
+  <Image
+    src="/maze-nodes.png"
+    alt="Maze Nodes"
+    width={500}
+    captionText="Our maze, overlaid with labeled maze nodes. The blue-green numbered spheres show the location of all the maze nodes."
+  />
+</ImageGrid>
+<ImageGrid>
+  <Image
+    src="/npc-closeup.png"
+    alt="A closeup of an NPC in the maze"
+    width={500}
+    captionText="A closeup of an NPC in the maze"
+  />
+  <Image
+    src="/maze-sim-ui.png"
+    alt="Maze Simulation UI"
+    width={500}
+    captionText="A screen capture of the maze simulation, including the user
+interface elements that help the viewer understand what is happening."
+  />
+</ImageGrid>
 
 NPCs:
 
 - Maintain a memory of visited nodes
-- Have a perception score for each other NPC (ranging -1 to +1)
-- Can share knowledge, follow others, or wait for companions
+- Have a perception score for each other NPC (defines how much they like or dislike the other NPC)
+- Can forge on alone, share knowledge, follow others, or wait for companions
 
 This setup allows rich social dynamics to emerge, such as friendship, avoidance, or teamwork.
 
@@ -181,8 +199,20 @@ This setup allows rich social dynamics to emerge, such as friendship, avoidance,
 
 Mood-driven facial expressions are rendered using blendshapes. The NPC’s mood coordinates on the circumplex graph determine which facial expressions are blended and displayed.
 
-📍 _\[TODO Figure 6.5 goes here]_ — Mood Graph with Emotions
-📍 _\[TODO Figure 6.6 goes here]_ — Facial Expression Examples
+<ImageGrid>
+  <Image
+    src="/mood-graph.png"
+    alt="Mood Graph with Emotions"
+    width={500}
+    captionText="Mood Graph with Emotions"
+  />
+  <Image
+    src="/npc-facial-expressions.png"
+    alt="Facial Expression Examples"
+    width={800}
+    captionText="Facial animation blendshapes were mapped to moods, and then the moods were mapped to positions on our mood graph. This shows the resulting facial animations as the current mood moves to different positions on the mood graph. From left to right: (1) medium energy and medium pleasantness (control), (2) medium energy and low pleasantness, (3) medium energy and high pleasantness, (4) low energy and medium pleasantness, (5) low energy and low pleasantness, (6) low energy and high pleasantness, (7) high energy and medium pleasantness, (8) high energy and low pleasantness, (9) high energy and high pleasantness."
+  />
+</ImageGrid>
 
 This enables real-time visual feedback of internal emotional states without manual animation.
 
@@ -198,24 +228,43 @@ This enables real-time visual feedback of internal emotional states without manu
 - NPCs high in **extraversion** were more likely to greet or follow others.
 - **Neurotic** NPCs had stronger emotional fluctuations.
 
-📍 _\[TODO Table 7.1 goes here]_ — Action vs. Trait Correlation
-📍 _\[TODO Table 7.2 goes here]_ — Trait vs. Mood Distance
+<ImageGrid>
+  <Image
+    src="/trait-action-correlation-table.png"
+    alt="Trait Versus Action Correlation"
+    width={500}
+    captionText="The correlation between each personality trait and the go to
+node, follow, share, and wait actions. The correlation value, r, is the
+Pearson product-moment correlation coefficient."
+  />
+  <Image
+    src="/trait-to-desired-mood-table.png"
+    alt="Trait to Desired Mood Correlation Table"
+    width={500}
+    captionText="The correlation between each personality trait and the average
+distance from the NPC’s current to desired moods. The correlation value,
+r, is the Pearson product-moment correlation coefficient."
+  />
+</ImageGrid>
+
+The results of the simulation were as expected, since I hand-configured each action to be more or less desirable for each personality trait. However, the real success is in the emergent behavior that was produced by small variations in personality. Even a small change in personality could lead to a completely different outcomes in terms of who finished first, who helped or avoided others, and so on.
+
+In the future, I would like to explore ways to improve the decision-making algorithm. It worked fine in my small maze environment, but it can still likely be improved. For example, I think collaborating with a dev team that works on sports games could be a great way to improve the algorithm. NPCs in sports games have to make decisions about when to pass, shoot, or dribble, and they have to do it in real time.
 
 #### Procedural Animation Evaluation
 
-The facial animation system successfully reflected mood changes. NPCs showed more lifelike expressions, helping viewers intuitively understand their emotional state.
+The facial animation system successfully reflected mood changes. NPCs showed more lifelike expressions, helping viewers intuitively understand their emotional state. The UI elements were also a success, and allowed us to see the changes in mood and personality in real time.
 
-📍 _\[TODO Figure 7.1 goes here]_ — Maze Simulation UI
-📍 _\[TODO Figure 7.2 goes here]_ — NPC Status and Face
+As a proof of concept, this procedural animation system worked very well. However, the quality of the facial animation could certaintly be enhanced by someone who is more skilled in animation. In the future, I would like to use a more sophisticated facial animation system—possibly involving animation handles and facial rigs.
 
-<br />
-
-### Applications
-
-This system could be applied to any game genre. Two specific examples are discussed:
-
-- **The Elder Scrolls V: Skyrim** — Could enhance storytelling and quest design by making NPCs react differently based on their personality and mood.
-- **NBA 2K** — Teammates and opponents could have unique playstyles and moods, changing how games unfold.
+<Image
+  src="/maze-sim-ui-closeup.png"
+  alt="A closeup of the maze simulation UI, showing the NPC status and face"
+  width={300}
+  captionText="A close-up view of the NPC status user interface elements,
+including the view of each NPC’s face. This shows the procedural facial
+animation for each NPC, which is determined by their mood."
+/>
 
 <br />
 
