@@ -244,13 +244,25 @@ export function useScrollSections(
         if (!visible) return;
 
         const section = visible.target.getAttribute("data-section");
+        console.log("🔍 IntersectionObserver triggered:", {
+          section,
+          activeSection,
+          scrollingManually,
+          targetSection: targetSectionRef.current,
+          isIntersecting: visible.isIntersecting,
+          intersectionRatio: visible.intersectionRatio,
+        });
+
         if (section && section !== activeSection) {
           // Only update if we're not in the middle of a programmatic scroll to a different section
           if (!scrollingManually || targetSectionRef.current === section) {
+            console.log("✅ Updating active section to:", section);
             setActiveSection(section);
             const params = new URLSearchParams(window.location.search);
             params.set("section", section);
             router.replace(`?${params.toString()}`);
+          } else {
+            console.log("❌ Not updating - scrolling manually or wrong target");
           }
         }
       },
@@ -264,9 +276,9 @@ export function useScrollSections(
     const children = Array.from(container.children);
     children.forEach((el) => observer.observe(el));
 
-    // iOS Safari specific: Additional scroll position-based detection
-    const handleIOSScrollDetection = () => {
-      if (!isIOSSafari() || scrollingManually) return;
+    // Position-based detection for all browsers (not just iOS Safari)
+    const handlePositionBasedDetection = () => {
+      if (scrollingManually) return;
 
       const containerHeight = container.clientHeight;
 
@@ -300,6 +312,11 @@ export function useScrollSections(
         bestSection !== activeSection &&
         bestVisibility > 0.3
       ) {
+        console.log("📱 Position-based update:", {
+          bestSection,
+          bestVisibility,
+          activeSection,
+        });
         setActiveSection(bestSection);
         const params = new URLSearchParams(window.location.search);
         params.set("section", bestSection);
@@ -307,19 +324,15 @@ export function useScrollSections(
       }
     };
 
-    // Add scroll listener for iOS Safari position-based detection
-    if (isIOSSafari()) {
-      container.addEventListener("scroll", handleIOSScrollDetection, {
-        passive: true,
-      });
-    }
+    // Add scroll listener for position-based detection on all browsers
+    container.addEventListener("scroll", handlePositionBasedDetection, {
+      passive: true,
+    });
 
     return () => {
       children.forEach((el) => observer.unobserve(el));
       observer.disconnect();
-      if (isIOSSafari()) {
-        container.removeEventListener("scroll", handleIOSScrollDetection);
-      }
+      container.removeEventListener("scroll", handlePositionBasedDetection);
     };
   }, [scrollingManually, activeSection, router, scrollRef]);
 
