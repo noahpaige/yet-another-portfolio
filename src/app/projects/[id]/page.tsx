@@ -41,12 +41,12 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
   // Default color pairs if none provided
   const defaultColorPairs: [HSLColor, HSLColor][] = [
     [
-      { h: 145, s: 50, l: 30 },
+      { h: 145, s: 60, l: 20 },
       { h: 290, s: 35, l: 10 },
     ],
     [
-      { h: 245, s: 30, l: 9 },
-      { h: 145, s: 60, l: 27 },
+      { h: 145, s: 60, l: 10 },
+      { h: 245, s: 30, l: 7 },
     ],
   ];
 

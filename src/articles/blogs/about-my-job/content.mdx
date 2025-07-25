@@ -1,0 +1,192 @@
+---
+title: "What I Do at CACI 🚀"
+description: "A deep dive into my role as a web developer at CACI, working on situational awareness software for rocket launches and supporting the National Reconnaissance Office."
+date: "2024-12-19"
+readTime: 8
+tags:
+  [
+    "Career",
+    "Web Development",
+    "Government",
+    "Aerospace",
+    "Full-Stack",
+    "3D Graphics",
+  ]
+featured: true
+featuredOrder: 2
+type: "blog"
+---
+
+I work for CACI as a web developer, and I wanted to share a comprehensive look at what my job actually entails. It's a unique role that combines web development, aerospace, and government contracting in ways that might surprise you.
+
+<br />
+
+## The Big Picture
+
+CACI has many products, mostly dealing with government contracts. My office focuses on a contract with the **National Reconnaissance Office (NRO)** of the US Government to support rocket launches. We provide two main services:
+
+1. **Independent Verification and Validation** (of trajectory and other calculations)
+2. **Situational awareness software**
+
+I work solely on the situational awareness software part, which is where things get really interesting.
+
+<br />
+
+## The Software We Build
+
+Our situational awareness software takes the form of a web app that we run and manage during NRO rocket launches. The app displays comprehensive information about launches, including:
+
+- Real-time announcements and updates
+- Launch timelines and milestones
+- Current issues and status updates
+- Multiple 3D visualization displays
+
+### Tech Stack
+
+The front end is built with **Node.js** and **Vue.js**, while the back end is a collection of different languages including:
+
+- C++
+- Java
+- Node.js
+- PHP
+- Redis database
+
+I primarily work on the front end (about 60% of my time), but I also contribute to the back end (40%), particularly with Java, Node.js, and PHP components.
+
+<br />
+
+## My Role Evolution
+
+### Starting with 3D Graphics
+
+I was originally hired to focus on 3D displays due to my background in games and graphics. I work on creating UIs, implementing new major features, and developing 3D visualization displays using **Three.js**. While I still enjoy working with 3D graphics, I've transitioned into more of a support role for our other 3D graphics developer as I moved to fill needs in the UI/UX design department.
+
+### Transitioning to Full-Stack
+
+As I moved away from primarily 3D work, I started working more on proposing and implementing major features. Most recently, I've been working on many projects that involve creating full-stack apps independently. Some are for internal use, but most are customer-facing applications.
+
+<br />
+
+## Launch Support - The Real Deal
+
+A significant component of my job is supporting actual rocket launches. Our office supports many launches per year, including several practice launches leading up to the real thing.
+
+### Software Lead Role
+
+I'm assigned to be the software lead for launches about 4 times a year. When I'm the software lead, I'm responsible for:
+
+- Creating a build of the software for the launch
+- Configuring it to support the specific launch requirements
+- Managing the configuration process (which can be quite lengthy)
+
+The configuration process involves making adjustments based on:
+
+- Launch provider (SpaceX, ULA, etc.)
+- Launch location (usually Vandenberg SFB or Cape Canaveral SFB)
+- Number of payloads on the rocket
+- Rocket model being used
+- And many other factors
+
+### Operations Room Support
+
+During launches and practice launches, I'm required to be in the operations room at the office, running the software and providing technical support to my coworkers and the customer. This takes up about 25% of my time at the job.
+
+<br />
+
+## Major Projects I've Worked On
+
+#### 1. 3D Refactor
+
+My first major task was refactoring our 3D code. We have several 3D displays, but they're all essentially versions of the main one - a 3D simulation of the rocket showing it in relation to Earth, including nominal and actual paths, event markers, and the current stage of the rocket.
+
+The 3D code was in dire condition - a 5000+ line monstrosity! I added structure by separating it into several classes to represent the various components of the scene. I also added comprehensive JSDoc comments to help future developers. This project taught me the importance of documentation and that I had a lot to learn about orbital mechanics!
+
+#### 2. Image Capture System
+
+I recreated the image capture software we use leading up to and during launches. This software takes screenshots of various displays throughout the launch to aid in bug detection and provide a history of the launch.
+
+I built the app using **Node.js** and the **Puppeteer** package (a web scraping tool). The app spins up a Chromium window, logs into the web app, and navigates to different pages to take screenshots based on a pre-defined schedule.
+
+I created a robust scheduling system that supported:
+
+- Adding/subtracting captures on the fly
+- Forward and backward time jumps
+- Dynamic schedule management
+
+This project introduced me to web scraping and honed my skills with scheduling algorithms.
+
+#### 3. Launch Feed
+
+I proposed the Launch Feed feature about 3 years ago and have continued to develop and support it since. After becoming more familiar with the codebase, I noticed we didn't have any display that provided a summary of everything happening during a launch.
+
+The Launch Feed is a Twitter-style display that shows posts chronologically about everything happening during the launch. It serves two purposes:
+
+1. **One-stop-shop display**: If you only have space for one display and want to be up to date on everything, this is the one for you
+2. **Launch history**: Many displays show current information but don't provide history. Launch Feed provides a great way to catch up mid-launch or review what happened afterward
+
+I was responsible for both the front end and back end of this feature. On the front end, I focused on creating a modern look and feel while maintaining consistency with the rest of the app. I also emphasized animation, as I believe tasteful animation gives a premium feel to applications.
+
+The back end work was quite complex. I designed Launch Feed to run on the server and listen to changes in about fifteen different keys in our Redis database. Each piece of data has a different format, so I created custom logic to convert each key into a launch feed post. I also added significant logic to determine if updates are worthy of creating new posts.
+
+I conducted several demo sessions with the launch support team to refine this logic. Developing Launch Feed gave me a lot of confidence in my skills - it was a long yet gratifying process that taught me so much about Redis and databases in general.
+
+#### 4. RAPDS Project
+
+I'm part of a small team working on a separate launch software project for CACI. This project aims to provide a similar experience to the software we create for the NRO, but with the main differentiator being that CACI owns the software.
+
+We use a similar tech stack (Vue, Node, Redis) but without any of the legacy back-end code from the NRO version. In this project, we use Node.js as our entire back end. We were able to bring on a UI/UX design team member, and I worked full-stack on this app, implementing both back-end code and the UI created by our designer.
+
+I was also the sole developer for the launcher app for this project, creating it using **Electron**, Node.js, Vue, and **Tailwind CSS**. This project taught me about the importance of creating UI prototypes, gave me a crash course in Electron development, and showed me how amazing Tailwind CSS is!
+
+#### 5. Predictive Diagnostics
+
+I contributed to a project that uses machine learning to provide predictive diagnostics to hardware sensors. The system will one day be deployed to various locations to remotely monitor hardware and detect faults before they happen.
+
+This project uses a microservice architecture including:
+
+- Kafka for message passing
+- Zookeeper for coordination
+- ClickHouse and Postgres for databases
+- Python Streamlit UI package
+
+My role was to improve the UI by adding the ability to render custom UI components and pages using React. This was my first experience working with a microservices architecture, and figuring out how to create custom React components and integrate them into the existing Streamlit website was quite challenging.
+
+#### 6. New Tech Stack (Current Project)
+
+Most recently, I've been working on a proof-of-concept project aimed at designing a modern version of our launch software. The front end of the current codebase was built over a decade ago, and parts of the back end are even older.
+
+This project has two main goals:
+
+1. Update the tech stack (the existing codebase is several versions behind and difficult to upgrade)
+2. Redesign the architecture using more standard patterns, making it easier for both new developers and LLMs to understand and work with
+
+I've been tasked with deciding the tech stack (Node, Redis, Vue, Tailwind, Shadcn components, Motion animations) and creating all the necessary back-end services including:
+
+- Browser window management
+- Telemetry data input
+- Redis-based pub/sub message passing service
+- Notification system
+- And more to come!
+
+The old codebase is a SaaS project that has changed significantly since its creation, accumulating technical debt due to feature creep. With my redesign, I'm able to design new systems in a clearer and more succinct way.
+
+For the UI, I'm focused on creating a modern, cohesive design with a simpler, more unified visual language. This includes refining the color scheme to reinforce consistency and contribute to overall polish. Drawing from my background in game design, I aim to make the UI/UX more "juicy" - rich with satisfying visual and interactive feedback.
+
+Animation plays a key role in this approach. Almost every component is animated for common interactions such as hover, click, show, and hide. I believe this level of detail adds a sense of craftsmanship and quality to the interface.
+
+This is the project with the largest scope that I've worked on, and that increased scope has opened my eyes to the importance of high-level systems design. For the back end, I'm creating so many systems that all have to work together. Diagramming and conceptualizing how they all integrate has been key to success.
+
+<br />
+
+## What I've Learned
+
+Working at CACI has been an incredible learning experience. I've had the opportunity to:
+
+- Work on real-world applications that support critical government operations
+- Develop full-stack applications from concept to deployment
+- Learn about aerospace and orbital mechanics
+- Work with diverse technologies and architectures
+- Lead software development for actual rocket launches
+- Contribute to both legacy systems and modern greenfield projects
+
+The combination of government contracting, aerospace, and web development creates a unique environment where I'm constantly learning new things and applying my skills to solve real problems that matter.

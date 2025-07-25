@@ -64,7 +64,7 @@ export default function BlogSection() {
               exit="exit"
             >
               {getFeaturedArticlesByType("blog")
-                .slice(0, 6)
+                .slice(0, 3)
                 .map((blog, i) => {
                   const mdxContent = getArticleMDXContent(blog.id);
                   return (

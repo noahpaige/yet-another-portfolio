@@ -31,17 +31,23 @@ export default async function BlogPage({ params }: BlogPageProps) {
     notFound();
   }
 
-  // Color pairs for blog pages (different from projects)
-  const colorPairs: [HSLColor, HSLColor][] = [
+  // Default color pairs if none provided
+  const defaultColorPairs: [HSLColor, HSLColor][] = [
     [
-      { h: 280, s: 60, l: 25 },
-      { h: 120, s: 40, l: 15 },
+      { h: 225, s: 45, l: 25 },
+      { h: 260, s: 60, l: 8 },
     ],
     [
-      { h: 320, s: 50, l: 25 },
-      { h: 180, s: 45, l: 15 },
+      { h: 225, s: 60, l: 15 },
+      { h: 260, s: 70, l: 7 },
     ],
   ];
+
+  // Use colorPairs from article if available (for blogs), otherwise use defaults
+  const colorPairs =
+    article.type === "blog" && article.colorPairs
+      ? (article.colorPairs as [HSLColor, HSLColor][])
+      : defaultColorPairs;
 
   return (
     <ArticleLayout
