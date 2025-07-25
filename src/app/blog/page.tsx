@@ -123,7 +123,7 @@ export default function BlogsPage() {
             </div>
 
             {/* Blogs Grid */}
-            <div className="flex-1">
+            <div className="flex-1 max-w-3xl">
               {filteredBlogs.length > 0 ? (
                 <div className="grid grid-cols-1 gap-6">
                   {filteredBlogs.map(({ id, content }) => {
