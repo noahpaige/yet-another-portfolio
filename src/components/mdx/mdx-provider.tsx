@@ -1,6 +1,6 @@
 import React from "react";
-import Image from "next/image";
 import { ArticleH1, ArticleH2, ArticleH3, ArticleH4 } from "./article-headings";
+import MDXImage from "./mdx-image";
 
 // Utility function to generate unique fragment IDs from heading text
 const generateHeadingId = (text: string): string => {
@@ -37,30 +37,6 @@ const Callout: React.FC<{
         <span className="text-lg">{icons[type]}</span>
         <div className="flex-1">{children}</div>
       </div>
-    </div>
-  );
-};
-
-// Custom Image component for MDX
-const MDXImage: React.FC<{
-  src: string;
-  alt: string;
-  width?: number;
-  height?: number;
-  className?: string;
-}> = ({ src, alt, width = 800, height = 600, className = "" }) => {
-  return (
-    <div className={`my-6 ${className}`}>
-      <Image
-        src={src}
-        alt={alt}
-        width={width}
-        height={height}
-        className="rounded-lg shadow-lg"
-      />
-      {alt && (
-        <p className="text-sm text-zinc-400 text-center mt-2 italic">{alt}</p>
-      )}
     </div>
   );
 };
@@ -139,6 +115,35 @@ const Divider: React.FC<{ className?: string }> = ({ className = "" }) => {
   return <hr className={`border-zinc-700 my-10 ${className}`} />;
 };
 
+// Custom ImageGrid component for MDX
+const ImageGrid: React.FC<{
+  children: React.ReactNode;
+  className?: string;
+}> = ({ children, className = "" }) => {
+  // Count the number of Image components
+  const imageCount = React.Children.count(children);
+
+  // Responsive grid classes based on image count
+  const getGridClasses = () => {
+    switch (imageCount) {
+      case 1:
+        return "grid-cols-1 max-w-2xl mx-auto";
+      case 2:
+        return "grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 max-w-4xl mx-auto";
+      case 3:
+        return "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 max-w-6xl mx-auto";
+      default:
+        return "grid-cols-1 max-w-2xl mx-auto";
+    }
+  };
+
+  return (
+    <div className={`my-6 ${className}`}>
+      <div className={`grid ${getGridClasses()}`}>{children}</div>
+    </div>
+  );
+};
+
 // Custom YouTube Video component for MDX
 const YouTubeVideo: React.FC<{
   videoId: string;
@@ -160,6 +165,7 @@ const YouTubeVideo: React.FC<{
     "16:9": 16 / 9, // width = height * (16/9)
     "4:3": 4 / 3, // width = height * (4/3)
     "21:9": 21 / 9, // width = height * (21/9)
+    "1920:1000": 1920 / 1000, // width = height * (1920/1000)
   };
 
   const aspectRatioValue = aspectRatioMultipliers[aspectRatio];
@@ -201,6 +207,7 @@ export const mdxComponents = {
   // Custom components
   Callout,
   Image: MDXImage,
+  ImageGrid,
   CodeBlock,
   Link: MDXLink,
   Quote,
@@ -280,6 +287,7 @@ export const mdxComponents = {
 export {
   Callout,
   MDXImage as Image,
+  ImageGrid,
   CodeBlock,
   MDXLink as Link,
   Quote,
