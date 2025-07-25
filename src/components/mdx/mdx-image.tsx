@@ -67,7 +67,7 @@ const MDXImage: React.FC<{
           </div>
         </Magnetic>
         {captionText && (
-          <p className="text-sm text-zinc-400 text-center mt-2 italic">
+          <p className="text-sm text-zinc-400 text-center mt-2 px-10 italic">
             {captionText}
           </p>
         )}
