@@ -136,7 +136,7 @@ const Quote: React.FC<{
 
 // Custom Divider component for MDX
 const Divider: React.FC<{ className?: string }> = ({ className = "" }) => {
-  return <hr className={`border-zinc-700 my-8 ${className}`} />;
+  return <hr className={`border-zinc-700 my-10 ${className}`} />;
 };
 
 // Custom YouTube Video component for MDX
@@ -221,7 +221,7 @@ export const mdxComponents = {
     <ArticleH4 id={generateHeadingId(props.children as string)} {...props} />
   ),
   p: (props: React.HTMLAttributes<HTMLParagraphElement>) => (
-    <p className="text-zinc-400 leading-relaxed mb-4" {...props} />
+    <p className="text-zinc-300 leading-relaxed mb-4" {...props} />
   ),
   ul: (props: React.HTMLAttributes<HTMLUListElement>) => (
     <ul
@@ -239,7 +239,7 @@ export const mdxComponents = {
     <li className="text-zinc-200" {...props} />
   ),
   strong: (props: React.HTMLAttributes<HTMLElement>) => (
-    <strong className="font-semibold text-zinc-200" {...props} />
+    <strong className="font-semibold text-zinc-300" {...props} />
   ),
   em: (props: React.HTMLAttributes<HTMLElement>) => (
     <em className="italic text-zinc-200" {...props} />
@@ -270,7 +270,7 @@ export const mdxComponents = {
   ),
   hr: (props: React.HTMLAttributes<HTMLHRElement>) => (
     <hr
-      className="border-zinc-500/50 my-10 mx-15 md:mx-20 lg:mx-30"
+      className="border-zinc-500/50 my-16 mx-15 md:mx-20 lg:mx-30"
       {...props}
     />
   ),
