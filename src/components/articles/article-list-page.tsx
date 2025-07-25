@@ -45,7 +45,33 @@ export function ArticleListPage({
 
   // Get all articles with MDX content
   const allArticlesWithMDX = useMemo(() => {
-    return getArticleTypeMDXContent(articleType);
+    const articles = getArticleTypeMDXContent(articleType);
+
+    // Sort articles: featured first (by featuredOrder), then non-featured (by date)
+    return articles.sort((a, b) => {
+      const aFeatured = a.content.metadata.featured === true;
+      const bFeatured = b.content.metadata.featured === true;
+
+      // If both are featured, sort by featuredOrder
+      if (aFeatured && bFeatured) {
+        const aOrder = (a.content.metadata.featuredOrder as number) || 0;
+        const bOrder = (b.content.metadata.featuredOrder as number) || 0;
+        return aOrder - bOrder;
+      }
+
+      // If only one is featured, featured goes first
+      if (aFeatured && !bFeatured) return -1;
+      if (!aFeatured && bFeatured) return 1;
+
+      // If neither is featured, sort by date (newest first)
+      const aDate = new Date(
+        (a.content.metadata.date as string) || "1970-01-01"
+      );
+      const bDate = new Date(
+        (b.content.metadata.date as string) || "1970-01-01"
+      );
+      return bDate.getTime() - aDate.getTime();
+    });
   }, [articleType]);
 
   // Initialize filtered articles with all articles
@@ -56,7 +82,33 @@ export function ArticleListPage({
   // Handle filter changes
   const handleFilterChange = React.useCallback(
     (filtered: Array<{ id: string; content: MDXContent }>) => {
-      setFilteredArticles(filtered);
+      // Apply the same sorting logic to filtered results
+      const sortedFiltered = filtered.sort((a, b) => {
+        const aFeatured = a.content.metadata.featured === true;
+        const bFeatured = b.content.metadata.featured === true;
+
+        // If both are featured, sort by featuredOrder
+        if (aFeatured && bFeatured) {
+          const aOrder = (a.content.metadata.featuredOrder as number) || 0;
+          const bOrder = (b.content.metadata.featuredOrder as number) || 0;
+          return aOrder - bOrder;
+        }
+
+        // If only one is featured, featured goes first
+        if (aFeatured && !bFeatured) return -1;
+        if (!aFeatured && bFeatured) return 1;
+
+        // If neither is featured, sort by date (newest first)
+        const aDate = new Date(
+          (a.content.metadata.date as string) || "1970-01-01"
+        );
+        const bDate = new Date(
+          (b.content.metadata.date as string) || "1970-01-01"
+        );
+        return bDate.getTime() - aDate.getTime();
+      });
+
+      setFilteredArticles(sortedFiltered);
 
       // Reset scroll position to top when filters change
       if (scrollContainerRef.current) {
