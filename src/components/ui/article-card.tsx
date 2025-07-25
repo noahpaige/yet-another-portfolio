@@ -146,7 +146,7 @@ export const ArticleCard = React.memo(
                   </div>
                 )}
                 {/* Content area - fits content height */}
-                <div className="p-2 sm:p-3 md:p-6 bg-black/20 backdrop-blur-sm">
+                <div className="p-2 sm:p-3 md:p-6">
                   <Magnetic
                     intensity={0.1}
                     range={1000}
