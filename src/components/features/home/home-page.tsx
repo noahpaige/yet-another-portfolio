@@ -8,7 +8,7 @@ import BottomNav from "@/components/features/home/bottom-nav";
 import AnimatedBackground from "@/components/animated-background";
 import ClientOnly from "@/components/client-only";
 import { useScrollSections } from "@/hooks/use-scroll-sections";
-import { Home, Folder, Info, Mail } from "lucide-react";
+import { Home, Folder, Info, Mail, MessageSquareQuote } from "lucide-react";
 import NoiseOverlay from "@/components/noise-overlay";
 import LazySection from "@/components/features/home/lazy-section";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -23,6 +23,9 @@ const AboutSection = lazy(
 );
 const ProjectsSection = lazy(
   () => import("@/components/features/home/sections/projects/projects-section")
+);
+const BlogSection = lazy(
+  () => import("@/components/features/home/sections/blog/blog-section")
 );
 const ContactSection = lazy(() =>
   import("@/components/features/home/sections/contact/contact-section").then(
@@ -55,6 +58,7 @@ const SECTIONS = new Map([
   ["HOME", { component: WelcomeSection, icon: Home }],
   ["ABOUT", { component: AboutSection, icon: Info }],
   ["PROJECTS", { component: ProjectsSection, icon: Folder }],
+  ["BLOG", { component: BlogSection, icon: MessageSquareQuote }],
   ["CONTACT", { component: ContactSection, icon: Mail }],
 ]);
 
