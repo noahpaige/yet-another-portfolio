@@ -159,6 +159,26 @@ function generateArticleIndex(config: ArticleTypeConfig) {
           } tags`
         );
 
+        // Log SEO metadata if available
+        if (enhancedMetadata.seo) {
+          const seo = enhancedMetadata.seo as {
+            title?: string;
+            description?: string;
+            keywords?: string[];
+            image?: string;
+            canonical?: string;
+          };
+          if (seo.title || seo.description) {
+            console.log(
+              `   🔍 SEO: ${seo.title ? "Custom title" : ""}${
+                seo.title && seo.description ? ", " : ""
+              }${seo.description ? "Custom description" : ""}${
+                seo.keywords ? `, ${seo.keywords.length} keywords` : ""
+              }`
+            );
+          }
+        }
+
         // Log any missing required fields for projects
         if (type === "project") {
           if (

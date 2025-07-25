@@ -46,6 +46,37 @@ try {
     console.log("   ✅ All projects have required fields");
   }
 
+  // Test SEO metadata availability
+  const projectsWithSEO = projectArticles.filter((article) => {
+    const mdxContent = getArticleMDXContent(article.id);
+    if (mdxContent?.metadata.seo) {
+      const seo = mdxContent.metadata.seo as {
+        title?: string;
+        description?: string;
+        keywords?: string[];
+        image?: string;
+        canonical?: string;
+      };
+      return (
+        seo.title ||
+        seo.description ||
+        seo.keywords ||
+        seo.image ||
+        seo.canonical
+      );
+    }
+    return false;
+  });
+  console.log(
+    `   Projects with SEO Metadata: ${projectsWithSEO.length}/${projectArticles.length}`
+  );
+
+  if (projectsWithSEO.length > 0) {
+    console.log("   ✅ Some projects have SEO metadata configured");
+  } else {
+    console.log("   ℹ️ No projects have SEO metadata (optional feature)");
+  }
+
   // Test 2: ID Consistency
   console.log("\n🆔 Test 2: ID Consistency");
   const folderBasedIds = projectArticles.map((article) => article.id);
@@ -96,6 +127,62 @@ try {
 
   if (metadataConsistent) {
     console.log("   ✅ All metadata is consistent");
+  }
+
+  // Test 5: SEO Metadata Validation
+  console.log("\n🔍 Test 5: SEO Metadata Validation");
+  let seoValidationPassed = true;
+  projectArticles.forEach((article) => {
+    const mdxContent = getArticleMDXContent(article.id);
+    if (mdxContent?.metadata.seo) {
+      const seo = mdxContent.metadata.seo as {
+        title?: string;
+        description?: string;
+        keywords?: string[];
+        image?: string;
+        canonical?: string;
+      };
+
+      // Validate SEO properties
+      if (seo.title && typeof seo.title !== "string") {
+        console.log(`   ❌ Invalid SEO title type for ${article.id}`);
+        seoValidationPassed = false;
+      }
+      if (seo.description && typeof seo.description !== "string") {
+        console.log(`   ❌ Invalid SEO description type for ${article.id}`);
+        seoValidationPassed = false;
+      }
+      if (seo.keywords && !Array.isArray(seo.keywords)) {
+        console.log(`   ❌ Invalid SEO keywords type for ${article.id}`);
+        seoValidationPassed = false;
+      }
+      if (seo.image && typeof seo.image !== "string") {
+        console.log(`   ❌ Invalid SEO image type for ${article.id}`);
+        seoValidationPassed = false;
+      }
+      if (seo.canonical && typeof seo.canonical !== "string") {
+        console.log(`   ❌ Invalid SEO canonical type for ${article.id}`);
+        seoValidationPassed = false;
+      }
+
+      // Log SEO configuration for projects that have it
+      if (seo.title || seo.description) {
+        console.log(`   📊 ${article.id}: SEO configured`);
+        if (seo.title) console.log(`      Title: "${seo.title}"`);
+        if (seo.description)
+          console.log(
+            `      Description: "${seo.description.substring(0, 60)}..."`
+          );
+        if (seo.keywords)
+          console.log(`      Keywords: ${seo.keywords.length} keywords`);
+      }
+    }
+  });
+
+  if (seoValidationPassed) {
+    console.log("   ✅ All SEO metadata is valid");
+  } else {
+    console.log("   ❌ Some SEO metadata has validation errors");
   }
 
   // Test 5: Filtering System

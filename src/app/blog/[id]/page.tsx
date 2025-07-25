@@ -5,11 +5,21 @@ import ArticleLayout from "@/components/articles/article-layout";
 import MDXRenderer from "@/components/mdx/mdx-renderer";
 import { notFound } from "next/navigation";
 import type { HSLColor } from "@/components/animated-background";
+import type { Metadata } from "next";
+import { generateArticleMetadata } from "@/hooks/use-seo-metadata";
 
 interface BlogPageProps {
   params: Promise<{
     id: string;
   }>;
+}
+
+// Generate dynamic metadata for SEO and social media sharing
+export async function generateMetadata({
+  params,
+}: BlogPageProps): Promise<Metadata> {
+  const { id } = await params;
+  return generateArticleMetadata(id);
 }
 
 export default async function BlogPage({ params }: BlogPageProps) {

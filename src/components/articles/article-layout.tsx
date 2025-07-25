@@ -8,6 +8,11 @@ import NoiseOverlay from "@/components/noise-overlay";
 import { TopNavbar } from "@/components/shared/top-navbar";
 import type { ArticleLayoutProps } from "./types";
 
+// SEO utility function for use in ArticleLayout (if needed for client-side SEO updates)
+export function getArticleSEOTitle(header: string): string {
+  return `${header} | Noah Paige Portfolio`;
+}
+
 export default function ArticleLayout({
   header,
   tags,

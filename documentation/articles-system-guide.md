@@ -67,6 +67,13 @@ interface BaseArticle {
   featured: boolean; // Featured status
   featuredOrder?: number; // Order in featured list
   type: "project" | "blog"; // Content type discriminator
+  seo?: {
+    title?: string; // Custom SEO title (overrides main title)
+    description?: string; // Custom SEO description (overrides main description)
+    keywords?: string[]; // Additional SEO keywords
+    image?: string; // Custom image for social sharing
+    canonical?: string; // Canonical URL
+  };
 }
 ```
 
@@ -122,6 +129,12 @@ interface BlogArticle extends BaseArticle {
    imageAltText: "Description of the project image"
    colorPairs:
      - ["hsl(240, 100%, 50%)", "hsl(280, 100%, 50%)"]
+   seo:
+     title: "Custom SEO Title for Social Media"
+     description: "Custom SEO description for search engines and social sharing"
+     keywords: ["keyword1", "keyword2", "keyword3"]
+     image: "/custom-seo-image.png"
+     canonical: "https://yourdomain.com/projects/your-project-name"
    ---
 
    # Your Project Content
@@ -167,6 +180,11 @@ interface BlogArticle extends BaseArticle {
    featured: true
    featuredOrder: 1
    type: "blog"
+   seo:
+     title: "Custom SEO Title for Blog Post"
+     description: "Custom SEO description for blog post"
+     keywords: ["blog", "keyword1", "keyword2"]
+     canonical: "https://yourdomain.com/blog/your-blog-post-name"
    ---
 
    # Your Blog Post Content
@@ -222,6 +240,17 @@ interface BlogArticle extends BaseArticle {
      // ... existing project fields
      projectSpecificProperty: z.number().optional(),
    });
+
+   // For SEO properties, they're already included in the base schema:
+   seo: z
+     .object({
+       title: z.string().optional(),
+       description: z.string().optional(),
+       keywords: z.array(z.string()).optional(),
+       image: z.string().optional(),
+       canonical: z.string().optional(),
+     })
+     .optional(),
    ```
 
 2. **Update TypeScript Interfaces**
@@ -232,6 +261,13 @@ interface BlogArticle extends BaseArticle {
    interface BaseArticle {
      // ... existing fields
      newProperty?: string;
+     seo?: {
+       title?: string;
+       description?: string;
+       keywords?: string[];
+       image?: string;
+       canonical?: string;
+     };
    }
 
    interface ProjectArticle extends BaseArticle {
@@ -361,6 +397,28 @@ const article = getArticleById("clair-obscur");
 
 // Get featured projects
 const featuredProjects = getFeaturedArticlesByType("project");
+```
+
+#### SEO Metadata Access
+
+```typescript
+import { getArticleMDXContent } from "@/generated/article-mdx-index";
+
+// Get SEO metadata from MDX content
+const mdxContent = getArticleMDXContent("clair-obscur");
+const seo = mdxContent?.metadata.seo as
+  | {
+      title?: string;
+      description?: string;
+      keywords?: string[];
+      image?: string;
+      canonical?: string;
+    }
+  | undefined;
+
+// Use SEO metadata with fallbacks
+const title = seo?.title || article.title;
+const description = seo?.description || article.description;
 ```
 
 #### MDX Content Access
@@ -516,10 +574,11 @@ npx tsc --noEmit
 - **Categories**: Add category field for better organization
 - **Authors**: Support for multiple authors
 - **Comments**: Integration with commenting system
-- **SEO**: Enhanced meta tags and structured data
 - **Analytics**: Content performance tracking
 - **Drafts**: Support for draft content
 - **Scheduling**: Future publication dates
+- **Structured Data**: Enhanced JSON-LD schema markup
+- **Social Media Integration**: Direct sharing capabilities
 
 ### Scalability Considerations
 
@@ -528,8 +587,42 @@ npx tsc --noEmit
 - **CDN Integration**: Serve static content from CDN
 - **Database Integration**: Move to database for very large content sets
 
+## SEO and Social Media Integration
+
+### Social Media Preview Cards
+
+The system automatically generates Open Graph and Twitter Card meta tags for social media sharing:
+
+- **Dynamic Metadata**: Each article page generates custom meta tags based on frontmatter
+- **SEO Properties**: Use the `seo` object in frontmatter for custom social media previews
+- **Fallback System**: Falls back to regular article metadata if SEO properties aren't specified
+- **Image Support**: Custom images for social sharing with proper alt text
+
+### Testing Social Media Previews
+
+Use these tools to test how your content appears when shared:
+
+- **Facebook**: [Facebook Sharing Debugger](https://developers.facebook.com/tools/debug/)
+- **Twitter**: [Twitter Card Validator](https://cards-dev.twitter.com/validator)
+- **LinkedIn**: [LinkedIn Post Inspector](https://www.linkedin.com/post-inspector/)
+
+### Example SEO Configuration
+
+```mdx
+---
+title: "Project Title"
+description: "Project description"
+seo:
+  title: "Custom Title for Social Media"
+  description: "Custom description for search engines and social sharing"
+  keywords: ["keyword1", "keyword2", "keyword3"]
+  image: "/custom-social-image.png"
+  canonical: "https://yourdomain.com/projects/project-name"
+---
+```
+
 ## Conclusion
 
 The Unified Articles System provides a robust, scalable, and developer-friendly foundation for content management. Its type-safe architecture, excellent performance characteristics, and comprehensive tooling make it ideal for portfolios, blogs, and other content-heavy applications.
 
-The system successfully eliminates metadata duplication, provides unified processing for all content types, and maintains excellent performance characteristics while offering a simple and intuitive content management workflow.
+The system successfully eliminates metadata duplication, provides unified processing for all content types, maintains excellent performance characteristics, and includes built-in SEO and social media integration while offering a simple and intuitive content management workflow.

@@ -179,6 +179,26 @@ function generateUnifiedMDXIndex() {
               enhancedMetadata.readTime || 5
             }min read, ${enhancedMetadata.tags?.length || 0} tags`
           );
+
+          // Log SEO metadata if available
+          if (enhancedMetadata.seo) {
+            const seo = enhancedMetadata.seo as {
+              title?: string;
+              description?: string;
+              keywords?: string[];
+              image?: string;
+              canonical?: string;
+            };
+            if (seo.title || seo.description) {
+              console.log(
+                `   🔍 SEO: ${seo.title ? "Custom title" : ""}${
+                  seo.title && seo.description ? ", " : ""
+                }${seo.description ? "Custom description" : ""}${
+                  seo.keywords ? `, ${seo.keywords.length} keywords` : ""
+                }`
+              );
+            }
+          }
         } catch (error) {
           console.error(`❌ Error processing MDX for ${contentDir}:`, error);
           allMDXContent[contentDir] = null;
