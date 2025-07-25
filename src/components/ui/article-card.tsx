@@ -5,7 +5,6 @@ import Image from "next/image";
 import { Magnetic } from "@/components/ui/magnetic";
 import { Article } from "@/generated/article-index";
 import { type MDXContent } from "@/generated/article-mdx-index";
-import { useClampCSS } from "@/hooks/useClampCSS";
 
 interface ArticleCardProps {
   article: Article;
@@ -14,6 +13,8 @@ interface ArticleCardProps {
   showDesc?: boolean;
   mdxContent?: MDXContent | null;
   customPath?: string; // Allow custom routing override
+  height?: string | "auto" | "fit"; // Updated height prop
+  titleFontSize?: string | "auto"; // New titleFontSize prop
 }
 
 export const ArticleCard = React.memo(
@@ -24,6 +25,8 @@ export const ArticleCard = React.memo(
     showDesc = false,
     mdxContent,
     customPath,
+    height = "auto", // Default to auto
+    titleFontSize = "auto", // Default to auto
   }: ArticleCardProps) => {
     // Helper function to safely get metadata values
     const getMetadataValue = (
@@ -61,25 +64,38 @@ export const ArticleCard = React.memo(
     // Simple boolean check for image display
     const hasImage = !!article.image;
 
-    // Generate responsive font size based on container height
-    const titleFontSize = useClampCSS(
-      24, // min font size (1rem)
-      32, // max font size (2rem)
-      96, // min screen height (24 * 4px = 96px)
-      320, // max screen height (80 * 4px = 320px)
-      375, // min screen width
-      1280 // max screen width
-    );
+    // Handle height styling
+    const getHeightStyle = () => {
+      if (height === "auto") {
+        return {
+          className: "h-40 sm:h-50 md:h-60 lg:h-70", // Responsive Tailwind classes
+        };
+      } else if (height === "fit") {
+        return {
+          className: "h-fit", // Fit content height
+        };
+      } else {
+        return {
+          style: { height: height as string },
+        };
+      }
+    };
 
-    // Generate dynamic height based on screen height only
-    const cardHeight = useClampCSS(
-      60, // min height
-      320, // max height
-      500, // min screen height where scaling starts
-      1400, // max screen height where scaling stops
-      0, // min screen width (ignored)
-      0 // max screen width (ignored)
-    );
+    // Handle title font size styling
+    const getTitleFontSizeStyle = () => {
+      if (titleFontSize === "auto") {
+        return {
+          className: "text-2xl sm:text-3xl md:text-4xl lg:text-5xl", // Responsive Tailwind classes
+        };
+      } else {
+        return {
+          style: { fontSize: titleFontSize as string },
+        };
+      }
+    };
+
+    const heightStyle = getHeightStyle();
+    const titleFontSizeStyle = getTitleFontSizeStyle();
 
     return (
       <Magnetic
@@ -91,57 +107,141 @@ export const ArticleCard = React.memo(
         {/* Attach the ref to the Link */}
         <Link href={getArticlePath(article)} ref={linkRef}>
           <div className="group relative overflow-hidden rounded-xl glass-layer-hoverable transition-all duration-300 p-1.5">
-            <div
-              className="relative rounded-lg overflow-hidden"
-              style={{ height: cardHeight }}
-            >
-              {/* Use the Link as the action area for inner Magnetics */}
-              <Magnetic
-                intensity={0.2}
-                range={1000}
-                actionArea={{
-                  type: "ref",
-                  ref: linkRef as React.RefObject<HTMLElement>,
-                }}
-                springOptions={{ stiffness: 300, damping: 30 }}
-              >
-                <div
-                  className="w-full scale-115"
-                  style={{ height: cardHeight }}
-                >
-                  {/* Article Image - Only render if image exists */}
-                  {hasImage && (
-                    <div
-                      className="relative w-full rounded-lg"
-                      style={{ height: cardHeight }}
+            {height === "fit" ? (
+              // Fit layout: Image on top, content below
+              <div className="relative rounded-lg overflow-hidden">
+                {/* Article Image - Only render if image exists */}
+                {hasImage && (
+                  <div className="relative w-full h-48 rounded-t-lg">
+                    {!imageError ? (
+                      <Image
+                        src={article.image!}
+                        alt={article.imageAltText || ""}
+                        fill
+                        className="object-cover rounded-t-lg"
+                        onError={() => setImageError(true)}
+                      />
+                    ) : (
+                      <div className="w-full h-full items-center justify-center bg-gray-800 text-slate-400 text-sm rounded-t-lg text-center flex">
+                        {article.imageAltText || "Article image"}
+                      </div>
+                    )}
+                  </div>
+                )}
+                {/* Content area - fits content height */}
+                <div className="p-2 sm:p-3 md:p-6 bg-black/20 backdrop-blur-sm">
+                  <Magnetic
+                    intensity={0.1}
+                    range={1000}
+                    actionArea={{
+                      type: "ref",
+                      ref: linkRef as React.RefObject<HTMLElement>,
+                    }}
+                    springOptions={{ stiffness: 300, damping: 30 }}
+                  >
+                    <h3
+                      className={`font-space-mono font-bold text-zinc-100 transition-colors ${
+                        titleFontSizeStyle.className || ""
+                      }`}
+                      style={titleFontSizeStyle.style}
                     >
-                      {!imageError ? (
-                        <Image
-                          src={article.image!}
-                          alt={article.imageAltText || ""}
-                          fill
-                          className="object-cover rounded-lg"
-                          onError={() => setImageError(true)}
-                        />
-                      ) : (
-                        <div
-                          className="w-full h-full items-center justify-center bg-gray-800 text-slate-400 text-sm rounded-lg text-center flex"
-                          style={{ height: cardHeight }}
+                      {article.title}
+                    </h3>
+                  </Magnetic>
+
+                  {/* Details Section */}
+                  {(showReadTime || showDesc) && mdxContent && (
+                    <div className="mt-3 space-y-2">
+                      {/* Read Time */}
+                      {showReadTime && readTime && (
+                        <Magnetic
+                          intensity={0.05}
+                          range={1000}
+                          actionArea={{
+                            type: "ref",
+                            ref: linkRef as React.RefObject<HTMLElement>,
+                          }}
+                          springOptions={{ stiffness: 300, damping: 30 }}
                         >
-                          {article.imageAltText || "Article image"}
-                        </div>
+                          <div className="flex items-center gap-1 text-zinc-400 text-xs">
+                            <svg
+                              className="w-3 h-3"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                              />
+                            </svg>
+                            {readTime} min read
+                          </div>
+                        </Magnetic>
+                      )}
+
+                      {/* Description Preview */}
+                      {showDesc && description && (
+                        <Magnetic
+                          intensity={0.05}
+                          range={1000}
+                          actionArea={{
+                            type: "ref",
+                            ref: linkRef as React.RefObject<HTMLElement>,
+                          }}
+                          springOptions={{ stiffness: 300, damping: 30 }}
+                        >
+                          <p className="text-zinc-300 text-xs line-clamp-2 leading-relaxed">
+                            {description}
+                          </p>
+                        </Magnetic>
                       )}
                     </div>
                   )}
-                  {/* Gradient overlay - only show if image exists */}
-                  {hasImage && (
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
-                  )}
+                  {/* Tags */}
+                  <div
+                    className={`${
+                      hideTags ? "hidden md:flex" : "flex"
+                    } flex-wrap gap-2 mt-1`}
+                  >
+                    {article.tags?.slice(0, 3).map((tag, index) => (
+                      <Magnetic
+                        key={tag}
+                        intensity={0.05}
+                        range={1000}
+                        actionArea={{
+                          type: "ref",
+                          ref: linkRef as React.RefObject<HTMLElement>,
+                        }}
+                        springOptions={{ stiffness: 300, damping: 30 }}
+                      >
+                        <span
+                          className="px-2 py-1 text-zinc-300 text-xs rounded-full glass-layer"
+                          style={{
+                            animationDelay: `${index * 200}ms`,
+                            animationDuration: "2s",
+                          }}
+                        >
+                          {tag}
+                        </span>
+                      </Magnetic>
+                    ))}
+                  </div>
                 </div>
-              </Magnetic>
-              <div className="p-2 sm:p-3 md:p-6 absolute bottom-0 left-0">
+              </div>
+            ) : (
+              // Original overlay layout for auto/custom heights
+              <div
+                className={`relative rounded-lg overflow-hidden ${
+                  heightStyle.className || ""
+                }`}
+                style={heightStyle.style}
+              >
+                {/* Use the Link as the action area for inner Magnetics */}
                 <Magnetic
-                  intensity={0.1}
+                  intensity={0.2}
                   range={1000}
                   actionArea={{
                     type: "ref",
@@ -149,96 +249,149 @@ export const ArticleCard = React.memo(
                   }}
                   springOptions={{ stiffness: 300, damping: 30 }}
                 >
-                  <h3
-                    className="font-space-mono font-bold text-zinc-100 transition-colors"
-                    style={{ fontSize: titleFontSize }}
+                  <div
+                    className={`w-full scale-115 ${
+                      heightStyle.className || ""
+                    }`}
+                    style={heightStyle.style}
                   >
-                    {article.title}
-                  </h3>
-                </Magnetic>
-
-                {/* Details Section */}
-                {(showReadTime || showDesc) && mdxContent && (
-                  <div className="mt-3 space-y-2">
-                    {/* Read Time */}
-                    {showReadTime && readTime && (
-                      <Magnetic
-                        intensity={0.05}
-                        range={1000}
-                        actionArea={{
-                          type: "ref",
-                          ref: linkRef as React.RefObject<HTMLElement>,
-                        }}
-                        springOptions={{ stiffness: 300, damping: 30 }}
+                    {/* Article Image - Only render if image exists */}
+                    {hasImage && (
+                      <div
+                        className={`relative w-full rounded-lg ${
+                          heightStyle.className || ""
+                        }`}
+                        style={heightStyle.style}
                       >
-                        <div className="flex items-center gap-1 text-zinc-400 text-xs">
-                          <svg
-                            className="w-3 h-3"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
+                        {!imageError ? (
+                          <Image
+                            src={article.image!}
+                            alt={article.imageAltText || ""}
+                            fill
+                            className="object-cover rounded-lg"
+                            onError={() => setImageError(true)}
+                          />
+                        ) : (
+                          <div
+                            className={`w-full h-full items-center justify-center bg-gray-800 text-slate-400 text-sm rounded-lg text-center flex ${
+                              heightStyle.className || ""
+                            }`}
+                            style={heightStyle.style}
                           >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                          </svg>
-                          {readTime} min read
-                        </div>
-                      </Magnetic>
+                            {article.imageAltText || "Article image"}
+                          </div>
+                        )}
+                      </div>
                     )}
-
-                    {/* Description Preview */}
-                    {showDesc && description && (
-                      <Magnetic
-                        intensity={0.05}
-                        range={1000}
-                        actionArea={{
-                          type: "ref",
-                          ref: linkRef as React.RefObject<HTMLElement>,
-                        }}
-                        springOptions={{ stiffness: 300, damping: 30 }}
-                      >
-                        <p className="text-zinc-300 text-xs line-clamp-2 leading-relaxed">
-                          {description}
-                        </p>
-                      </Magnetic>
+                    {/* Gradient overlay - only show if image exists */}
+                    {hasImage && (
+                      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
                     )}
                   </div>
-                )}
-                {/* Tags */}
-                <div
-                  className={`${
-                    hideTags ? "hidden md:flex" : "flex"
-                  } flex-wrap gap-2 mt-1`}
-                >
-                  {article.tags?.slice(0, 3).map((tag, index) => (
-                    <Magnetic
-                      key={tag}
-                      intensity={0.05}
-                      range={1000}
-                      actionArea={{
-                        type: "ref",
-                        ref: linkRef as React.RefObject<HTMLElement>,
-                      }}
-                      springOptions={{ stiffness: 300, damping: 30 }}
+                </Magnetic>
+                <div className="p-2 sm:p-3 md:p-6 absolute bottom-0 left-0">
+                  <Magnetic
+                    intensity={0.1}
+                    range={1000}
+                    actionArea={{
+                      type: "ref",
+                      ref: linkRef as React.RefObject<HTMLElement>,
+                    }}
+                    springOptions={{ stiffness: 300, damping: 30 }}
+                  >
+                    <h3
+                      className={`font-space-mono font-bold text-zinc-100 transition-colors ${
+                        titleFontSizeStyle.className || ""
+                      }`}
+                      style={titleFontSizeStyle.style}
                     >
-                      <span
-                        className="px-2 py-1 text-zinc-300 text-xs rounded-full glass-layer"
-                        style={{
-                          animationDelay: `${index * 200}ms`,
-                          animationDuration: "2s",
+                      {article.title}
+                    </h3>
+                  </Magnetic>
+
+                  {/* Details Section */}
+                  {(showReadTime || showDesc) && mdxContent && (
+                    <div className="mt-3 space-y-2">
+                      {/* Read Time */}
+                      {showReadTime && readTime && (
+                        <Magnetic
+                          intensity={0.05}
+                          range={1000}
+                          actionArea={{
+                            type: "ref",
+                            ref: linkRef as React.RefObject<HTMLElement>,
+                          }}
+                          springOptions={{ stiffness: 300, damping: 30 }}
+                        >
+                          <div className="flex items-center gap-1 text-zinc-400 text-xs">
+                            <svg
+                              className="w-3 h-3"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                              />
+                            </svg>
+                            {readTime} min read
+                          </div>
+                        </Magnetic>
+                      )}
+
+                      {/* Description Preview */}
+                      {showDesc && description && (
+                        <Magnetic
+                          intensity={0.05}
+                          range={1000}
+                          actionArea={{
+                            type: "ref",
+                            ref: linkRef as React.RefObject<HTMLElement>,
+                          }}
+                          springOptions={{ stiffness: 300, damping: 30 }}
+                        >
+                          <p className="text-zinc-300 text-xs line-clamp-2 leading-relaxed">
+                            {description}
+                          </p>
+                        </Magnetic>
+                      )}
+                    </div>
+                  )}
+                  {/* Tags */}
+                  <div
+                    className={`${
+                      hideTags ? "hidden md:flex" : "flex"
+                    } flex-wrap gap-2 mt-1`}
+                  >
+                    {article.tags?.slice(0, 3).map((tag, index) => (
+                      <Magnetic
+                        key={tag}
+                        intensity={0.05}
+                        range={1000}
+                        actionArea={{
+                          type: "ref",
+                          ref: linkRef as React.RefObject<HTMLElement>,
                         }}
+                        springOptions={{ stiffness: 300, damping: 30 }}
                       >
-                        {tag}
-                      </span>
-                    </Magnetic>
-                  ))}
+                        <span
+                          className="px-2 py-1 text-zinc-300 text-xs rounded-full glass-layer"
+                          style={{
+                            animationDelay: `${index * 200}ms`,
+                            animationDuration: "2s",
+                          }}
+                        >
+                          {tag}
+                        </span>
+                      </Magnetic>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         </Link>
       </Magnetic>

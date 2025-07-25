@@ -138,6 +138,7 @@ export default function BlogsPage() {
                         showReadTime={isSmallScreen}
                         showDesc={isSmallScreen}
                         mdxContent={content}
+                        height="fit"
                       />
                     );
                   })}
