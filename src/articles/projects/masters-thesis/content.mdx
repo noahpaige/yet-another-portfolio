@@ -24,6 +24,22 @@ For my visual learners, take a look at the [Video Showcase](#video-showcase).
 
 For everyone else, go on down to the [Thesis Summary](#thesis-summary).
 
+#### Key Achievements
+
+- **Published Research**: Thesis available on [Cal Poly Digital Commons](https://digitalcommons.calpoly.edu/theses/2406/)
+- **Technical Innovation**: Novel integration of psychology models with game AI
+- **Statistical Validation**: 100 simulation iterations with correlation analysis
+- **Real-time Systems**: Procedural animation with mood-driven facial expressions
+- **Cross-disciplinary**: Applied psychological research to computer science
+
+#### Technical Skills Demonstrated
+
+- **Game Development**: Unity, C#, procedural animation, behavior systems
+- **AI/ML**: Behavior modeling, decision trees, finite state machines, personality systems, mood simulation
+- **Research**: Statistical analysis, correlation studies, academic writing
+- **Psychology**: Five-Factor Model, Circumplex Model of Affect
+- **Data Visualization**: Mood graphs, correlation tables, UI design, real-time feedback
+
 ---
 
 ## TL;DR
@@ -55,11 +71,11 @@ This is a screen recording of the presentation I gave when I defended my thesis.
 
 #### Maze Simulation
 
-Here's a video of the maze simulation from start to finish. TODO send da video
+Here's a video of the maze simulation from start to finish
 
 <YouTubeVideo
   videoId="20RuUF9LnNA?si=bPFH-DJ0spAlYtrN"
-  title="Masters Thesis Presentation"
+  title="Maze Simulation Run"
   aspectRatio="1920:1000"
   maxHeight={300}
   horizontalAlign="center"
@@ -87,13 +103,13 @@ NPCs play various roles in games—quest-givers, enemies, companions, or vendors
 
 #### Five-Factor Model of Personality
 
-Often referred to as the “Big Five,” this model breaks personality into five traits: **Openness**, **Conscientiousness**, **Extraversion**, **Agreeableness**, and **Neuroticism**. Each NPC is assigned a numerical value (0–1) for each trait, which combine to define their personality.
+Often referred to as the “Big Five,” this model breaks personality into five traits: **Openness**, **Conscientiousness**, **Extraversion**, **Agreeableness**, and **Neuroticism**. This forms the basis of the personality model used in this thesis.
 
 <Image
-  src="/big-five.webp"
+  src="/five-factor-model.png"
   alt="Five-Factor Model of Personality Image"
   width={500}
-  captionText="The Five-Factor Model of Personality, AKA the Big Five Personality Traits."
+  captionText="The Five-Factor Model of Personality, with examples of traits for low and high scores."
 />
 
 #### Circumplex Model of Affect
@@ -123,11 +139,7 @@ Three main components were developed:
 
 #### Behavior Model
 
-NPCs choose from actions like "Go To Node", "Greet", "Follow", "Share", "Wait", and "Scan" based on:
-
-- What they can see
-- Their current mood and personality
-- A **potential value heuristic** that estimates how a given action might move their mood closer to their "desired mood"
+NPCs are given a personality, which is a set of five numerical values for the five personality traits. Each NPC is assigned a numerical value (0–1) for each trait, which combine to define their personality. These values are used to determine the NPC's desired mood, which is a point on the Circumplex Model of Affect. Each action an NPC decides to take is assigned a potential value, which is a measure of how close it brings the NPC to their desired mood. The NPC then chooses the action with the highest potential value.
 
 <Image
   src="/npc-flowchart.png"
@@ -153,7 +165,14 @@ These influence the NPC’s mood, which updates after each action.
 
 ### Simulation Environment
 
-A custom maze was built in Unity. Each NPC starts in a common area and tries to reach the exit, either alone or by collaborating with others.
+A custom maze was built in Unity. Each NPC starts in a common area and tries to reach the exit, either alone or by collaborating with others. NPCs choose from the following actions:
+
+- **Go To Node** - Move to a specific node in the maze. This will always be a node that has not been visited yet. Influenced by Conscientiousness.
+- **Greet** - Greet another NPC. This gets the NPCs acquainted with one another, allowing them to perform other social actions. Influenced by Extroversion.
+- **Follow** - Follow another NPC. This is influenced by Extroversion, Agreeableness, and perception of the other NPC.
+- **Share** - The NPC can decide to tell others about where they have already explored. Influenced by Agreeableness.
+- **Wait** - If an NPC notices that someone else if following them, they can choose to wait. Influenced by Agreeableness and Neuroticism.
+- **Scan** - The NPC can decide to scan for maze nodes and other NPCs. Influenced by Conscientiousness.
 
 <ImageGrid>
   <Image
@@ -190,8 +209,6 @@ NPCs:
 - Maintain a memory of visited nodes
 - Have a perception score for each other NPC (defines how much they like or dislike the other NPC)
 - Can forge on alone, share knowledge, follow others, or wait for companions
-
-This setup allows rich social dynamics to emerge, such as friendship, avoidance, or teamwork.
 
 <br />
 
@@ -282,3 +299,5 @@ Ideas for future development include:
 ### Conclusion
 
 This thesis demonstrated that combining personality and mood models from psychology can dramatically improve the believability and behavior of NPCs. The integration of real-time emotion simulation and procedural facial animation creates characters that not only act differently but also feel emotionally alive—bringing us one step closer to the immersive realism often promised but rarely delivered in video games.
+
+**Portfolio Impact**: This work showcases my ability to bridge academic research with practical game development, implement complex behavioral systems, and communicate technical concepts effectively. The statistical validation and real-world applications demonstrate both research rigor and industry relevance.

@@ -243,10 +243,10 @@ export const mdxComponents = {
     />
   ),
   li: (props: React.HTMLAttributes<HTMLLIElement>) => (
-    <li className="text-zinc-200" {...props} />
+    <li className="text-zinc-200 font-normal" {...props} />
   ),
   strong: (props: React.HTMLAttributes<HTMLElement>) => (
-    <strong className="font-semibold text-zinc-300" {...props} />
+    <strong className="font-bold text-zinc-300" {...props} />
   ),
   em: (props: React.HTMLAttributes<HTMLElement>) => (
     <em className="italic text-zinc-200" {...props} />
