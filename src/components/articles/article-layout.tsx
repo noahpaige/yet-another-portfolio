@@ -61,7 +61,7 @@ export default function ArticleLayout({
         >
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-16">
-              <h1 className="text-5xl md:text-6xl font-bold mb-6 text-zinc-100">
+              <h1 className="text-5xl font-ibm-plex-mono md:text-6xl font-bold mb-6 text-zinc-100">
                 {header}
               </h1>
               {tags.length > 0 && (
