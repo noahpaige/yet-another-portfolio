@@ -114,11 +114,6 @@ export function ArticleListPage({
       if (scrollContainerRef.current) {
         scrollContainerRef.current.scrollTo(0, 0);
       }
-
-      // Trigger resize after a short delay to allow DOM updates
-      setTimeout(() => {
-        window.dispatchEvent(new Event("resize"));
-      }, 100);
     },
     []
   );
