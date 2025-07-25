@@ -59,6 +59,11 @@ export default function BlogsPage() {
     (filtered: Array<{ id: string; content: MDXContent }>) => {
       setFilteredBlogs(filtered);
 
+      // Reset scroll position to top when filters change
+      if (scrollContainerRef.current) {
+        scrollContainerRef.current.scrollTo(0, 0);
+      }
+
       // Trigger resize after a short delay to allow DOM updates
       setTimeout(() => {
         window.dispatchEvent(new Event("resize"));
