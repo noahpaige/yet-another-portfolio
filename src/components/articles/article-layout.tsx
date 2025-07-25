@@ -26,6 +26,7 @@ export default function ArticleLayout({
   useEffect(() => {
     const originalOverflow = document.body.style.overflowY;
     document.body.style.overflowY = "auto";
+    document.body.style.background = "black";
 
     // Cleanup: restore original overflow when component unmounts
     return () => {
