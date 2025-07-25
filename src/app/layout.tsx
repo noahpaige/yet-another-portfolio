@@ -6,6 +6,9 @@ import { HardwareCapabilityProvider } from "@/context/HardwareCapabilityContext"
 import { ViewportHeightFix } from "@/components/viewport-fix";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
+  ),
   title: "Noah Paige | Portfolio",
   description:
     "Software engineer and game developer specializing in AI, Unity, and full-stack development. View my projects and research.",
