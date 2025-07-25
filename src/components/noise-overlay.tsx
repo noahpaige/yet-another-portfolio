@@ -101,6 +101,9 @@ const NoiseOverlay = React.memo<NoiseOverlayProps>(
           pointerEvents: "none",
           opacity: opacity,
           imageRendering: "pixelated",
+          // iOS Safari fix: prevent overlay from disappearing during scroll
+          transform: "translateZ(0)",
+          willChange: "transform",
         }}
       />
     );
