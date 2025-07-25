@@ -214,7 +214,7 @@ export const ArticleCard = React.memo(
                     hideTags ? "hidden md:flex" : "flex"
                   } flex-wrap gap-2 mt-1`}
                 >
-                  {article.tags?.map((tag, index) => (
+                  {article.tags?.slice(0, 3).map((tag, index) => (
                     <Magnetic
                       key={tag}
                       intensity={0.05}
