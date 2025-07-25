@@ -16,18 +16,61 @@ const containerVariants = {
   show: {
     opacity: 1,
     transition: {
-      delayChildren: 0.1,
-      staggerChildren: 0.05,
+      delayChildren: 0.2,
+      staggerChildren: 0.08,
+      duration: 0.2,
     },
   },
-  exit: { opacity: 0 },
+  exit: {
+    opacity: 0,
+    transition: {
+      duration: 0.4,
+      delay: 0.1,
+    },
+  },
 };
 
 // Each list item
 const itemVariants = {
   hidden: { opacity: 0, y: 40, scale: 0.95 },
-  show: { opacity: 1, y: 0, scale: 1 },
-  exit: { opacity: 0, y: 40, scale: 0.95 },
+  show: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      duration: 0.15,
+    },
+  },
+  exit: {
+    opacity: 0,
+    y: 40,
+    scale: 0.95,
+    transition: {
+      duration: 0.1,
+    },
+  },
+};
+
+// Magnetic button variant with longer delay
+const buttonVariants = {
+  hidden: { opacity: 0, y: 20, scale: 0.95 },
+  show: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      duration: 0.2,
+      delay: 0.4,
+    },
+  },
+  exit: {
+    opacity: 0,
+    y: 20,
+    scale: 0.95,
+    transition: {
+      duration: 0.2,
+    },
+  },
 };
 
 export default function BlogSection() {
@@ -91,11 +134,10 @@ export default function BlogSection() {
         <motion.div
           className="z-1 w-full flex pt-2 sm:pt-4 max-w-xl justify-end"
           style={{ width: "calc(min(100%, 1536px))" }}
-          variants={itemVariants}
+          variants={buttonVariants}
           initial="hidden"
           animate={show ? "show" : "hidden"}
           exit="exit"
-          transition={{ delay: 0.4 }}
         >
           <MagneticButton onClick={() => router.push("/blog")}>
             <span className="whitespace-nowrap p-1 pr-2">More Blogs</span>
