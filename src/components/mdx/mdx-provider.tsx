@@ -232,13 +232,13 @@ export const mdxComponents = {
   ),
   ul: (props: React.HTMLAttributes<HTMLUListElement>) => (
     <ul
-      className="list-disc list-inside text-zinc-200 mb-4 space-y-1"
+      className="list-disc list-outside text-zinc-200 mb-4 space-y-1 ml-6"
       {...props}
     />
   ),
   ol: (props: React.HTMLAttributes<HTMLOListElement>) => (
     <ol
-      className="list-decimal list-inside text-zinc-200 mb-4 space-y-1"
+      className="list-decimal list-outside text-zinc-200 mb-4 space-y-1 ml-6"
       {...props}
     />
   ),
