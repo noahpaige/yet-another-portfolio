@@ -37,7 +37,7 @@ The PIPE Method is a systematic approach to AI-assisted development that ensures
 
 ## Phase 1: Planning
 
-The foundation of successful AI-assisted development is thorough planning. Here's how I craft my initial prompt:
+The foundation of successful AI-assisted development is thorough planning. Here's how you should craft your initial prompt:
 
 - **Explicitly tell the AI not to write code yet** - This is crucial, especially for tools like Cursor that can generate code automatically
 - **Define the task with maximum detail**:
@@ -68,11 +68,11 @@ Once you're happy with your plan, it's time to document it:
 4. **Add any additional context** - Notes about design decisions, constraints, or assumptions
 5. **Commit the plan document** - This creates a baseline for your implementation
 
-**Pro tip**: I like to create a new git branch for each feature at this point. This keeps your planning work separate and makes it easy to reference later.
+**Pro tip**: Create a new git branch for each feature at this point. This keeps your planning work separate and makes it easy to reference later.
 
 ## Phase 2: Implementation
 
-Now, it's time to implement. Here's my implementation workflow:
+Now, it's time to implement. Here's your implementation workflow:
 
 ### Starting Implementation
 
@@ -80,11 +80,9 @@ Now, it's time to implement. Here's my implementation workflow:
 - If starting a new conversation thread, reference your planning document
 - Monitor the AI's progress for unexpected issues or plan deviations
 
-Once the AI is finished and you're happy with the implementation, we have more documentation to do! Implementations rarely go exactly to plan, so we have to keep track of what we actually implemented. Ask the AI to document the actual implementation in `<feature-name>-implementation.md`. Once it's finished, go ahead and commit the implementation doc to your repo.
+Once the AI is finished and you're happy with the implementation, you have more documentation to do! Implementations rarely go exactly to plan, so you need to keep track of what was actually implemented. Ask the AI to document the actual implementation in `<feature-name>-implementation.md`. Once it's finished, go ahead and commit the implementation doc to your repo.
 
 ### Iterative Development
-
-Once the AI is finished and you're happy with the implementation, we have more documentation to do! Implementations rarely go exactly to plan, so we have to keep track of what we actually implemented. Ask the AI to document the actual implementation in `<feature-name>-implementation.md`. Once it's finished, go ahead and commit the implementation doc to your repo.
 
 1. **Review the generated code**
 2. **Test the implementation**
@@ -98,7 +96,7 @@ This phase runs parallel to implementation and is crucial for maintaining projec
 
 ### Documentation Structure
 
-I organize my documentation in a `documentation/` folder with these files:
+Organize your documentation in a `documentation/` folder with these files:
 
 - `<feature-name>-plan.md` - The original implementation plan
 - `<feature-name>-implementation.md` - What was actually implemented
@@ -113,19 +111,17 @@ Since implementations rarely go exactly to plan:
 - Commit documentation after each major step
 - Use feature branches for better organization
 
-You can (and should) ask the AI to do this step for you. It knows what it implemented better than you do!
-
 ## Phase 4: Evaluation
 
-Nice job! You just vibe coded a whole feature! Now, it's time to document the feature.
+Nice job! You just vibe coded a whole feature! Now it's time to document the feature.
 
 ### Creating Feature Documentation
 
-First, make sure that you've filled out each step in the `<feature-name>-implementation.md` file with the actual implementation. Next, we'll prompt the AI to document the feature. Point it towards your `<feature-name>-plan.md` and `<feature-name>-implementation.md` files and ask it to write a separate feature document.
+First, make sure that you've filled out each step in the `<feature-name>-implementation.md` file with the actual implementation. Next, prompt the AI to document the feature. Point it towards your `<feature-name>-plan.md` and `<feature-name>-implementation.md` files and ask it to write a separate _feature_ document.
 
-### Why do we create a **third** documentation file?
+### Why should you create a **third** documentation file?
 
-Because you're probably going to implement some more features, and we both know you don't know how to explain how all the code you just vibe coded works! We create this third file so we can reference it with the AI in the future.
+Because you're probably going to implement some more features, and we both know you don't know how to explain how all the code you just vibe coded works! You create this third file so you can reference it with the AI in the future.
 
 The three-file system serves different purposes:
 
@@ -135,7 +131,7 @@ The three-file system serves different purposes:
 
 ## Real-World Benefits
 
-The PIPE Method provides several key benefits:
+The PIPE Method provides you with several key benefits:
 
 #### For Future Development
 
@@ -155,10 +151,11 @@ The PIPE Method provides several key benefits:
 - **Better debugging**: Clear documentation helps identify issues quickly
 - **Confidence in AI-generated code**: Understanding what was built reduces uncertainty
 
-## Conclusion
+---
 
-The PIPE Method transforms AI-assisted development from chaotic experimentation into a structured, repeatable process. By emphasizing planning, tracking progress, and maintaining comprehensive documentation, you can leverage AI's capabilities while maintaining full control over your codebase.
+<div className="text-md text-zinc-700 md:px-30 px-10">
+Thanks for reading! If you found this helpful, please share it with your friends and AI overlords!
 
-The key is consistency - follow the method for every feature, and you'll build a well-documented, maintainable codebase that grows more valuable over time.
+If you have any questions or feedback, feel free to email me at [noah@noahpaige.com](mailto:noah@noahpaige.com).
 
-Ready to PIPE your next feature? 🚀
+</div>
