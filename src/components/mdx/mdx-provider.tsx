@@ -46,10 +46,10 @@ const Callout: React.FC<{
   children: React.ReactNode;
 }> = ({ type = "info", children }) => {
   const styles = {
-    info: "bg-blue-900/20 border-blue-500/30 text-blue-200",
-    warning: "bg-yellow-900/20 border-yellow-500/30 text-yellow-200",
-    error: "bg-red-900/20 border-red-500/30 text-red-200",
-    success: "bg-green-900/20 border-green-500/30 text-green-200",
+    info: "bg-blue-900/40 border-blue-500/60 text-blue-200",
+    warning: "bg-yellow-900/40 border-yellow-500/60 text-yellow-200",
+    error: "bg-red-900/40 border-red-500/60 text-red-200",
+    success: "bg-green-900/40 border-green-500/60 text-green-200",
   };
 
   const icons = {
@@ -63,7 +63,7 @@ const Callout: React.FC<{
     <div className={`p-4 rounded-lg border ${styles[type]} my-6`}>
       <div className="flex items-start gap-3">
         <span className="text-lg">{icons[type]}</span>
-        <div className="flex-1">{children}</div>
+        <div className="flex-1 pb-0">{children}</div>
       </div>
     </div>
   );
@@ -281,7 +281,7 @@ export const mdxComponents = {
   ),
   code: (props: React.HTMLAttributes<HTMLElement>) => (
     <code
-      className="bg-zinc-800 text-cyan-200 px-1 py-0.5 rounded text-sm font-mono"
+      className="bg-zinc-800 text-slate-200/80 px-1 py-0.5 rounded text-md font-mono shadow-md"
       {...props}
     />
   ),
