@@ -3,7 +3,35 @@ import { ArticleH1, ArticleH2, ArticleH3, ArticleH4 } from "./article-headings";
 import MDXImage from "./mdx-image";
 
 // Utility function to generate unique fragment IDs from heading text
-const generateHeadingId = (text: string): string => {
+const generateHeadingId = (children: React.ReactNode): string => {
+  // Convert children to string, handling different types
+  let text = "";
+
+  if (typeof children === "string") {
+    text = children;
+  } else if (typeof children === "number") {
+    text = children.toString();
+  } else if (Array.isArray(children)) {
+    text = children
+      .map((child) => {
+        if (typeof child === "string") return child;
+        if (typeof child === "number") return child.toString();
+        if (child && typeof child === "object" && "props" in child) {
+          const childWithProps = child as {
+            props: { children?: React.ReactNode };
+          };
+          return generateHeadingId(childWithProps.props.children);
+        }
+        return "";
+      })
+      .join("");
+  } else if (children && typeof children === "object" && "props" in children) {
+    const childWithProps = children as {
+      props: { children?: React.ReactNode };
+    };
+    text = generateHeadingId(childWithProps.props.children);
+  }
+
   return text
     .toLowerCase()
     .replace(/[^a-z0-9\s-]/g, "") // Remove special characters except spaces and hyphens
@@ -216,16 +244,16 @@ export const mdxComponents = {
 
   // Override default HTML elements with enhanced styling
   h1: (props: React.HTMLAttributes<HTMLHeadingElement>) => (
-    <ArticleH1 id={generateHeadingId(props.children as string)} {...props} />
+    <ArticleH1 id={generateHeadingId(props.children)} {...props} />
   ),
   h2: (props: React.HTMLAttributes<HTMLHeadingElement>) => (
-    <ArticleH2 id={generateHeadingId(props.children as string)} {...props} />
+    <ArticleH2 id={generateHeadingId(props.children)} {...props} />
   ),
   h3: (props: React.HTMLAttributes<HTMLHeadingElement>) => (
-    <ArticleH3 id={generateHeadingId(props.children as string)} {...props} />
+    <ArticleH3 id={generateHeadingId(props.children)} {...props} />
   ),
   h4: (props: React.HTMLAttributes<HTMLHeadingElement>) => (
-    <ArticleH4 id={generateHeadingId(props.children as string)} {...props} />
+    <ArticleH4 id={generateHeadingId(props.children)} {...props} />
   ),
   p: (props: React.HTMLAttributes<HTMLParagraphElement>) => (
     <p className="text-zinc-300 leading-relaxed mb-4" {...props} />
