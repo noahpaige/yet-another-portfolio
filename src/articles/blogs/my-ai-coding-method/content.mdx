@@ -1,6 +1,6 @@
 ---
-title: "My AI Coding Method 🤖"
-description: "How I leverage AI tools to enhance my development workflow and boost productivity."
+title: "The PIPE Method for Vibe Coding 🤖"
+description: "How I leverage AI tools to enhance my development workflow and boost productivity using a structured 4-phase approach."
 date: "2025-08-01"
 readTime: 8
 tags: ["AI", "Development", "Productivity", "Workflow"]
@@ -8,8 +8,8 @@ featured: true
 featuredOrder: 2
 type: "blog"
 seo:
-  title: "My AI Coding Method: How I Use AI to Boost Development Productivity"
-  description: "Discover how I integrate AI tools into my development workflow to write better code, debug faster, and ship features more efficiently."
+  title: "The PIPE Method: How I Use AI to Boost Development Productivity"
+  description: "Discover my structured 4-phase approach to AI-assisted development that helps write better code, debug faster, and ship features more efficiently."
   keywords:
     [
       "AI coding",
@@ -17,59 +17,148 @@ seo:
       "productivity",
       "programming",
       "AI tools",
+      "PIPE method",
     ]
   canonical: "https://yourdomain.com/blog/my-ai-coding-method"
 ---
 
-maybe i can call it the PIMP method? need to think of what each letter stands for.
-P: Planning
-I: Implementation
-M: ?
-P: ? something to do with documentation
+I've developed a specific method for AI-assisted development that I want to share! This method is primarily designed for projects with a single developer, but I'm sure there are some lessons that can be applied to larger teams. I call it the **PIPE Method** - **P**lanning, **I**mplementation, **P**rogress tracking, and **E**valuation.
 
-I've developed a specific method for vibe coding that I want to share! This method is primarily designed for projects with a single developer, but I'm sure there are some lessons that can be applied to larger teams.
+###
 
-Planning
+The PIPE Method Overview
 
-Here's how I craft my initial prompt:
+The PIPE Method is a systematic approach to AI-assisted development that ensures you maintain control while leveraging AI's capabilities effectively. Here's what each phase entails:
 
-- Tell the AI to not write code yet. You need to be very clear about this requirement for the prompt. This is especially important for tools like Cursor that can write code without asking.
-- Define the task with as much detail as possible.
-  - Questions like:
-    - Should it use a specific library?
-    - Should it integrate with any existing code?
-- Define the scope
-  - this is important! In my experience, AI tools have a tendency to choose overly complex solutions to simple problems.
-- Tell it to create a step-by-step implementation plan.
+- [**Planning**](#phase-1-planning): Create a detailed, step-by-step implementation plan
+- [**Implementation**](#phase-2-implementation): Execute the plan with AI assistance
+- [**Progress Tracking**](#phase-3-progress-tracking): Document what was actually implemented
+- [**Evaluation**](#phase-4-evaluation): Create comprehensive feature documentation
 
-Once you've sent the prompt, it's time to review. Take your time and read through each step. You'll probably find a few issues with the plan. Go ahead ask the AI to correct the plan. Keep repeating until you're happy with the plan.
+## Phase 1: Planning
 
-Documentation
+The foundation of successful AI-assisted development is thorough planning. Here's how I craft my initial prompt:
 
-Once you finish planning, it's time to document the plan. You need to document the plan because it makes it easier for you and the AI to review the plan later on. This is especially true if/when you want to start a new conversation thread with the AI.
+- **Explicitly tell the AI not to write code yet** - This is crucial, especially for tools like Cursor that can generate code automatically
+- **Define the task with maximum detail**:
+  - Should it use specific libraries or frameworks?
+  - How should it integrate with existing code?
+  - What are the performance requirements?
+- **Define clear scope boundaries** - AI tools often over-engineer solutions, so be explicit about what you want
+- **Request a step-by-step implementation plan**
+  - This breaks the problem down the work into manageable chunks
+  - This is important! We'll be referencing this plan continuously throughout the implementation process
 
-In my projects, I like to create a documentation/ folder to put all my markdown documetation in. This is where I put my plans, too. Once I save my plan document \<feature name\>-plan.md, I also immediately create a \<feature name\>-implementation.md file. This second document is where we are going to have the AI document what we actually implemented after each step. Implementations rarely go to exactly to plan, so we have to keep track of what we actually implemented.
+### Review and Refine
 
-Go ahead and commit the plan docs to your repo. Personally, I like to create a new branch for each feature.
+Once you receive the initial plan:
 
-Implementation
-Now, it's time to implement. Go ahead and ask the AI to implement the first step. If you're starting in a new conversation thread, then you'll need to point the AI to the planning doc.
+1. **Read through each step carefully**
+2. **Identify potential issues or gaps**
+3. **Ask the AI to correct and improve the plan**
+4. **Repeat until you're satisfied with the approach**
 
-You'll need to monitor the AI's progress while it's implementing in case of unexpected issues, or problems with the plan.
+### The Implementation Plan Document
 
-Once the AI is finished and you're happy with the implementation, we have more documentation to do! Now, tell the AI to document the actual implementation in \<feature name\>-implementation.md. Once it's finished, go ahead and commit the implementation doc to your repo.
+Once you're happy with your plan, it's time to document it:
 
-Repeat these steps until you've implemented the entire feature.
+1. **Create a `documentation/` folder** in your project root (if it doesn't exist)
+2. **Save your plan as `<feature-name>-plan.md`** - Use a descriptive name like `user-authentication-plan.md`
+3. **Include the complete planning conversation** - Copy the final, refined plan from your AI conversation
+4. **Add any additional context** - Notes about design decisions, constraints, or assumptions
+5. **Commit the plan document** - This creates a baseline for your implementation
 
-Documentation (again)
+**Pro tip**: I like to create a new git branch for each feature at this point. This keeps your planning work separate and makes it easy to reference later.
+
+## Phase 2: Implementation
+
+Now, it's time to implement. Here's my implementation workflow:
+
+### Starting Implementation
+
+- Ask the AI to implement the first step of your plan
+- If starting a new conversation thread, reference your planning document
+- Monitor the AI's progress for unexpected issues or plan deviations
+
+Once the AI is finished and you're happy with the implementation, we have more documentation to do! Implementations rarely go exactly to plan, so we have to keep track of what we actually implemented. Ask the AI to document the actual implementation in `<feature-name>-implementation.md`. Once it's finished, go ahead and commit the implementation doc to your repo.
+
+### Iterative Development
+
+Once the AI is finished and you're happy with the implementation, we have more documentation to do! Implementations rarely go exactly to plan, so we have to keep track of what we actually implemented. Ask the AI to document the actual implementation in `<feature-name>-implementation.md`. Once it's finished, go ahead and commit the implementation doc to your repo.
+
+1. **Review the generated code**
+2. **Test the implementation**
+3. **Document what was actually built** (see [Phase 3: Progress Tracking](#phase-3-progress-tracking))
+4. **Commit your progress**
+5. **Move to the next step**
+
+## Phase 3: Progress Tracking
+
+This phase runs parallel to implementation and is crucial for maintaining project clarity. You can (and should) ask the AI to do this step for you. It knows what it implemented better than you do!
+
+### Documentation Structure
+
+I organize my documentation in a `documentation/` folder with these files:
+
+- `<feature-name>-plan.md` - The original implementation plan
+- `<feature-name>-implementation.md` - What was actually implemented
+- `<feature-name>-feature.md` - Final feature documentation ([Phase 4: Evaluation](#phase-4-evaluation))
+
+### Tracking Implementation Changes
+
+Since implementations rarely go exactly to plan:
+
+- Document each step's actual implementation
+- Note any deviations from the original plan
+- Commit documentation after each major step
+- Use feature branches for better organization
+
+You can (and should) ask the AI to do this step for you. It knows what it implemented better than you do!
+
+## Phase 4: Evaluation
+
 Nice job! You just vibe coded a whole feature! Now, it's time to document the feature.
 
-First, make sure that you've filled out each step in the \<feature name\>-implementation.md file with the actual implementation. Next, we'll prompt the AI to document the feature. Point it towards your \<feature name\>-plan.md and \<feature name\>-implementation.md files and ask it to write a separate feature document.
+### Creating Feature Documentation
 
-Why do we create a **third** documentation file? Because you're probably going to implement some more features, and we both know you don't know how to explain how all the code you just vibe coded works! We create this third file so we can reference it with the AI in the future.
+First, make sure that you've filled out each step in the `<feature-name>-implementation.md` file with the actual implementation. Next, we'll prompt the AI to document the feature. Point it towards your `<feature-name>-plan.md` and `<feature-name>-implementation.md` files and ask it to write a separate feature document.
 
-Here are some use cases for the third documentation file:
+### Why do we create a **third** documentation file?
 
-- You're working on a new feature, and you need it to integrate with some existing code (that you vibe coded). Just tell the AI to read the feature document, and BOOM! It will immediately be an expert without having to analyze your whole codebase.
-- You're debugging something, and you have no idea how the code works! Just ask the AI your specific question, and reference the feature document to help it answer your question.
-- If you're working with a team, you can use the feature document to help the team understand the code you vibe coded.
+Because you're probably going to implement some more features, and we both know you don't know how to explain how all the code you just vibe coded works! We create this third file so we can reference it with the AI in the future.
+
+The three-file system serves different purposes:
+
+- **Plan file**: Original roadmap and design decisions
+- **Implementation file**: What was actually built and why
+- **Feature file**: High-level overview for future reference
+
+## Real-World Benefits
+
+The PIPE Method provides several key benefits:
+
+#### For Future Development
+
+- **Quick AI onboarding**: Reference the feature document to give AI context instantly
+- **Efficient debugging**: AI can understand your codebase without full analysis
+- **Seamless integration**: New features can integrate with existing AI-coded components
+
+#### For Team Collaboration
+
+- **Knowledge sharing**: Team members can understand your AI-generated code
+- **Reduced onboarding time**: New developers can quickly grasp feature implementations
+- **Maintainable codebase**: Clear documentation prevents technical debt
+
+#### For Personal Productivity
+
+- **Faster iteration**: AI can build upon previous work without re-learning
+- **Better debugging**: Clear documentation helps identify issues quickly
+- **Confidence in AI-generated code**: Understanding what was built reduces uncertainty
+
+## Conclusion
+
+The PIPE Method transforms AI-assisted development from chaotic experimentation into a structured, repeatable process. By emphasizing planning, tracking progress, and maintaining comprehensive documentation, you can leverage AI's capabilities while maintaining full control over your codebase.
+
+The key is consistency - follow the method for every feature, and you'll build a well-documented, maintainable codebase that grows more valuable over time.
+
+Ready to PIPE your next feature? 🚀
