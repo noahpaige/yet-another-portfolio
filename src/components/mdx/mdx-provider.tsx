@@ -1,7 +1,7 @@
 import React from "react";
 import { ArticleH1, ArticleH2, ArticleH3, ArticleH4 } from "./article-headings";
 import MDXImage from "./mdx-image";
-import MDXMarquee from "./mdx-marquee";
+import MDXMarquee from "./MDXMarquee";
 
 // Utility function to generate unique fragment IDs from heading text
 const generateHeadingId = (children: React.ReactNode): string => {
