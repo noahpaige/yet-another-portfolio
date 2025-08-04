@@ -46,7 +46,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
 
   // Speed constants
   const NATURAL_SPEED = speed;
-  const MAX_SPEED = speed * 20; // 3x natural speed
+  const MAX_SPEED = speed * 30; // 3x natural speed
   const MOMENTUM_DECAY = 0.1; // How quickly speed returns to natural
 
   // Calculate total width needed for seamless loop - memoize this
@@ -61,13 +61,6 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
   const duplicatedImages = React.useMemo(() => {
     return [...images, ...images];
   }, [images]);
-
-  // Debug: Check if component is mounting
-  console.log("MDXMarquee component rendering with:", {
-    speed,
-    currentSpeed,
-    totalWidth,
-  });
 
   // Intersection observer for lazy loading
   useEffect(() => {
@@ -122,24 +115,12 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
 
   // Base animation with motion
   useEffect(() => {
-    console.log("Setting up animation loop with:", {
-      currentSpeed,
-      isDragging,
-      totalWidth,
-    });
-
     const interval = setInterval(() => {
       const speed = currentSpeedRef.current; // Use ref to get current speed
-      console.log("Animation tick:", { speed, isDragging });
       // Always animate if not dragging, regardless of pause state
       if (!isDragging) {
         setScrollOffset((prev) => {
           const newOffset = prev + speed / 60; // 60fps
-          console.log("Updating scroll offset:", {
-            prev,
-            newOffset,
-            speed,
-          });
           // Infinite loop - when we reach the end, continue seamlessly
           if (newOffset >= totalWidth) {
             return newOffset - totalWidth;
@@ -155,11 +136,6 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
 
     return () => clearInterval(interval);
   }, [isDragging, totalWidth]); // Removed currentSpeed from dependencies
-
-  // Debug logging for animation
-  useEffect(() => {
-    console.log("Animation state:", { currentSpeed, scrollOffset, isDragging });
-  }, [currentSpeed, scrollOffset, isDragging]);
 
   // Momentum decay - gradually return to natural speed
   useEffect(() => {
@@ -261,18 +237,10 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
 
       const direction = deltaY > 0 ? -1 : 1;
 
-      // Debug logging for Chrome/Arc
-      console.log("Wheel event:", {
-        deltaY,
-        direction,
-        currentSpeed: currentSpeed,
-      });
-
       // More responsive speed change for better cross-browser compatibility
       setCurrentSpeed((prev) => {
         const speedChange = direction * (MAX_SPEED * 0.5); // Increased sensitivity for Chrome/Arc
         const newSpeed = prev - speedChange;
-        console.log("Speed change:", { prev, speedChange, newSpeed });
         return Math.max(-MAX_SPEED, Math.min(MAX_SPEED, newSpeed));
       });
     };
@@ -378,9 +346,6 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
             type: "tween",
             ease: "linear",
             duration: isDragging ? 0 : 0.1,
-          }}
-          onUpdate={(latest) => {
-            console.log("Motion update:", { latest, scrollOffset, totalWidth });
           }}
         >
           {duplicatedImages.map((image, index) => renderImage(image, index))}
