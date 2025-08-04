@@ -201,7 +201,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
         // Add momentum based on touch velocity - matching wheel behavior
         const direction = deltaX > 0 ? -1 : 1;
         setCurrentSpeed((prev) => {
-          const newSpeed = prev - direction * MAX_SPEED;
+          const newSpeed = prev - direction * MAX_SPEED * 0.001;
           return Math.max(-MAX_SPEED, Math.min(MAX_SPEED, newSpeed));
         });
       }
