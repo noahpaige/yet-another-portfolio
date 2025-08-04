@@ -80,7 +80,7 @@ const DEFAULT_HEIGHT = 300;
 const DEFAULT_PRELOAD_DISTANCE = 500;
 
 /** Maximum speed multiplier relative to natural speed */
-const MAX_SPEED_MULTIPLIER = 30;
+const MAX_SPEED_MULTIPLIER = 20;
 
 /** Momentum decay rate for smooth speed transitions */
 const MOMENTUM_DECAY_RATE = 0.1;
@@ -131,6 +131,14 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
     dragStart: 0,
     dragOffset: 0,
   });
+
+  /** Drag state ref for useCallback access */
+  const dragStateRef = useRef(dragState);
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    dragStateRef.current = dragState;
+  }, [dragState]);
 
   /** Image loading state for lazy loading and error handling */
   const [imageState, setImageState] = useState({
@@ -201,15 +209,6 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
    */
 
   const useMarqueeAnimation = () => {
-    // Update refs whenever state changes (for UI updates)
-    useEffect(() => {
-      currentSpeedRef.current = animationState.currentSpeed;
-    }, [animationState.currentSpeed]);
-
-    useEffect(() => {
-      scrollOffsetRef.current = animationState.scrollOffset;
-    }, [animationState.scrollOffset]);
-
     // Optimized animation loop using refs to avoid state updates on every frame
     useEffect(() => {
       let lastTime = 0;
@@ -269,7 +268,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
             });
             needsStateUpdate = false;
             stateUpdateTimeout = null;
-          }, 16); // ~60fps update rate
+          }, STATE_UPDATE_INTERVAL); // ~60fps update rate
         }
 
         // Continue animation loop
@@ -288,7 +287,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
           clearTimeout(stateUpdateTimeout);
         }
       };
-    }, [dragState.isDragging, totalWidth, NATURAL_SPEED, MOMENTUM_DECAY]);
+    }, []);
 
     return {
       currentSpeedRef,
@@ -299,7 +298,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
   };
 
   // Initialize animation hook
-  const animationRefs = useMarqueeAnimation();
+  useMarqueeAnimation();
 
   /**
    * useTouchHandling Hook
@@ -321,40 +320,32 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
       });
     }, []);
 
-    const handleTouchMove = useCallback(
-      (e: React.TouchEvent) => {
-        if (dragState.isDragging) {
-          e.preventDefault();
-          const currentX = e.touches[0].clientX;
-          const deltaX = dragState.dragStart - currentX;
-          const newOffset = dragState.dragOffset + deltaX;
+    const handleTouchMove = useCallback((e: React.TouchEvent) => {
+      if (dragStateRef.current.isDragging) {
+        e.preventDefault();
+        const currentX = e.touches[0].clientX;
+        const deltaX = dragStateRef.current.dragStart - currentX;
+        const newOffset = dragStateRef.current.dragOffset + deltaX;
 
-          // Update refs directly for immediate response
-          scrollOffsetRef.current = newOffset;
-          setAnimationState((prev) => ({ ...prev, scrollOffset: newOffset }));
+        // Update refs directly for immediate response
+        scrollOffsetRef.current = newOffset;
+        setAnimationState((prev) => ({ ...prev, scrollOffset: newOffset }));
 
-          // Add momentum based on touch velocity - matching wheel behavior
-          const direction = deltaX > 0 ? -1 : 1;
-          const newSpeed =
-            currentSpeedRef.current - direction * MAX_SPEED * 0.001;
-          const clampedSpeed = Math.max(
-            -MAX_SPEED,
-            Math.min(MAX_SPEED, newSpeed)
-          );
-          currentSpeedRef.current = clampedSpeed;
-          setAnimationState((prev) => ({
-            ...prev,
-            currentSpeed: clampedSpeed,
-          }));
-        }
-      },
-      [
-        dragState.isDragging,
-        dragState.dragStart,
-        dragState.dragOffset,
-        MAX_SPEED,
-      ]
-    );
+        // Add momentum based on touch velocity - matching wheel behavior
+        const direction = deltaX > 0 ? -1 : 1;
+        console.log("DELTA X", deltaX);
+        const newSpeed = currentSpeedRef.current - direction * MAX_SPEED * 0.2;
+        const clampedSpeed = Math.max(
+          -MAX_SPEED,
+          Math.min(MAX_SPEED, newSpeed)
+        );
+        currentSpeedRef.current = clampedSpeed;
+        setAnimationState((prev) => ({
+          ...prev,
+          currentSpeed: clampedSpeed,
+        }));
+      }
+    }, []);
 
     const handleTouchEnd = useCallback(() => {
       setDragState((prev) => ({ ...prev, isDragging: false }));
@@ -382,7 +373,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
         const direction = deltaY > 0 ? -1 : 1;
 
         // More responsive speed change for better cross-browser compatibility
-        const speedChange = direction * (MAX_SPEED * 0.5); // Increased sensitivity for Chrome/Arc
+        const speedChange = direction * MAX_SPEED; // Increased sensitivity for Chrome/Arc
         const newSpeed = currentSpeedRef.current - speedChange;
         const clampedSpeed = Math.max(
           -MAX_SPEED,
@@ -398,7 +389,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
       return () => {
         container.removeEventListener("wheel", handleWheel);
       };
-    }, [MAX_SPEED]); // Removed currentSpeed to prevent circular dependencies
+    }, []); // Removed currentSpeed to prevent circular dependencies
 
     return {
       handleTouchStart,
@@ -433,7 +424,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
         if (modalRef.current) {
           modalRef.current.focus();
         }
-      }, 100);
+      }, MODAL_FOCUS_DELAY);
     };
 
     const closeFullscreen = () => {
@@ -477,7 +468,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
         document.addEventListener("keydown", handleKeyDown);
         return () => document.removeEventListener("keydown", handleKeyDown);
       }
-    }, [fullscreenState.isFullscreen]);
+    }, [fullscreenState.isFullscreen, closeFullscreen]);
 
     // Cleanup body style on unmount
     useEffect(() => {
@@ -528,7 +519,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
                   ...prev,
                   loadedImages: new Set([...prev.loadedImages, imageSrc]),
                 }));
-              }, 100);
+              }, IMAGE_LOAD_DELAY);
               // Mark as error if image fails to load after timeout
               setTimeout(() => {
                 setImageState((prev) => {
@@ -540,7 +531,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
                   }
                   return prev;
                 });
-              }, 5000); // 5 second timeout for image loading
+              }, IMAGE_LOAD_TIMEOUT); // 5 second timeout for image loading
             } else {
               setImageState((prev) => {
                 const newVisibleImages = new Set(prev.visibleImages);
@@ -597,7 +588,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
   };
 
   // Initialize image loading hook
-  const imageLoadingRefs = useImageLoading();
+  useImageLoading();
 
   // ============================================================================
   // COMPONENT LOGIC
@@ -754,7 +745,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
       imageState.errorImages,
       gap,
       height,
-      fullscreenHandlers.openFullscreen,
+      fullscreenHandlers,
     ]
   );
 
