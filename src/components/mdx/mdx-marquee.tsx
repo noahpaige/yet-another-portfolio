@@ -42,7 +42,10 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
   const [currentSpeed, setCurrentSpeed] = useState(speed);
   const containerRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
-  const currentSpeedRef = useRef(speed); // Add ref to track current speed
+  const currentSpeedRef = useRef(speed);
+  const scrollOffsetRef = useRef(0); // Add ref for scroll offset
+  const animationFrameRef = useRef<number | null>(null); // Add ref for animation frame
+  const performanceRef = useRef({ frameCount: 0, lastTime: 0, fps: 0 }); // Performance monitoring
 
   // Speed constants
   const NATURAL_SPEED = speed;
@@ -113,79 +116,110 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
   useEffect(() => {
     if (!observerRef.current || !containerRef.current) return;
 
+    // Disconnect and reconnect observer to avoid memory leaks
+    const observer = observerRef.current;
+    observer.disconnect();
+
+    // Observe all image containers
     const imageContainers =
       containerRef.current.querySelectorAll("[data-image-src]");
     imageContainers.forEach((container) => {
-      observerRef.current?.observe(container);
+      observer.observe(container);
     });
   }, [duplicatedImages]);
 
-  // Update the ref whenever currentSpeed changes
+  // Update refs whenever state changes (for UI updates)
   useEffect(() => {
     currentSpeedRef.current = currentSpeed;
   }, [currentSpeed]);
 
-  // Consolidated animation loop using requestAnimationFrame
   useEffect(() => {
-    let animationFrameId: number;
+    scrollOffsetRef.current = scrollOffset;
+  }, [scrollOffset]);
+
+  // Optimized animation loop using refs to avoid state updates on every frame
+  useEffect(() => {
     let lastTime = 0;
+    let needsStateUpdate = false;
+    let stateUpdateTimeout: NodeJS.Timeout | null = null;
 
     const animate = (currentTime: number) => {
       // Calculate delta time for smooth animation regardless of frame rate
       const deltaTime = currentTime - lastTime;
       lastTime = currentTime;
 
-      // Update scroll offset if not dragging
-      if (!isDragging) {
-        const speed = currentSpeedRef.current;
-        setScrollOffset((prev) => {
-          const newOffset = prev + (speed * deltaTime) / 1000; // Convert to seconds
-          // Infinite loop - when we reach the end, continue seamlessly
-          if (newOffset >= totalWidth) {
-            return newOffset - totalWidth;
-          }
-          // Handle negative scrolling (scrolling backwards)
-          if (newOffset < 0) {
-            return newOffset + totalWidth;
-          }
-          return newOffset;
-        });
+      // Performance monitoring
+      performanceRef.current.frameCount++;
+      if (currentTime - performanceRef.current.lastTime >= 1000) {
+        performanceRef.current.fps = performanceRef.current.frameCount;
+        performanceRef.current.frameCount = 0;
+        performanceRef.current.lastTime = currentTime;
+        // Log FPS in development
+        if (process.env.NODE_ENV === "development") {
+          console.log(`Marquee FPS: ${performanceRef.current.fps}`);
+        }
       }
 
-      // Update momentum decay
-      setCurrentSpeed((prev) => {
-        if (Math.abs(prev - NATURAL_SPEED) < 0.1) {
-          return NATURAL_SPEED;
+      // Update animation values using refs (no re-renders)
+      if (!isDragging) {
+        const speed = currentSpeedRef.current;
+        const newOffset = scrollOffsetRef.current + (speed * deltaTime) / 1000;
+
+        // Handle infinite loop
+        if (newOffset >= totalWidth) {
+          scrollOffsetRef.current = newOffset - totalWidth;
+        } else if (newOffset < 0) {
+          scrollOffsetRef.current = newOffset + totalWidth;
+        } else {
+          scrollOffsetRef.current = newOffset;
         }
-        // Much more responsive decay for Chrome/Arc compatibility
+
+        needsStateUpdate = true;
+      }
+
+      // Update momentum decay using refs
+      const currentSpeedValue = currentSpeedRef.current;
+      if (Math.abs(currentSpeedValue - NATURAL_SPEED) >= 0.1) {
         const decayRate = MOMENTUM_DECAY;
-        return prev + (NATURAL_SPEED - prev) * decayRate;
-      });
+        currentSpeedRef.current =
+          currentSpeedValue + (NATURAL_SPEED - currentSpeedValue) * decayRate;
+        needsStateUpdate = true;
+      }
+
+      // Batch state updates to reduce re-renders
+      if (needsStateUpdate && !stateUpdateTimeout) {
+        stateUpdateTimeout = setTimeout(() => {
+          setScrollOffset(scrollOffsetRef.current);
+          setCurrentSpeed(currentSpeedRef.current);
+          needsStateUpdate = false;
+          stateUpdateTimeout = null;
+        }, 16); // ~60fps update rate
+      }
 
       // Continue animation loop
-      animationFrameId = requestAnimationFrame(animate);
+      animationFrameRef.current = requestAnimationFrame(animate);
     };
 
     // Start animation loop
-    animationFrameId = requestAnimationFrame(animate);
+    animationFrameRef.current = requestAnimationFrame(animate);
 
     // Cleanup
     return () => {
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      if (stateUpdateTimeout) {
+        clearTimeout(stateUpdateTimeout);
       }
     };
   }, [isDragging, totalWidth, NATURAL_SPEED, MOMENTUM_DECAY]);
 
   // Touch handlers for mobile swipe
-  const handleTouchStart = useCallback(
-    (e: React.TouchEvent) => {
-      setIsDragging(true);
-      setDragStart(e.touches[0].clientX);
-      setDragOffset(scrollOffset);
-    },
-    [scrollOffset]
-  );
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    setIsDragging(true);
+    setDragStart(e.touches[0].clientX);
+    setDragOffset(scrollOffsetRef.current);
+  }, []);
 
   const handleTouchMove = useCallback(
     (e: React.TouchEvent) => {
@@ -195,15 +229,20 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
         const deltaX = dragStart - currentX;
         const newOffset = dragOffset + deltaX;
 
-        // Infinite scroll - allow scrolling beyond boundaries
+        // Update refs directly for immediate response
+        scrollOffsetRef.current = newOffset;
         setScrollOffset(newOffset);
 
         // Add momentum based on touch velocity - matching wheel behavior
         const direction = deltaX > 0 ? -1 : 1;
-        setCurrentSpeed((prev) => {
-          const newSpeed = prev - direction * MAX_SPEED * 0.001;
-          return Math.max(-MAX_SPEED, Math.min(MAX_SPEED, newSpeed));
-        });
+        const newSpeed =
+          currentSpeedRef.current - direction * MAX_SPEED * 0.001;
+        const clampedSpeed = Math.max(
+          -MAX_SPEED,
+          Math.min(MAX_SPEED, newSpeed)
+        );
+        currentSpeedRef.current = clampedSpeed;
+        setCurrentSpeed(clampedSpeed);
       }
     },
     [isDragging, dragStart, dragOffset, MAX_SPEED]
@@ -247,6 +286,25 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
     };
   }, []);
 
+  // Comprehensive cleanup on unmount
+  useEffect(() => {
+    return () => {
+      // Cleanup animation frame
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+
+      // Cleanup intersection observer
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+        observerRef.current = null;
+      }
+
+      // Reset body overflow
+      document.body.style.overflow = "unset";
+    };
+  }, []);
+
   // Add wheel event listener directly to the container
   useEffect(() => {
     const container = containerRef.current;
@@ -269,11 +327,11 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
       const direction = deltaY > 0 ? -1 : 1;
 
       // More responsive speed change for better cross-browser compatibility
-      setCurrentSpeed((prev) => {
-        const speedChange = direction * (MAX_SPEED * 0.5); // Increased sensitivity for Chrome/Arc
-        const newSpeed = prev - speedChange;
-        return Math.max(-MAX_SPEED, Math.min(MAX_SPEED, newSpeed));
-      });
+      const speedChange = direction * (MAX_SPEED * 0.5); // Increased sensitivity for Chrome/Arc
+      const newSpeed = currentSpeedRef.current - speedChange;
+      const clampedSpeed = Math.max(-MAX_SPEED, Math.min(MAX_SPEED, newSpeed));
+      currentSpeedRef.current = clampedSpeed;
+      setCurrentSpeed(clampedSpeed);
     };
 
     // Use wheel event with passive: false for better cross-browser support
