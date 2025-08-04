@@ -8,7 +8,7 @@ This document tracks the actual implementation progress of the MDXMarquee refact
 
 - **Start Date**: December 2024
 - **Current Phase**: Phase 1 - Critical Performance Fixes
-- **Overall Progress**: 13.3% (2/15 steps complete)
+- **Overall Progress**: 26.7% (4/15 steps complete)
 
 ## Phase 1: Critical Performance Fixes
 
@@ -46,35 +46,37 @@ This document tracks the actual implementation progress of the MDXMarquee refact
 
 ### 1.3 Fix Circular Dependencies
 
-- **Status**: ⏳ Pending
-- **Start Date**: [To be filled]
-- **Completion Date**: [To be filled]
+- **Status**: ✅ Complete
+- **Start Date**: December 2024
+- **Completion Date**: December 2024
 - **Files Modified**:
   - `src/components/mdx/mdx-marquee.tsx`
 - **Changes Made**:
   ```typescript
-  // Before: currentSpeed in useEffect dependencies
-  // After: Use refs for non-render values
+  // Before: currentSpeed in wheel event useEffect dependencies
+  // After: Removed currentSpeed from dependencies to prevent infinite re-renders
   ```
-- **Performance Impact**: [To be measured]
-- **Issues Encountered**: [To be filled]
-- **Lessons Learned**: [To be filled]
+- **Performance Impact**: Prevents infinite re-renders, improves stability
+- **Issues Encountered**: None
+- **Lessons Learned**: Using refs for values that don't need to trigger re-renders prevents circular dependencies
 
 ### 1.4 Proper Cleanup
 
-- **Status**: ⏳ Pending
-- **Start Date**: [To be filled]
-- **Completion Date**: [To be filled]
+- **Status**: ✅ Complete
+- **Start Date**: December 2024
+- **Completion Date**: December 2024
 - **Files Modified**:
   - `src/components/mdx/mdx-marquee.tsx`
 - **Changes Made**:
   ```typescript
-  // Before: Potential memory leaks
-  // After: Proper cleanup in useEffect
+  // Before: Intersection Observer recreated on every duplicatedImages change
+  // After: Observer created once, separate effect for observing new images
+  // Before: No cleanup for body style on unmount
+  // After: Proper cleanup of body overflow style
   ```
-- **Performance Impact**: [To be measured]
-- **Issues Encountered**: [To be filled]
-- **Lessons Learned**: [To be filled]
+- **Performance Impact**: Prevents memory leaks, reduces observer recreation overhead
+- **Issues Encountered**: None
+- **Lessons Learned**: Separating observer creation from observation logic prevents unnecessary recreations
 
 ## Phase 2: Component Architecture
 

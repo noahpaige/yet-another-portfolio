@@ -105,8 +105,20 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
 
     return () => {
       observer.disconnect();
+      observerRef.current = null;
     };
-  }, [preloadDistance, duplicatedImages]);
+  }, [preloadDistance]); // Removed duplicatedImages dependency to prevent recreation
+
+  // Observe new images when duplicatedImages changes
+  useEffect(() => {
+    if (!observerRef.current || !containerRef.current) return;
+
+    const imageContainers =
+      containerRef.current.querySelectorAll("[data-image-src]");
+    imageContainers.forEach((container) => {
+      observerRef.current?.observe(container);
+    });
+  }, [duplicatedImages]);
 
   // Update the ref whenever currentSpeed changes
   useEffect(() => {
@@ -213,7 +225,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
     document.body.style.overflow = "unset";
   };
 
-  // Handle escape key
+  // Handle escape key and body style cleanup
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isFullscreen) {
@@ -226,6 +238,14 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
       return () => document.removeEventListener("keydown", handleEscape);
     }
   }, [isFullscreen]);
+
+  // Cleanup body style on unmount
+  useEffect(() => {
+    return () => {
+      // Reset body overflow when component unmounts
+      document.body.style.overflow = "unset";
+    };
+  }, []);
 
   // Add wheel event listener directly to the container
   useEffect(() => {
@@ -262,7 +282,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
     return () => {
       container.removeEventListener("wheel", handleWheel);
     };
-  }, [MAX_SPEED, currentSpeed]);
+  }, [MAX_SPEED]); // Removed currentSpeed to prevent circular dependencies
 
   const renderImage = useCallback(
     (image: MarqueeImage, index: number) => {
