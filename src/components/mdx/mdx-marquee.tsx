@@ -97,6 +97,15 @@ const IMAGE_LOAD_DELAY = 100;
 /** Modal focus delay in milliseconds */
 const MODAL_FOCUS_DELAY = 100;
 
+/** Momentum transfer factor (0-1) */
+const MOMENTUM_TRANSFER = 0.3;
+
+/** Speed recovery rate when resuming from drag */
+const SPEED_RECOVERY_RATE = 0.05;
+
+/** Minimum velocity threshold for momentum transfer */
+const MIN_VELOCITY_THRESHOLD = 50;
+
 // ============================================================================
 // MAIN COMPONENT
 // ============================================================================
@@ -128,8 +137,16 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
   /** Drag state for touch interactions */
   const [dragState, setDragState] = useState({
     isDragging: false,
+    isMouseDown: false, // Track if mouse is down (regardless of movement)
+    isTouchDown: false, // Track if touch is down (regardless of movement)
     dragStart: 0,
     dragOffset: 0,
+    lastPosition: 0,
+    lastTime: 0,
+    velocity: 0,
+    isMouseDrag: false,
+    hasMoved: false, // Track if user has moved during drag
+    dragThreshold: 5, // Minimum pixels to move before considering it a drag
   });
 
   /** Drag state ref for useCallback access */
@@ -139,6 +156,22 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
   useEffect(() => {
     dragStateRef.current = dragState;
   }, [dragState]);
+
+  /** Interaction state ref for animation loop access */
+  const interactionStateRef = useRef({
+    isMouseDown: false,
+    isTouchDown: false,
+    isDragging: false,
+  });
+
+  // Keep interaction ref in sync with drag state
+  useEffect(() => {
+    interactionStateRef.current = {
+      isMouseDown: dragState.isMouseDown,
+      isTouchDown: dragState.isTouchDown,
+      isDragging: dragState.isDragging,
+    };
+  }, [dragState.isMouseDown, dragState.isTouchDown, dragState.isDragging]);
 
   /** Image loading state for lazy loading and error handling */
   const [imageState, setImageState] = useState({
@@ -233,7 +266,13 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
         }
 
         // Update animation values using refs (no re-renders)
-        if (!dragState.isDragging) {
+        // Stop animation when mouse is down OR touch is down OR dragging
+        const isInteracting =
+          interactionStateRef.current.isMouseDown ||
+          interactionStateRef.current.isTouchDown ||
+          interactionStateRef.current.isDragging;
+
+        if (!isInteracting) {
           const speed = currentSpeedRef.current;
           const newOffset =
             scrollOffsetRef.current + (speed * deltaTime) / 1000;
@@ -248,15 +287,30 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
           }
 
           needsStateUpdate = true;
+        } else {
+          // During any interaction, we don't update scroll offset at all
+          // The position is controlled entirely by interaction handlers
+          // This prevents any conflict between animation and user input
+          needsStateUpdate = false; // Don't trigger state updates during interaction
         }
 
-        // Update momentum decay using refs
-        const currentSpeedValue = currentSpeedRef.current;
-        if (Math.abs(currentSpeedValue - NATURAL_SPEED) >= 0.1) {
-          const decayRate = MOMENTUM_DECAY;
-          currentSpeedRef.current =
-            currentSpeedValue + (NATURAL_SPEED - currentSpeedValue) * decayRate;
-          needsStateUpdate = true;
+        // Update momentum decay using refs (only when not interacting)
+        // During any interaction, we completely pause all speed updates to prevent conflicts
+        if (!isInteracting) {
+          const currentSpeedValue = currentSpeedRef.current;
+          if (Math.abs(currentSpeedValue - NATURAL_SPEED) >= 0.1) {
+            const decayRate = MOMENTUM_DECAY;
+            currentSpeedRef.current =
+              currentSpeedValue +
+              (NATURAL_SPEED - currentSpeedValue) * decayRate;
+            needsStateUpdate = true;
+          }
+        } else {
+          // During interaction, ensure speed stays at 0 to prevent any animation interference
+          if (Math.abs(currentSpeedRef.current) > 0.1) {
+            currentSpeedRef.current = 0;
+            needsStateUpdate = true;
+          }
         }
 
         // Batch state updates to reduce re-renders
@@ -313,42 +367,100 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
   const useTouchHandling = () => {
     // Touch handlers for mobile swipe
     const handleTouchStart = useCallback((e: React.TouchEvent) => {
+      const now = Date.now();
       setDragState({
         isDragging: true,
+        isMouseDown: false,
+        isTouchDown: true,
         dragStart: e.touches[0].clientX,
         dragOffset: scrollOffsetRef.current,
+        lastPosition: e.touches[0].clientX,
+        lastTime: now,
+        velocity: 0,
+        isMouseDrag: false,
+        hasMoved: false,
+        dragThreshold: 5,
       });
+
+      // Stop the marquee during drag
+      currentSpeedRef.current = 0;
+      setAnimationState((prev) => ({ ...prev, currentSpeed: 0 }));
     }, []);
 
     const handleTouchMove = useCallback((e: React.TouchEvent) => {
       if (dragStateRef.current.isDragging) {
         e.preventDefault();
         const currentX = e.touches[0].clientX;
+        const now = Date.now();
         const deltaX = dragStateRef.current.dragStart - currentX;
-        const newOffset = dragStateRef.current.dragOffset + deltaX;
 
-        // Update refs directly for immediate response
-        scrollOffsetRef.current = newOffset;
-        setAnimationState((prev) => ({ ...prev, scrollOffset: newOffset }));
+        // Check if user has moved enough to consider it a drag
+        const hasMoved = Math.abs(deltaX) > dragStateRef.current.dragThreshold;
 
-        // Add momentum based on touch velocity - matching wheel behavior
-        const direction = deltaX > 0 ? -1 : 1;
-        console.log("DELTA X", deltaX);
-        const newSpeed = currentSpeedRef.current - direction * MAX_SPEED * 0.2;
-        const clampedSpeed = Math.max(
-          -MAX_SPEED,
-          Math.min(MAX_SPEED, newSpeed)
-        );
-        currentSpeedRef.current = clampedSpeed;
-        setAnimationState((prev) => ({
-          ...prev,
-          currentSpeed: clampedSpeed,
-        }));
+        if (hasMoved) {
+          const newOffset = dragStateRef.current.dragOffset + deltaX;
+
+          // Calculate velocity for momentum transfer
+          const timeDelta = now - dragStateRef.current.lastTime;
+          const positionDelta = currentX - dragStateRef.current.lastPosition;
+          const velocity =
+            timeDelta > 0 ? (positionDelta / timeDelta) * 1000 : 0; // pixels per second
+
+          // Update refs directly for immediate response
+          scrollOffsetRef.current = newOffset;
+          setAnimationState((prev) => ({ ...prev, scrollOffset: newOffset }));
+
+          // Update drag state with new position and velocity
+          setDragState((prev) => ({
+            ...prev,
+            lastPosition: currentX,
+            lastTime: now,
+            velocity: velocity,
+            hasMoved: true,
+          }));
+        }
       }
     }, []);
 
     const handleTouchEnd = useCallback(() => {
-      setDragState((prev) => ({ ...prev, isDragging: false }));
+      const finalVelocity = dragStateRef.current.velocity;
+      const hasMoved = dragStateRef.current.hasMoved;
+
+      // Only apply momentum if user actually dragged
+      if (hasMoved) {
+        if (Math.abs(finalVelocity) > MIN_VELOCITY_THRESHOLD) {
+          const momentumSpeed = -finalVelocity * MOMENTUM_TRANSFER; // Negative because we want opposite direction
+          const clampedSpeed = Math.max(
+            -MAX_SPEED,
+            Math.min(MAX_SPEED, momentumSpeed)
+          );
+          currentSpeedRef.current = clampedSpeed;
+          setAnimationState((prev) => ({
+            ...prev,
+            currentSpeed: clampedSpeed,
+          }));
+        } else {
+          // Gradually resume natural speed if no significant velocity
+          currentSpeedRef.current = NATURAL_SPEED * SPEED_RECOVERY_RATE;
+          setAnimationState((prev) => ({
+            ...prev,
+            currentSpeed: NATURAL_SPEED * SPEED_RECOVERY_RATE,
+          }));
+        }
+      } else {
+        // If no drag occurred, resume natural speed immediately
+        currentSpeedRef.current = NATURAL_SPEED;
+        setAnimationState((prev) => ({ ...prev, currentSpeed: NATURAL_SPEED }));
+      }
+
+      setDragState((prev) => ({
+        ...prev,
+        isDragging: false,
+        isMouseDown: false,
+        isTouchDown: false,
+        velocity: 0,
+        hasMoved: false,
+      }));
     }, []);
 
     // Add wheel event listener directly to the container
@@ -391,10 +503,214 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
       };
     }, []); // Removed currentSpeed to prevent circular dependencies
 
+    // Mouse handlers for desktop drag
+    const handleMouseDown = useCallback((e: React.MouseEvent) => {
+      e.preventDefault();
+      const now = Date.now();
+      setDragState({
+        isDragging: true,
+        isMouseDown: true,
+        isTouchDown: false,
+        dragStart: e.clientX,
+        dragOffset: scrollOffsetRef.current,
+        lastPosition: e.clientX,
+        lastTime: now,
+        velocity: 0,
+        isMouseDrag: true,
+        hasMoved: false,
+        dragThreshold: 5,
+      });
+
+      // Stop the marquee during drag
+      currentSpeedRef.current = 0;
+      setAnimationState((prev) => ({ ...prev, currentSpeed: 0 }));
+    }, []);
+
+    const handleMouseMove = useCallback((e: React.MouseEvent) => {
+      if (dragStateRef.current.isDragging && dragStateRef.current.isMouseDrag) {
+        e.preventDefault();
+        const currentX = e.clientX;
+        const now = Date.now();
+        const deltaX = dragStateRef.current.dragStart - currentX;
+
+        // Check if user has moved enough to consider it a drag
+        const hasMoved = Math.abs(deltaX) > dragStateRef.current.dragThreshold;
+
+        if (hasMoved) {
+          const newOffset = dragStateRef.current.dragOffset + deltaX;
+
+          // Calculate velocity for momentum transfer
+          const timeDelta = now - dragStateRef.current.lastTime;
+          const positionDelta = currentX - dragStateRef.current.lastPosition;
+          const velocity =
+            timeDelta > 0 ? (positionDelta / timeDelta) * 1000 : 0; // pixels per second
+
+          // Update refs directly for immediate response
+          scrollOffsetRef.current = newOffset;
+          setAnimationState((prev) => ({ ...prev, scrollOffset: newOffset }));
+
+          // Update drag state with new position and velocity
+          setDragState((prev) => ({
+            ...prev,
+            lastPosition: currentX,
+            lastTime: now,
+            velocity: velocity,
+            hasMoved: true,
+          }));
+        }
+      }
+    }, []);
+
+    const handleMouseUp = useCallback(() => {
+      if (dragStateRef.current.isMouseDrag) {
+        const finalVelocity = dragStateRef.current.velocity;
+        const hasMoved = dragStateRef.current.hasMoved;
+
+        // Only apply momentum if user actually dragged
+        if (hasMoved) {
+          if (Math.abs(finalVelocity) > MIN_VELOCITY_THRESHOLD) {
+            const momentumSpeed = -finalVelocity * MOMENTUM_TRANSFER; // Negative because we want opposite direction
+            const clampedSpeed = Math.max(
+              -MAX_SPEED,
+              Math.min(MAX_SPEED, momentumSpeed)
+            );
+            currentSpeedRef.current = clampedSpeed;
+            setAnimationState((prev) => ({
+              ...prev,
+              currentSpeed: clampedSpeed,
+            }));
+          } else {
+            // Gradually resume natural speed if no significant velocity
+            currentSpeedRef.current = NATURAL_SPEED * SPEED_RECOVERY_RATE;
+            setAnimationState((prev) => ({
+              ...prev,
+              currentSpeed: NATURAL_SPEED * SPEED_RECOVERY_RATE,
+            }));
+          }
+        } else {
+          // If no drag occurred, resume natural speed immediately
+          currentSpeedRef.current = NATURAL_SPEED;
+          setAnimationState((prev) => ({
+            ...prev,
+            currentSpeed: NATURAL_SPEED,
+          }));
+        }
+
+        setDragState((prev) => ({
+          ...prev,
+          isDragging: false,
+          isMouseDown: false,
+          isTouchDown: false,
+          velocity: 0,
+          isMouseDrag: false,
+          hasMoved: false,
+        }));
+      }
+    }, []);
+
+    // Add global mouse event listeners for drag outside the component
+    useEffect(() => {
+      const handleGlobalMouseMove = (e: MouseEvent) => {
+        if (
+          dragStateRef.current.isDragging &&
+          dragStateRef.current.isMouseDrag
+        ) {
+          const currentX = e.clientX;
+          const now = Date.now();
+          const deltaX = dragStateRef.current.dragStart - currentX;
+
+          // Check if user has moved enough to consider it a drag
+          const hasMoved =
+            Math.abs(deltaX) > dragStateRef.current.dragThreshold;
+
+          if (hasMoved) {
+            const newOffset = dragStateRef.current.dragOffset + deltaX;
+
+            // Calculate velocity for momentum transfer
+            const timeDelta = now - dragStateRef.current.lastTime;
+            const positionDelta = currentX - dragStateRef.current.lastPosition;
+            const velocity =
+              timeDelta > 0 ? (positionDelta / timeDelta) * 1000 : 0;
+
+            // Update refs directly for immediate response
+            scrollOffsetRef.current = newOffset;
+            setAnimationState((prev) => ({ ...prev, scrollOffset: newOffset }));
+
+            // Update drag state with new position and velocity
+            setDragState((prev) => ({
+              ...prev,
+              lastPosition: currentX,
+              lastTime: now,
+              velocity: velocity,
+              hasMoved: true,
+            }));
+          }
+        }
+      };
+
+      const handleGlobalMouseUp = () => {
+        if (dragStateRef.current.isMouseDrag) {
+          const finalVelocity = dragStateRef.current.velocity;
+          const hasMoved = dragStateRef.current.hasMoved;
+
+          // Only apply momentum if user actually dragged
+          if (hasMoved) {
+            if (Math.abs(finalVelocity) > MIN_VELOCITY_THRESHOLD) {
+              const momentumSpeed = -finalVelocity * MOMENTUM_TRANSFER;
+              const clampedSpeed = Math.max(
+                -MAX_SPEED,
+                Math.min(MAX_SPEED, momentumSpeed)
+              );
+              currentSpeedRef.current = clampedSpeed;
+              setAnimationState((prev) => ({
+                ...prev,
+                currentSpeed: clampedSpeed,
+              }));
+            } else {
+              // Gradually resume natural speed if no significant velocity
+              currentSpeedRef.current = NATURAL_SPEED * SPEED_RECOVERY_RATE;
+              setAnimationState((prev) => ({
+                ...prev,
+                currentSpeed: NATURAL_SPEED * SPEED_RECOVERY_RATE,
+              }));
+            }
+          } else {
+            // If no drag occurred, resume natural speed immediately
+            currentSpeedRef.current = NATURAL_SPEED;
+            setAnimationState((prev) => ({
+              ...prev,
+              currentSpeed: NATURAL_SPEED,
+            }));
+          }
+
+          setDragState((prev) => ({
+            ...prev,
+            isDragging: false,
+            isMouseDown: false,
+            isTouchDown: false,
+            velocity: 0,
+            isMouseDrag: false,
+            hasMoved: false,
+          }));
+        }
+      };
+
+      document.addEventListener("mousemove", handleGlobalMouseMove);
+      document.addEventListener("mouseup", handleGlobalMouseUp);
+
+      return () => {
+        document.removeEventListener("mousemove", handleGlobalMouseMove);
+        document.removeEventListener("mouseup", handleGlobalMouseUp);
+      };
+    }, []);
+
     return {
       handleTouchStart,
       handleTouchMove,
       handleTouchEnd,
+      handleMouseDown,
+      handleMouseMove,
+      handleMouseUp,
     };
   };
 
@@ -648,9 +964,12 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
               stiffness: 300,
               damping: 20,
             }}
-            onClick={() =>
-              !hasError && fullscreenHandlers.openFullscreen(image)
-            }
+            onClick={() => {
+              // Only open fullscreen if no drag occurred
+              if (!hasError && !dragState.hasMoved) {
+                fullscreenHandlers.openFullscreen(image);
+              }
+            }}
             role="button"
             tabIndex={hasError ? -1 : 0}
             aria-label={
@@ -757,6 +1076,9 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
         onTouchStart={touchHandlers.handleTouchStart}
         onTouchMove={touchHandlers.handleTouchMove}
         onTouchEnd={touchHandlers.handleTouchEnd}
+        onMouseDown={touchHandlers.handleMouseDown}
+        onMouseMove={touchHandlers.handleMouseMove}
+        onMouseUp={touchHandlers.handleMouseUp}
         role="region"
         aria-label="Image marquee gallery"
         aria-live="polite"
@@ -764,8 +1086,9 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
       >
         {/* Screen reader instructions */}
         <div id="marquee-instructions" className="sr-only">
-          Use mouse wheel or touch gestures to control the marquee speed. Click
-          on images to view them in fullscreen.
+          Use mouse wheel, drag with mouse or touch, or touch gestures to
+          control the marquee speed. Drag to pause and release to resume with
+          momentum. Click on images to view them in fullscreen.
         </div>
         <motion.div
           ref={containerRef}
