@@ -29,21 +29,34 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
   height = 300,
   preloadDistance = 500,
 }) => {
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [fullscreenImage, setFullscreenImage] = useState<MarqueeImage | null>(
-    null
-  );
-  const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
-  const [visibleImages, setVisibleImages] = useState<Set<string>>(new Set());
-  const [scrollOffset, setScrollOffset] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState(0);
-  const [dragOffset, setDragOffset] = useState(0);
-  const [currentSpeed, setCurrentSpeed] = useState(speed);
+  // Animation state
+  const [animationState, setAnimationState] = useState({
+    scrollOffset: 0,
+    currentSpeed: speed,
+  });
+
+  // Drag state
+  const [dragState, setDragState] = useState({
+    isDragging: false,
+    dragStart: 0,
+    dragOffset: 0,
+  });
+
+  // Image loading state
+  const [imageState, setImageState] = useState({
+    loadedImages: new Set<string>(),
+    visibleImages: new Set<string>(),
+  });
+
+  // Fullscreen state
+  const [fullscreenState, setFullscreenState] = useState({
+    isFullscreen: false,
+    fullscreenImage: null as MarqueeImage | null,
+  });
   const containerRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
-  const currentSpeedRef = useRef(speed);
-  const scrollOffsetRef = useRef(0); // Add ref for scroll offset
+  const currentSpeedRef = useRef(animationState.currentSpeed);
+  const scrollOffsetRef = useRef(animationState.scrollOffset); // Add ref for scroll offset
   const animationFrameRef = useRef<number | null>(null); // Add ref for animation frame
   const performanceRef = useRef({ frameCount: 0, lastTime: 0, fps: 0 }); // Performance monitoring
 
@@ -76,16 +89,25 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
           if (!imageSrc) return;
 
           if (entry.isIntersecting) {
-            setVisibleImages((prev) => new Set([...prev, imageSrc]));
+            setImageState((prev) => ({
+              ...prev,
+              visibleImages: new Set([...prev.visibleImages, imageSrc]),
+            }));
             // Mark as loaded after a small delay to simulate loading
             setTimeout(() => {
-              setLoadedImages((prev) => new Set([...prev, imageSrc]));
+              setImageState((prev) => ({
+                ...prev,
+                loadedImages: new Set([...prev.loadedImages, imageSrc]),
+              }));
             }, 100);
           } else {
-            setVisibleImages((prev) => {
-              const newSet = new Set(prev);
-              newSet.delete(imageSrc);
-              return newSet;
+            setImageState((prev) => {
+              const newVisibleImages = new Set(prev.visibleImages);
+              newVisibleImages.delete(imageSrc);
+              return {
+                ...prev,
+                visibleImages: newVisibleImages,
+              };
             });
           }
         });
@@ -130,12 +152,12 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
 
   // Update refs whenever state changes (for UI updates)
   useEffect(() => {
-    currentSpeedRef.current = currentSpeed;
-  }, [currentSpeed]);
+    currentSpeedRef.current = animationState.currentSpeed;
+  }, [animationState.currentSpeed]);
 
   useEffect(() => {
-    scrollOffsetRef.current = scrollOffset;
-  }, [scrollOffset]);
+    scrollOffsetRef.current = animationState.scrollOffset;
+  }, [animationState.scrollOffset]);
 
   // Optimized animation loop using refs to avoid state updates on every frame
   useEffect(() => {
@@ -161,7 +183,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
       }
 
       // Update animation values using refs (no re-renders)
-      if (!isDragging) {
+      if (!dragState.isDragging) {
         const speed = currentSpeedRef.current;
         const newOffset = scrollOffsetRef.current + (speed * deltaTime) / 1000;
 
@@ -189,8 +211,10 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
       // Batch state updates to reduce re-renders
       if (needsStateUpdate && !stateUpdateTimeout) {
         stateUpdateTimeout = setTimeout(() => {
-          setScrollOffset(scrollOffsetRef.current);
-          setCurrentSpeed(currentSpeedRef.current);
+          setAnimationState({
+            scrollOffset: scrollOffsetRef.current,
+            currentSpeed: currentSpeedRef.current,
+          });
           needsStateUpdate = false;
           stateUpdateTimeout = null;
         }, 16); // ~60fps update rate
@@ -212,26 +236,28 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
         clearTimeout(stateUpdateTimeout);
       }
     };
-  }, [isDragging, totalWidth, NATURAL_SPEED, MOMENTUM_DECAY]);
+  }, [dragState.isDragging, totalWidth, NATURAL_SPEED, MOMENTUM_DECAY]);
 
   // Touch handlers for mobile swipe
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    setIsDragging(true);
-    setDragStart(e.touches[0].clientX);
-    setDragOffset(scrollOffsetRef.current);
+    setDragState({
+      isDragging: true,
+      dragStart: e.touches[0].clientX,
+      dragOffset: scrollOffsetRef.current,
+    });
   }, []);
 
   const handleTouchMove = useCallback(
     (e: React.TouchEvent) => {
-      if (isDragging) {
+      if (dragState.isDragging) {
         e.preventDefault();
         const currentX = e.touches[0].clientX;
-        const deltaX = dragStart - currentX;
-        const newOffset = dragOffset + deltaX;
+        const deltaX = dragState.dragStart - currentX;
+        const newOffset = dragState.dragOffset + deltaX;
 
         // Update refs directly for immediate response
         scrollOffsetRef.current = newOffset;
-        setScrollOffset(newOffset);
+        setAnimationState((prev) => ({ ...prev, scrollOffset: newOffset }));
 
         // Add momentum based on touch velocity - matching wheel behavior
         const direction = deltaX > 0 ? -1 : 1;
@@ -242,41 +268,45 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
           Math.min(MAX_SPEED, newSpeed)
         );
         currentSpeedRef.current = clampedSpeed;
-        setCurrentSpeed(clampedSpeed);
+        setAnimationState((prev) => ({ ...prev, currentSpeed: clampedSpeed }));
       }
     },
-    [isDragging, dragStart, dragOffset, MAX_SPEED]
+    [dragState.isDragging, dragState.dragStart, dragState.dragOffset, MAX_SPEED]
   );
 
   const handleTouchEnd = useCallback(() => {
-    setIsDragging(false);
+    setDragState((prev) => ({ ...prev, isDragging: false }));
   }, []);
 
   const openFullscreen = (image: MarqueeImage) => {
-    setFullscreenImage(image);
-    setIsFullscreen(true);
+    setFullscreenState({
+      isFullscreen: true,
+      fullscreenImage: image,
+    });
     document.body.style.overflow = "hidden";
   };
 
   const closeFullscreen = () => {
-    setIsFullscreen(false);
-    setFullscreenImage(null);
+    setFullscreenState({
+      isFullscreen: false,
+      fullscreenImage: null,
+    });
     document.body.style.overflow = "unset";
   };
 
   // Handle escape key and body style cleanup
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isFullscreen) {
+      if (e.key === "Escape" && fullscreenState.isFullscreen) {
         closeFullscreen();
       }
     };
 
-    if (isFullscreen) {
+    if (fullscreenState.isFullscreen) {
       document.addEventListener("keydown", handleEscape);
       return () => document.removeEventListener("keydown", handleEscape);
     }
-  }, [isFullscreen]);
+  }, [fullscreenState.isFullscreen]);
 
   // Cleanup body style on unmount
   useEffect(() => {
@@ -331,7 +361,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
       const newSpeed = currentSpeedRef.current - speedChange;
       const clampedSpeed = Math.max(-MAX_SPEED, Math.min(MAX_SPEED, newSpeed));
       currentSpeedRef.current = clampedSpeed;
-      setCurrentSpeed(clampedSpeed);
+      setAnimationState((prev) => ({ ...prev, currentSpeed: clampedSpeed }));
     };
 
     // Use wheel event with passive: false for better cross-browser support
@@ -344,8 +374,8 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
 
   const renderImage = useCallback(
     (image: MarqueeImage, index: number) => {
-      const isVisible = visibleImages.has(image.src);
-      const isLoaded = loadedImages.has(image.src);
+      const isVisible = imageState.visibleImages.has(image.src);
+      const isLoaded = imageState.loadedImages.has(image.src);
 
       return (
         <div
@@ -396,9 +426,13 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
                       className="rounded-lg shadow-lg object-cover"
                       style={{ height: `${height}px` }}
                       onLoad={() => {
-                        setLoadedImages(
-                          (prev) => new Set([...prev, image.src])
-                        );
+                        setImageState((prev) => ({
+                          ...prev,
+                          loadedImages: new Set([
+                            ...prev.loadedImages,
+                            image.src,
+                          ]),
+                        }));
                       }}
                     />
                   </motion.div>
@@ -414,7 +448,13 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
         </div>
       );
     },
-    [visibleImages, loadedImages, gap, height, openFullscreen]
+    [
+      imageState.visibleImages,
+      imageState.loadedImages,
+      gap,
+      height,
+      openFullscreen,
+    ]
   );
 
   return (
@@ -430,11 +470,11 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
           ref={containerRef}
           className="flex items-center"
           style={{ width: `${totalWidth * 2}px` }}
-          animate={{ x: -(scrollOffset % totalWidth) }}
+          animate={{ x: -(animationState.scrollOffset % totalWidth) }}
           transition={{
             type: "tween",
             ease: "linear",
-            duration: isDragging ? 0 : 0.1,
+            duration: dragState.isDragging ? 0 : 0.1,
           }}
         >
           {duplicatedImages.map((image, index) => renderImage(image, index))}
@@ -443,7 +483,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
 
       {/* Fullscreen Modal */}
       <AnimatePresence>
-        {isFullscreen && fullscreenImage && (
+        {fullscreenState.isFullscreen && fullscreenState.fullscreenImage && (
           <motion.div
             className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 cursor-pointer"
             onClick={closeFullscreen}
@@ -453,7 +493,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
             transition={{ duration: 0.3 }}
             role="dialog"
             aria-modal="true"
-            aria-label={`Fullscreen view of ${fullscreenImage.alt}`}
+            aria-label={`Fullscreen view of ${fullscreenState.fullscreenImage.alt}`}
           >
             <motion.div
               className="flex flex-col items-center justify-center"
@@ -470,14 +510,14 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
                 }}
               >
                 <Image
-                  src={fullscreenImage.src}
-                  alt={fullscreenImage.alt}
+                  src={fullscreenState.fullscreenImage.src}
+                  alt={fullscreenState.fullscreenImage.alt}
                   width={1920}
                   height={1080}
                   className="w-full h-full object-contain"
                 />
               </div>
-              {fullscreenImage.captionText && (
+              {fullscreenState.fullscreenImage.captionText && (
                 <motion.p
                   className="text-white text-center mt-4 text-lg"
                   initial={{ opacity: 0, y: 20 }}
@@ -485,7 +525,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
                   exit={{ opacity: 0, y: 20 }}
                   transition={{ duration: 0.3, delay: 0.1 }}
                 >
-                  {fullscreenImage.captionText}
+                  {fullscreenState.fullscreenImage.captionText}
                 </motion.p>
               )}
             </motion.div>
