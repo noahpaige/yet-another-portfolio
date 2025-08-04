@@ -166,9 +166,25 @@
   --sidebar-ring: oklch(0.704 0.04 256.788);
   --real-vh: 100vh;
 }
+
+/* iOS Safari viewport height improvements */
 @supports (height: 100dvh) {
   :root {
     --real-vh: 100dvh;
+  }
+}
+
+/* iOS Safari specific viewport height handling */
+@supports (-webkit-touch-callout: none) {
+  :root {
+    --real-vh: 100vh; /* Fallback for iOS Safari */
+  }
+
+  /* Ensure sections don't exceed viewport on iOS Safari */
+  .snap-start {
+    min-height: 100vh;
+    height: 100vh;
+    max-height: 100vh;
   }
 }
 
@@ -218,6 +234,22 @@
     padding: 0;
     height: 100%;
     @apply bg-background text-foreground;
+  }
+
+  /* iOS Safari viewport fixes */
+  @supports (-webkit-touch-callout: none) {
+    html,
+    body {
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Prevent iOS Safari from adding padding for the address bar */
+    body {
+      position: fixed;
+      width: 100%;
+      height: 100vh;
+    }
   }
 }
 
