@@ -113,14 +113,21 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
     currentSpeedRef.current = currentSpeed;
   }, [currentSpeed]);
 
-  // Base animation with motion
+  // Consolidated animation loop using requestAnimationFrame
   useEffect(() => {
-    const interval = setInterval(() => {
-      const speed = currentSpeedRef.current; // Use ref to get current speed
-      // Always animate if not dragging, regardless of pause state
+    let animationFrameId: number;
+    let lastTime = 0;
+
+    const animate = (currentTime: number) => {
+      // Calculate delta time for smooth animation regardless of frame rate
+      const deltaTime = currentTime - lastTime;
+      lastTime = currentTime;
+
+      // Update scroll offset if not dragging
       if (!isDragging) {
+        const speed = currentSpeedRef.current;
         setScrollOffset((prev) => {
-          const newOffset = prev + speed / 60; // 60fps
+          const newOffset = prev + (speed * deltaTime) / 1000; // Convert to seconds
           // Infinite loop - when we reach the end, continue seamlessly
           if (newOffset >= totalWidth) {
             return newOffset - totalWidth;
@@ -132,27 +139,31 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
           return newOffset;
         });
       }
-    }, 16); // ~60fps
 
-    return () => clearInterval(interval);
-  }, [isDragging, totalWidth]); // Removed currentSpeed from dependencies
-
-  // Momentum decay - gradually return to natural speed
-  useEffect(() => {
-    const interval = setInterval(() => {
-      // Always decay, regardless of pause state
+      // Update momentum decay
       setCurrentSpeed((prev) => {
         if (Math.abs(prev - NATURAL_SPEED) < 0.1) {
           return NATURAL_SPEED;
         }
         // Much more responsive decay for Chrome/Arc compatibility
-        const decayRate = MOMENTUM_DECAY; // Much faster decay
+        const decayRate = MOMENTUM_DECAY;
         return prev + (NATURAL_SPEED - prev) * decayRate;
       });
-    }, 16); // ~60fps
 
-    return () => clearInterval(interval);
-  }, [NATURAL_SPEED, MOMENTUM_DECAY]);
+      // Continue animation loop
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    // Start animation loop
+    animationFrameId = requestAnimationFrame(animate);
+
+    // Cleanup
+    return () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
+  }, [isDragging, totalWidth, NATURAL_SPEED, MOMENTUM_DECAY]);
 
   // Touch handlers for mobile swipe
   const handleTouchStart = useCallback(
