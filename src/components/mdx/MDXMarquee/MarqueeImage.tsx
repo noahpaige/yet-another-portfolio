@@ -7,7 +7,6 @@ import { MarqueeImage as MarqueeImageType } from "./index";
 
 interface MarqueeImageProps {
   image: MarqueeImageType;
-  index: number;
   gap: number;
   height: number;
   isVisible: boolean;
@@ -18,7 +17,6 @@ interface MarqueeImageProps {
 
 const MarqueeImage: React.FC<MarqueeImageProps> = ({
   image,
-  index,
   gap,
   height,
   isVisible,

@@ -15,7 +15,7 @@ interface MarqueeContainerProps {
   isDragging: boolean;
   visibleImages: Set<string>;
   loadedImages: Set<string>;
-  containerRef: React.RefObject<HTMLDivElement>;
+  containerRef: React.RefObject<HTMLDivElement | null>;
   onTouchStart: (e: React.TouchEvent) => void;
   onTouchMove: (e: React.TouchEvent) => void;
   onTouchEnd: (e: React.TouchEvent) => void;
@@ -49,7 +49,6 @@ const MarqueeContainer: React.FC<MarqueeContainerProps> = ({
         <MarqueeImage
           key={`${image.src}-${index}`}
           image={image}
-          index={index}
           gap={gap}
           height={height}
           isVisible={isVisible}
@@ -59,7 +58,7 @@ const MarqueeContainer: React.FC<MarqueeContainerProps> = ({
         />
       );
     },
-    [visibleImages, loadedImages, gap, height, onImageClick]
+    [visibleImages, loadedImages, gap, height, onImageClick, onImageLoad]
   );
 
   return (
