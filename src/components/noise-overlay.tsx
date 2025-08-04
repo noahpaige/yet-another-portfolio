@@ -15,8 +15,8 @@ const NoiseOverlay = React.memo<NoiseOverlayProps>(
     const getContainerSize = () => {
       if (scrollContainerRef && scrollContainerRef.current) {
         return {
-          width: scrollContainerRef.current.scrollWidth,
-          height: scrollContainerRef.current.scrollHeight,
+          width: Math.min(scrollContainerRef.current.scrollWidth, 16384), // Max canvas width
+          height: Math.min(scrollContainerRef.current.scrollHeight, 16384), // Max canvas height
         };
       }
       return {
@@ -36,8 +36,8 @@ const NoiseOverlay = React.memo<NoiseOverlayProps>(
         if (canvas) {
           const ctx = canvas.getContext("2d")!;
           const { width, height } = getContainerSize();
-          const effWidth = width * resolution;
-          const effHeight = height * resolution;
+          const effWidth = Math.min(width * resolution, 16384); // Max canvas width
+          const effHeight = Math.min(height * resolution, 16384); // Max canvas height
 
           canvas.width = effWidth;
           canvas.height = effHeight;
@@ -61,8 +61,8 @@ const NoiseOverlay = React.memo<NoiseOverlayProps>(
 
       const drawStaticNoise = () => {
         const { width, height } = getContainerSize();
-        const effWidth = width * resolution;
-        const effHeight = height * resolution;
+        const effWidth = Math.min(width * resolution, 16384); // Max canvas width
+        const effHeight = Math.min(height * resolution, 16384); // Max canvas height
 
         canvas.width = effWidth;
         canvas.height = effHeight;
