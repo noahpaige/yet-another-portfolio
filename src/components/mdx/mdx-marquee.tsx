@@ -130,12 +130,6 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
   // STATE MANAGEMENT
   // ============================================================================
 
-  /** Animation state for scroll offset and speed */
-  const [animationState, setAnimationState] = useState({
-    scrollOffset: 0,
-    currentSpeed: speed,
-  });
-
   /** Drag state for touch interactions */
   const [dragState, setDragState] = useState({
     isDragging: false,
@@ -201,13 +195,15 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
   /** Intersection observer reference for cleanup */
   const observerRef = useRef<IntersectionObserver | null>(null);
   /** Current animation speed reference for performance optimization */
-  const currentSpeedRef = useRef(animationState.currentSpeed);
+  const currentSpeedRef = useRef(speed);
   /** Scroll offset reference for performance optimization */
-  const scrollOffsetRef = useRef(animationState.scrollOffset);
+  const scrollOffsetRef = useRef(0);
   /** Animation frame reference for cleanup */
   const animationFrameRef = useRef<number | null>(null);
   /** Modal reference for focus management */
   const modalRef = useRef<HTMLDivElement>(null);
+  /** Animation container ref for direct DOM manipulation */
+  const animationContainerRef = useRef<HTMLDivElement>(null);
 
   // ============================================================================
   // COMPUTED VALUES
@@ -240,24 +236,24 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
    * Applies momentum to the marquee based on final velocity
    * @param finalVelocity - The final velocity from drag interaction
    */
-  const applyMomentum = useCallback((finalVelocity: number) => {
-    if (Math.abs(finalVelocity) > MIN_VELOCITY_THRESHOLD) {
-      const momentumSpeed = -finalVelocity * MOMENTUM_TRANSFER; // Negative because we want opposite direction
-      const clampedSpeed = Math.max(
-        -MAX_SPEED,
-        Math.min(MAX_SPEED, momentumSpeed)
-      );
-      currentSpeedRef.current = clampedSpeed;
-      setAnimationState((prev) => ({ ...prev, currentSpeed: clampedSpeed }));
-    } else {
-      // Gradually resume natural speed if no significant velocity
-      currentSpeedRef.current = NATURAL_SPEED * 0.1;
-      setAnimationState((prev) => ({
-        ...prev,
-        currentSpeed: NATURAL_SPEED * 0.1,
-      }));
-    }
-  }, []);
+  const applyMomentum = useCallback(
+    (finalVelocity: number) => {
+      if (Math.abs(finalVelocity) > MIN_VELOCITY_THRESHOLD) {
+        const momentumSpeed = -finalVelocity * MOMENTUM_TRANSFER; // Negative because we want opposite direction
+        const clampedSpeed = Math.max(
+          -MAX_SPEED,
+          Math.min(MAX_SPEED, momentumSpeed)
+        );
+        currentSpeedRef.current = clampedSpeed;
+        // No need to update state - the animation loop will handle the visual update
+      } else {
+        // Gradually resume natural speed if no significant velocity
+        currentSpeedRef.current = NATURAL_SPEED * 0.1;
+        // No need to update state - the animation loop will handle the visual update
+      }
+    },
+    [MAX_SPEED, NATURAL_SPEED]
+  );
 
   /**
    * Unified interaction handler for both touch and mouse events
@@ -283,45 +279,54 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
 
       // Stop the marquee during drag
       currentSpeedRef.current = 0;
-      setAnimationState((prev) => ({ ...prev, currentSpeed: 0 }));
+      // No need to update state - the animation loop will handle the visual update
     },
     []
   );
 
-  const handleInteractionMove = useCallback((clientX: number) => {
-    if (dragStateRef.current.isDragging) {
-      const now = Date.now();
-      const deltaX = dragStateRef.current.dragStart - clientX;
+  const handleInteractionMove = useCallback(
+    (clientX: number) => {
+      if (dragStateRef.current.isDragging) {
+        const now = Date.now();
+        const deltaX = dragStateRef.current.dragStart - clientX;
 
-      // Check if user has moved enough to consider it a drag
-      const hasMoved = Math.abs(deltaX) > dragStateRef.current.dragThreshold;
+        // Check if user has moved enough to consider it a drag
+        const hasMoved = Math.abs(deltaX) > dragStateRef.current.dragThreshold;
 
-      if (hasMoved) {
-        // Mark that a drag operation occurred
-        dragOccurredRef.current = true;
+        if (hasMoved) {
+          // Mark that a drag operation occurred
+          dragOccurredRef.current = true;
 
-        const newOffset = dragStateRef.current.dragOffset + deltaX;
+          const newOffset = dragStateRef.current.dragOffset + deltaX;
 
-        // Calculate velocity for momentum transfer
-        const timeDelta = now - dragStateRef.current.lastTime;
-        const positionDelta = clientX - dragStateRef.current.lastPosition;
-        const velocity = timeDelta > 0 ? (positionDelta / timeDelta) * 1000 : 0; // pixels per second
+          // Calculate velocity for momentum transfer
+          const timeDelta = now - dragStateRef.current.lastTime;
+          const positionDelta = clientX - dragStateRef.current.lastPosition;
+          const velocity =
+            timeDelta > 0 ? (positionDelta / timeDelta) * 1000 : 0; // pixels per second
 
-        // Update refs directly for immediate response
-        scrollOffsetRef.current = newOffset;
-        setAnimationState((prev) => ({ ...prev, scrollOffset: newOffset }));
+          // Update refs directly for immediate response
+          scrollOffsetRef.current = newOffset;
 
-        // Update drag state with new position and velocity
-        setDragState((prev) => ({
-          ...prev,
-          lastPosition: clientX,
-          lastTime: now,
-          velocity: velocity,
-          hasMoved: true,
-        }));
+          // Apply transform directly to DOM for immediate visual feedback
+          if (animationContainerRef.current) {
+            const transformX = -(newOffset % totalWidth);
+            animationContainerRef.current.style.transform = `translateX(${transformX}px)`;
+          }
+
+          // Update drag state with new position and velocity
+          setDragState((prev) => ({
+            ...prev,
+            lastPosition: clientX,
+            lastTime: now,
+            velocity: velocity,
+            hasMoved: true,
+          }));
+        }
       }
-    }
-  }, []);
+    },
+    [totalWidth]
+  );
 
   const handleInteractionEnd = useCallback(() => {
     const finalVelocity = dragStateRef.current.velocity;
@@ -333,7 +338,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
     } else {
       // If no drag occurred, resume natural speed immediately
       currentSpeedRef.current = NATURAL_SPEED;
-      setAnimationState((prev) => ({ ...prev, currentSpeed: NATURAL_SPEED }));
+      // No need to update state - the animation loop will handle the visual update
     }
 
     setDragState((prev) => ({
@@ -345,7 +350,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
       isMouseDrag: false,
       hasMoved: false,
     }));
-  }, []);
+  }, [applyMomentum, NATURAL_SPEED]);
 
   /**
    * iOS Safari scrolling fix - multi-step process to reset internal scroll state
@@ -389,11 +394,14 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
   // EFFECTS AND EVENT HANDLERS
   // ============================================================================
 
-  // Animation loop
+  // Sync refs when speed prop changes
+  useEffect(() => {
+    currentSpeedRef.current = speed;
+  }, [speed]);
+
+  // Animation loop - optimized for performance using direct DOM manipulation
   useEffect(() => {
     let lastTime = 0;
-    let needsStateUpdate = false;
-    let stateUpdateTimeout: NodeJS.Timeout | null = null;
 
     const animate = (currentTime: number) => {
       const deltaTime = currentTime - lastTime;
@@ -417,9 +425,11 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
           scrollOffsetRef.current = newOffset;
         }
 
-        needsStateUpdate = true;
-      } else {
-        needsStateUpdate = false;
+        // Apply transform directly to DOM for better performance
+        if (animationContainerRef.current) {
+          const transformX = -(scrollOffsetRef.current % totalWidth);
+          animationContainerRef.current.style.transform = `translateX(${transformX}px)`;
+        }
       }
 
       // Update momentum decay
@@ -429,25 +439,11 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
           const decayRate = MOMENTUM_DECAY;
           currentSpeedRef.current =
             currentSpeedValue + (NATURAL_SPEED - currentSpeedValue) * decayRate;
-          needsStateUpdate = true;
         }
       } else {
         if (Math.abs(currentSpeedRef.current) > 0.1) {
           currentSpeedRef.current = 0;
-          needsStateUpdate = true;
         }
-      }
-
-      // Batch state updates
-      if (needsStateUpdate && !stateUpdateTimeout) {
-        stateUpdateTimeout = setTimeout(() => {
-          setAnimationState({
-            scrollOffset: scrollOffsetRef.current,
-            currentSpeed: currentSpeedRef.current,
-          });
-          needsStateUpdate = false;
-          stateUpdateTimeout = null;
-        }, 16);
       }
 
       animationFrameRef.current = requestAnimationFrame(animate);
@@ -459,11 +455,8 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
-      if (stateUpdateTimeout) {
-        clearTimeout(stateUpdateTimeout);
-      }
     };
-  }, []);
+  }, [totalWidth, NATURAL_SPEED, MOMENTUM_DECAY]);
 
   // Wheel event handling
   useEffect(() => {
@@ -487,7 +480,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
       const newSpeed = currentSpeedRef.current - speedChange;
       const clampedSpeed = Math.max(-MAX_SPEED, Math.min(MAX_SPEED, newSpeed));
       currentSpeedRef.current = clampedSpeed;
-      setAnimationState((prev) => ({ ...prev, currentSpeed: clampedSpeed }));
+      // No need to update state - the animation loop will handle the visual update
     };
 
     container.addEventListener("wheel", handleWheel, { passive: false });
@@ -495,7 +488,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
     return () => {
       container.removeEventListener("wheel", handleWheel);
     };
-  }, []);
+  }, [MAX_SPEED]);
 
   // Global mouse event listeners
   useEffect(() => {
@@ -632,12 +625,18 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
     navigateToLastImage,
   ]);
 
-  // Image loading with intersection observer
+  // Image loading with intersection observer - optimized for bidirectional scrolling
   useEffect(() => {
     if (!containerRef.current) return;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
+    // Debounce intersection observer callbacks to reduce jitter
+    let debounceTimeout: NodeJS.Timeout | null = null;
+    const debouncedCallback = (entries: IntersectionObserverEntry[]) => {
+      if (debounceTimeout) {
+        clearTimeout(debounceTimeout);
+      }
+
+      debounceTimeout = setTimeout(() => {
         entries.forEach((entry) => {
           const imageSrc = entry.target.getAttribute("data-image-src");
           if (!imageSrc) return;
@@ -649,6 +648,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
               loadingImages: new Set([...prev.loadingImages, imageSrc]),
             }));
 
+            // Simulate image load after a short delay
             setTimeout(() => {
               setImageState((prev) => ({
                 ...prev,
@@ -659,6 +659,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
               }));
             }, 100);
 
+            // Set error timeout
             setTimeout(() => {
               setImageState((prev) => {
                 if (!prev.loadedImages.has(imageSrc)) {
@@ -674,6 +675,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
               });
             }, 5000);
           } else {
+            // Only remove from visible images, keep loaded images for backward scrolling
             setImageState((prev) => {
               const newVisibleImages = new Set(prev.visibleImages);
               const newLoadingImages = new Set(prev.loadingImages);
@@ -685,17 +687,20 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
                 ...prev,
                 visibleImages: newVisibleImages,
                 loadingImages: newLoadingImages,
+                // Don't remove from loadedImages - keep them for backward scrolling
               };
             });
           }
         });
-      },
-      {
-        root: containerRef.current,
-        rootMargin: `${preloadDistance}px`,
-        threshold: 0.1,
-      }
-    );
+      }, 16); // 16ms debounce for 60fps
+    };
+
+    const observer = new IntersectionObserver(debouncedCallback, {
+      root: containerRef.current,
+      // Extend root margin in both directions for better backward scrolling
+      rootMargin: `${preloadDistance}px ${preloadDistance}px ${preloadDistance}px ${preloadDistance}px`,
+      threshold: 0.1,
+    });
 
     observerRef.current = observer;
 
@@ -706,23 +711,33 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
     });
 
     return () => {
+      if (debounceTimeout) {
+        clearTimeout(debounceTimeout);
+      }
       observer.disconnect();
       observerRef.current = null;
     };
   }, [preloadDistance]);
 
-  // Observe new images when duplicatedImages changes
+  // Observe new images when duplicatedImages changes - improved for bidirectional scrolling
   useEffect(() => {
     if (!observerRef.current || !containerRef.current) return;
 
     const observer = observerRef.current;
+
+    // Disconnect and reconnect to ensure all images are observed
     observer.disconnect();
 
-    const imageContainers =
-      containerRef.current.querySelectorAll("[data-image-src]");
-    imageContainers.forEach((container) => {
-      observer.observe(container);
-    });
+    // Small delay to ensure DOM is updated
+    setTimeout(() => {
+      const imageContainers =
+        containerRef.current?.querySelectorAll("[data-image-src]");
+      if (imageContainers) {
+        imageContainers.forEach((container) => {
+          observer.observe(container);
+        });
+      }
+    }, 0);
   }, [duplicatedImages]);
 
   // Fullscreen handlers
@@ -836,13 +851,13 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
   const renderImage = useCallback(
     (image: MarqueeImage, index: number) => {
       const imageSrc = image.src;
-      const isVisible = imageState.visibleImages.has(imageSrc);
       const isLoaded = imageState.loadedImages.has(imageSrc);
       const isLoading = imageState.loadingImages.has(imageSrc);
       const hasError = imageState.errorImages.has(imageSrc);
 
       // Determine if we should show the image
-      const shouldShowImage = isVisible && isLoaded;
+      // Show image if it's loaded, regardless of visibility (for backward scrolling)
+      const shouldShowImage = isLoaded;
 
       return (
         <div
@@ -974,7 +989,6 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
       );
     },
     [
-      imageState.visibleImages,
       imageState.loadedImages,
       imageState.loadingImages,
       imageState.errorImages,
@@ -1012,19 +1026,27 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
           mode, use arrow keys to navigate between images, Home/End to jump to
           first/last image, and Escape to close.
         </div>
-        <motion.div
+        <div
           ref={containerRef}
           className="flex items-center"
           style={{ width: `${totalWidth * 2}px` }}
-          animate={{ x: -(animationState.scrollOffset % totalWidth) }}
-          transition={{
-            type: "tween",
-            ease: "linear",
-            duration: dragState.isDragging ? 0 : 0.1,
-          }}
         >
-          {duplicatedImages.map((image, index) => renderImage(image, index))}
-        </motion.div>
+          <div
+            ref={animationContainerRef}
+            className="flex items-center"
+            style={{
+              width: `${totalWidth * 2}px`,
+              transform: `translateX(${-(
+                scrollOffsetRef.current % totalWidth
+              )}px)`,
+              transition: dragState.isDragging
+                ? "none"
+                : "transform 0.1s linear",
+            }}
+          >
+            {duplicatedImages.map((image, index) => renderImage(image, index))}
+          </div>
+        </div>
       </motion.div>
 
       {/* Fullscreen Modal */}
@@ -1047,7 +1069,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
             <div className="absolute inset-0 pointer-events-none flex items-center justify-between p-4">
               {/* Previous button */}
               <motion.button
-                className="pointer-events-auto  hover:bg-black/20 text-white p-3 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-white/50"
+                className="pointer-events-auto hover:bg-black/10 text-white p-3 rounded-full transition-colors duration-200 cursor-pointer"
                 onClick={(e) => {
                   e.stopPropagation();
                   navigateToPreviousImage();
@@ -1074,7 +1096,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
 
               {/* Next button */}
               <motion.button
-                className="pointer-events-auto hover:bg-black/70 text-white p-3 rounded-full transition-colors duration-200 focus:outline-none cursor-pointer"
+                className="pointer-events-auto hover:bg-black/10 text-white p-3 rounded-full transition-colors duration-200 focus:outline-none cursor-pointer"
                 onClick={(e) => {
                   e.stopPropagation();
                   navigateToNextImage();
