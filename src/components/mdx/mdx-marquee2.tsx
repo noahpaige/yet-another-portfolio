@@ -65,7 +65,7 @@ interface MDXMarquee2Props {
   className?: string;
   /** Fixed height for the marquee container in pixels (default: 300) */
   height?: number;
-  /** Distance in pixels before viewport to start preloading images (default: 500) */
+  /** Distance in pixels before viewport to start preloading images (default: 1000) */
   preloadDistance?: number;
 }
 
@@ -83,7 +83,7 @@ const DEFAULT_GAP = 20;
 const DEFAULT_HEIGHT = 300;
 
 /** Default preload distance in pixels */
-const DEFAULT_PRELOAD_DISTANCE = 500;
+const DEFAULT_PRELOAD_DISTANCE = 1000;
 
 /** Maximum speed multiplier relative to natural speed */
 const MAX_SPEED_MULTIPLIER = 20;
@@ -386,16 +386,85 @@ const MDXMarquee2: React.FC<MDXMarquee2Props> = ({
   const { fpsRef } = useCSSTransformAnimation();
 
   // ============================================================================
-  // SIMPLE IMAGE LOADING SYSTEM (Temporary - will be replaced with intersection observer)
+  // MEMORY-EFFICIENT IMAGE HANDLING WITH INTERSECTION OBSERVER
   // ============================================================================
 
-  // Make all images visible by default for now
+  /**
+   * Intersection Observer for lazy loading images
+   * Detects when images are inside the viewport for full-width marquee
+   */
   useEffect(() => {
+    if (!containerRef.current) return;
+
+    // Create intersection observer for lazy loading
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const imageSrc = entry.target.getAttribute("data-image-src");
+          if (!imageSrc) return;
+
+          if (entry.isIntersecting) {
+            // Image is visible in viewport, add to visible set
+            imageStateRef.current.visibleImages.add(imageSrc);
+
+            // Start loading if not already loaded
+            if (
+              !imageStateRef.current.loadedImages.has(imageSrc) &&
+              !imageStateRef.current.loadingImages.has(imageSrc)
+            ) {
+              imageStateRef.current.loadingImages.add(imageSrc);
+            }
+          }
+          // Note: We don't remove images from visible set when they leave viewport
+          // to maintain smooth scrolling experience
+
+          // Update UI state
+          setImageUiState({
+            loadedCount: imageStateRef.current.loadedImages.size,
+            errorCount: imageStateRef.current.errorImages.size,
+            loadingCount: imageStateRef.current.loadingImages.size,
+          });
+        });
+      },
+      {
+        root: null, // Use viewport as root
+        rootMargin: `${preloadDistance}px`, // Preload images before they enter viewport
+        threshold: 0.01, // Trigger when any part of image enters viewport
+      }
+    );
+
+    // Observe all image containers
+    const imageElements =
+      containerRef.current.querySelectorAll("[data-image-src]");
+    imageElements.forEach((element) => {
+      observer.observe(element);
+    });
+
+    // Store observer reference for cleanup
+    observerRef.current = observer;
+
+    // Cleanup
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+        observerRef.current = null;
+      }
+    };
+  }, [duplicatedImages, preloadDistance]);
+
+  /**
+   * Initialize visible images for immediate display
+   * Show first few images immediately for better UX
+   */
+  useEffect(() => {
+    // Make all images visible by default for immediate display
     const allImageSrcs = duplicatedImages.map((img) => img.src);
+
+    // Set all images as visible and loading
     imageStateRef.current.visibleImages = new Set(allImageSrcs);
     imageStateRef.current.loadingImages = new Set(allImageSrcs);
 
-    // Update UI state for re-render
+    // Update UI state
     setImageUiState({
       loadedCount: imageStateRef.current.loadedImages.size,
       errorCount: imageStateRef.current.errorImages.size,
@@ -419,7 +488,8 @@ const MDXMarquee2: React.FC<MDXMarquee2Props> = ({
       const hasError = imageStateRef.current.errorImages.has(imageSrc);
 
       // Determine if we should show the image
-      const shouldShowImage = isVisible && isLoaded;
+      // Show image if it's visible and either loaded or currently loading
+      const shouldShowImage = isVisible && (isLoaded || isLoading);
 
       return (
         <div
@@ -505,7 +575,7 @@ const MDXMarquee2: React.FC<MDXMarquee2Props> = ({
               )}
 
               {/* Loading indicator overlay */}
-              {isLoading && !hasError && (
+              {isLoading && !hasError && !isLoaded && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-md">
                   <div className="text-white text-sm">Loading...</div>
                 </div>
