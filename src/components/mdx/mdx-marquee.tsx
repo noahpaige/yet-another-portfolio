@@ -265,18 +265,18 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
    * @param isTouch - Whether this is a touch event
    */
   const handleInteractionStart = useCallback(
-    (clientX: number, _isTouch: boolean) => {
+    (clientX: number, isTouch: boolean) => {
       const now = Date.now();
       setDragState({
         isDragging: true,
-        isMouseDown: !_isTouch,
-        isTouchDown: _isTouch,
+        isMouseDown: !isTouch,
+        isTouchDown: isTouch,
         dragStart: clientX,
         dragOffset: scrollOffsetRef.current,
         lastPosition: clientX,
         lastTime: now,
         velocity: 0,
-        isMouseDrag: !_isTouch,
+        isMouseDrag: !isTouch,
         hasMoved: false,
         dragThreshold: 5,
       });
@@ -390,470 +390,332 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
   }, []);
 
   // ============================================================================
-  // CUSTOM HOOKS
+  // EFFECTS AND EVENT HANDLERS
   // ============================================================================
 
-  /**
-   * useMarqueeAnimation Hook
-   *
-   * Manages the core animation loop with performance optimizations:
-   * - Uses refs to avoid re-renders on every frame
-   * - Implements batched state updates
-   * - Handles infinite loop wrapping
-   * - Provides performance monitoring
-   */
+  // Animation loop
+  useEffect(() => {
+    let lastTime = 0;
+    let needsStateUpdate = false;
+    let stateUpdateTimeout: NodeJS.Timeout | null = null;
 
-  const useMarqueeAnimation = () => {
-    // Optimized animation loop using refs to avoid state updates on every frame
-    useEffect(() => {
-      let lastTime = 0;
-      let needsStateUpdate = false;
-      let stateUpdateTimeout: NodeJS.Timeout | null = null;
+    const animate = (currentTime: number) => {
+      const deltaTime = currentTime - lastTime;
+      lastTime = currentTime;
 
-      const animate = (currentTime: number) => {
-        // Calculate delta time for smooth animation regardless of frame rate
-        const deltaTime = currentTime - lastTime;
-        lastTime = currentTime;
+      const isInteracting =
+        interactionStateRef.current.isMouseDown ||
+        interactionStateRef.current.isTouchDown ||
+        interactionStateRef.current.isDragging;
 
-        // Update animation values using refs (no re-renders)
-        // Stop animation when mouse is down OR touch is down OR dragging
-        const isInteracting =
-          interactionStateRef.current.isMouseDown ||
-          interactionStateRef.current.isTouchDown ||
-          interactionStateRef.current.isDragging;
+      if (!isInteracting) {
+        const speed = currentSpeedRef.current;
+        const newOffset = scrollOffsetRef.current + (speed * deltaTime) / 1000;
 
-        if (!isInteracting) {
-          const speed = currentSpeedRef.current;
-          const newOffset =
-            scrollOffsetRef.current + (speed * deltaTime) / 1000;
+        // Handle infinite loop
+        if (newOffset >= totalWidth) {
+          scrollOffsetRef.current = newOffset - totalWidth;
+        } else if (newOffset < 0) {
+          scrollOffsetRef.current = newOffset + totalWidth;
+        } else {
+          scrollOffsetRef.current = newOffset;
+        }
 
-          // Handle infinite loop
-          if (newOffset >= totalWidth) {
-            scrollOffsetRef.current = newOffset - totalWidth;
-          } else if (newOffset < 0) {
-            scrollOffsetRef.current = newOffset + totalWidth;
-          } else {
-            scrollOffsetRef.current = newOffset;
-          }
+        needsStateUpdate = true;
+      } else {
+        needsStateUpdate = false;
+      }
 
+      // Update momentum decay
+      if (!isInteracting) {
+        const currentSpeedValue = currentSpeedRef.current;
+        if (Math.abs(currentSpeedValue - NATURAL_SPEED) >= 0.1) {
+          const decayRate = MOMENTUM_DECAY;
+          currentSpeedRef.current =
+            currentSpeedValue + (NATURAL_SPEED - currentSpeedValue) * decayRate;
           needsStateUpdate = true;
-        } else {
-          // During any interaction, we don't update scroll offset at all
-          // The position is controlled entirely by interaction handlers
-          // This prevents any conflict between animation and user input
-          needsStateUpdate = false; // Don't trigger state updates during interaction
         }
-
-        // Update momentum decay using refs (only when not interacting)
-        // During any interaction, we completely pause all speed updates to prevent conflicts
-        if (!isInteracting) {
-          const currentSpeedValue = currentSpeedRef.current;
-          if (Math.abs(currentSpeedValue - NATURAL_SPEED) >= 0.1) {
-            const decayRate = MOMENTUM_DECAY;
-            currentSpeedRef.current =
-              currentSpeedValue +
-              (NATURAL_SPEED - currentSpeedValue) * decayRate;
-            needsStateUpdate = true;
-          }
-        } else {
-          // During interaction, ensure speed stays at 0 to prevent any animation interference
-          if (Math.abs(currentSpeedRef.current) > 0.1) {
-            currentSpeedRef.current = 0;
-            needsStateUpdate = true;
-          }
+      } else {
+        if (Math.abs(currentSpeedRef.current) > 0.1) {
+          currentSpeedRef.current = 0;
+          needsStateUpdate = true;
         }
+      }
 
-        // Batch state updates to reduce re-renders
-        if (needsStateUpdate && !stateUpdateTimeout) {
-          stateUpdateTimeout = setTimeout(() => {
-            setAnimationState({
-              scrollOffset: scrollOffsetRef.current,
-              currentSpeed: currentSpeedRef.current,
-            });
-            needsStateUpdate = false;
-            stateUpdateTimeout = null;
-          }, 16); // ~60fps update rate
-        }
+      // Batch state updates
+      if (needsStateUpdate && !stateUpdateTimeout) {
+        stateUpdateTimeout = setTimeout(() => {
+          setAnimationState({
+            scrollOffset: scrollOffsetRef.current,
+            currentSpeed: currentSpeedRef.current,
+          });
+          needsStateUpdate = false;
+          stateUpdateTimeout = null;
+        }, 16);
+      }
 
-        // Continue animation loop
-        animationFrameRef.current = requestAnimationFrame(animate);
-      };
-
-      // Start animation loop
       animationFrameRef.current = requestAnimationFrame(animate);
-
-      // Cleanup
-      return () => {
-        if (animationFrameRef.current) {
-          cancelAnimationFrame(animationFrameRef.current);
-        }
-        if (stateUpdateTimeout) {
-          clearTimeout(stateUpdateTimeout);
-        }
-      };
-    }, []);
-
-    return {
-      currentSpeedRef,
-      scrollOffsetRef,
-      animationFrameRef,
     };
-  };
 
-  // Initialize animation hook
-  useMarqueeAnimation();
+    animationFrameRef.current = requestAnimationFrame(animate);
 
-  /**
-   * useTouchHandling Hook
-   *
-   * Manages touch and wheel interactions:
-   * - Touch events for mobile swipe gestures
-   * - Wheel events for desktop scrolling
-   * - Momentum-based speed changes
-   * - Cross-browser compatibility
-   */
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      if (stateUpdateTimeout) {
+        clearTimeout(stateUpdateTimeout);
+      }
+    };
+  }, []);
 
-  const useTouchHandling = () => {
-    // Touch handlers for mobile swipe
-    const handleTouchStart = useCallback(
-      (e: React.TouchEvent) => {
-        handleInteractionStart(e.touches[0].clientX, true);
-      },
-      [handleInteractionStart]
-    );
+  // Wheel event handling
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
 
-    const handleTouchMove = useCallback(
-      (e: React.TouchEvent) => {
-        if (dragStateRef.current.isDragging) {
-          e.preventDefault();
-          handleInteractionMove(e.touches[0].clientX, true);
-        }
-      },
-      [handleInteractionMove]
-    );
+    const handleWheel = (e: Event) => {
+      e.preventDefault();
+      e.stopPropagation();
 
-    const handleTouchEnd = useCallback(() => {
-      handleInteractionEnd(true);
-    }, [handleInteractionEnd]);
+      const wheelEvent = e as WheelEvent;
+      let deltaY = wheelEvent.deltaY;
 
-    // Add wheel event listener directly to the container
-    useEffect(() => {
-      const container = containerRef.current;
-      if (!container) return;
+      if (deltaY === undefined) {
+        const legacyEvent = e as WheelEvent & { wheelDelta?: number };
+        deltaY = legacyEvent.wheelDelta ? -legacyEvent.wheelDelta : 0;
+      }
 
-      const handleWheel = (e: Event) => {
-        e.preventDefault();
-        e.stopPropagation();
+      const direction = deltaY > 0 ? -1 : 1;
+      const speedChange = direction * MAX_SPEED;
+      const newSpeed = currentSpeedRef.current - speedChange;
+      const clampedSpeed = Math.max(-MAX_SPEED, Math.min(MAX_SPEED, newSpeed));
+      currentSpeedRef.current = clampedSpeed;
+      setAnimationState((prev) => ({ ...prev, currentSpeed: clampedSpeed }));
+    };
 
-        // Handle different wheel event formats across browsers
-        const wheelEvent = e as WheelEvent;
-        let deltaY = wheelEvent.deltaY;
+    container.addEventListener("wheel", handleWheel, { passive: false });
 
-        // Fallback for older browsers
-        if (deltaY === undefined) {
-          const legacyEvent = e as WheelEvent & { wheelDelta?: number };
-          deltaY = legacyEvent.wheelDelta ? -legacyEvent.wheelDelta : 0;
-        }
+    return () => {
+      container.removeEventListener("wheel", handleWheel);
+    };
+  }, []);
 
-        const direction = deltaY > 0 ? -1 : 1;
+  // Global mouse event listeners
+  useEffect(() => {
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      if (dragStateRef.current.isDragging && dragStateRef.current.isMouseDrag) {
+        handleInteractionMove(e.clientX, false);
+      }
+    };
 
-        // More responsive speed change for better cross-browser compatibility
-        const speedChange = direction * MAX_SPEED; // Increased sensitivity for Chrome/Arc
-        const newSpeed = currentSpeedRef.current - speedChange;
-        const clampedSpeed = Math.max(
-          -MAX_SPEED,
-          Math.min(MAX_SPEED, newSpeed)
-        );
-        currentSpeedRef.current = clampedSpeed;
-        setAnimationState((prev) => ({ ...prev, currentSpeed: clampedSpeed }));
-      };
-
-      // Use wheel event with passive: false for better cross-browser support
-      container.addEventListener("wheel", handleWheel, { passive: false });
-
-      return () => {
-        container.removeEventListener("wheel", handleWheel);
-      };
-    }, []); // Removed currentSpeed to prevent circular dependencies
-
-    // Mouse handlers for desktop drag
-    const handleMouseDown = useCallback(
-      (e: React.MouseEvent) => {
-        e.preventDefault();
-        // Reset drag occurred flag for new interaction
-        dragOccurredRef.current = false;
-        handleInteractionStart(e.clientX, false);
-      },
-      [handleInteractionStart]
-    );
-
-    const handleMouseMove = useCallback(
-      (e: React.MouseEvent) => {
-        if (
-          dragStateRef.current.isDragging &&
-          dragStateRef.current.isMouseDrag
-        ) {
-          e.preventDefault();
-          handleInteractionMove(e.clientX, false);
-        }
-      },
-      [handleInteractionMove]
-    );
-
-    const handleMouseUp = useCallback(() => {
+    const handleGlobalMouseUp = () => {
       if (dragStateRef.current.isMouseDrag) {
         handleInteractionEnd(false);
       }
-    }, [handleInteractionEnd]);
-
-    // Add global mouse event listeners for drag outside the component
-    useEffect(() => {
-      const handleGlobalMouseMove = (e: MouseEvent) => {
-        if (
-          dragStateRef.current.isDragging &&
-          dragStateRef.current.isMouseDrag
-        ) {
-          handleInteractionMove(e.clientX, false);
-        }
-      };
-
-      const handleGlobalMouseUp = () => {
-        if (dragStateRef.current.isMouseDrag) {
-          handleInteractionEnd(false);
-        }
-      };
-
-      document.addEventListener("mousemove", handleGlobalMouseMove);
-      document.addEventListener("mouseup", handleGlobalMouseUp);
-
-      return () => {
-        document.removeEventListener("mousemove", handleGlobalMouseMove);
-        document.removeEventListener("mouseup", handleGlobalMouseUp);
-      };
-    }, []);
-
-    return {
-      handleTouchStart,
-      handleTouchMove,
-      handleTouchEnd,
-      handleMouseDown,
-      handleMouseMove,
-      handleMouseUp,
-    };
-  };
-
-  // Initialize touch handling hook
-  const touchHandlers = useTouchHandling();
-
-  /**
-   * useFullscreen Hook
-   *
-   * Manages fullscreen modal functionality:
-   * - Modal state management
-   * - Focus trap and keyboard navigation
-   * - Body overflow control
-   * - Accessibility features
-   * - iOS Safari scrolling fix
-   */
-
-  const useFullscreen = () => {
-    const openFullscreen = (image: MarqueeImage) => {
-      setFullscreenState({
-        isFullscreen: true,
-        fullscreenImage: image,
-      });
-      document.body.style.overflow = "hidden";
-
-      // Focus the modal when it opens for accessibility
-      setTimeout(() => {
-        if (modalRef.current) {
-          modalRef.current.focus();
-        }
-      }, 100);
     };
 
-    const closeFullscreen = () => {
-      setFullscreenState({
-        isFullscreen: false,
-        fullscreenImage: null,
-      });
+    document.addEventListener("mousemove", handleGlobalMouseMove);
+    document.addEventListener("mouseup", handleGlobalMouseUp);
 
-      // Apply the fix with a small delay to ensure modal is fully closed
-      setTimeout(fixIOSScrolling, 50);
+    return () => {
+      document.removeEventListener("mousemove", handleGlobalMouseMove);
+      document.removeEventListener("mouseup", handleGlobalMouseUp);
     };
+  }, []);
 
-    // Handle keyboard navigation and body style cleanup
-    useEffect(() => {
-      const handleKeyDown = (e: KeyboardEvent) => {
-        if (!fullscreenState.isFullscreen) return;
+  // Fullscreen keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!fullscreenState.isFullscreen) return;
 
-        switch (e.key) {
-          case "Escape":
-            e.preventDefault();
-            closeFullscreen();
-            break;
-          case "ArrowLeft":
-            e.preventDefault();
-            // TODO: Navigate to previous image
-            break;
-          case "ArrowRight":
-            e.preventDefault();
-            // TODO: Navigate to next image
-            break;
-          case "Home":
-            e.preventDefault();
-            // TODO: Go to first image
-            break;
-          case "End":
-            e.preventDefault();
-            // TODO: Go to last image
-            break;
-        }
-      };
-
-      if (fullscreenState.isFullscreen) {
-        document.addEventListener("keydown", handleKeyDown);
-        return () => document.removeEventListener("keydown", handleKeyDown);
+      switch (e.key) {
+        case "Escape":
+          e.preventDefault();
+          setFullscreenState({
+            isFullscreen: false,
+            fullscreenImage: null,
+          });
+          setTimeout(fixIOSScrolling, 50);
+          break;
+        case "ArrowLeft":
+        case "ArrowRight":
+        case "Home":
+        case "End":
+          e.preventDefault();
+          // TODO: Implement navigation
+          break;
       }
-    }, [fullscreenState.isFullscreen, closeFullscreen]);
-
-    // Cleanup body style on unmount
-    useEffect(() => {
-      return () => {
-        // Apply the fix immediately on unmount
-        fixIOSScrolling();
-      };
-    }, [fixIOSScrolling]);
-
-    return {
-      openFullscreen,
-      closeFullscreen,
     };
-  };
 
-  // Initialize fullscreen hook
-  const fullscreenHandlers = useFullscreen();
+    if (fullscreenState.isFullscreen) {
+      document.addEventListener("keydown", handleKeyDown);
+      return () => document.removeEventListener("keydown", handleKeyDown);
+    }
+  }, [fullscreenState.isFullscreen]);
 
-  /**
-   * useImageLoading Hook
-   *
-   * Manages image loading and visibility:
-   * - Intersection observer for lazy loading
-   * - Image loading state tracking
-   * - Error handling and timeouts
-   * - Memory leak prevention
-   */
+  // Image loading with intersection observer
+  useEffect(() => {
+    if (!containerRef.current) return;
 
-  const useImageLoading = () => {
-    // Intersection observer for lazy loading
-    useEffect(() => {
-      if (!containerRef.current) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const imageSrc = entry.target.getAttribute("data-image-src");
+          if (!imageSrc) return;
 
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            const imageSrc = entry.target.getAttribute("data-image-src");
-            if (!imageSrc) return;
+          if (entry.isIntersecting) {
+            setImageState((prev) => ({
+              ...prev,
+              visibleImages: new Set([...prev.visibleImages, imageSrc]),
+              loadingImages: new Set([...prev.loadingImages, imageSrc]),
+            }));
 
-            if (entry.isIntersecting) {
-              // Load image when it becomes visible
+            setTimeout(() => {
               setImageState((prev) => ({
                 ...prev,
-                visibleImages: new Set([...prev.visibleImages, imageSrc]),
-                loadingImages: new Set([...prev.loadingImages, imageSrc]),
+                loadedImages: new Set([...prev.loadedImages, imageSrc]),
+                loadingImages: new Set(
+                  [...prev.loadingImages].filter((src) => src !== imageSrc)
+                ),
               }));
+            }, 100);
 
-              // Mark image as loaded after delay
-              setTimeout(() => {
-                setImageState((prev) => ({
-                  ...prev,
-                  loadedImages: new Set([...prev.loadedImages, imageSrc]),
-                  loadingImages: new Set(
-                    [...prev.loadingImages].filter((src) => src !== imageSrc)
-                  ),
-                }));
-              }, 100);
-
-              // Error handling
-              setTimeout(() => {
-                setImageState((prev) => {
-                  if (!prev.loadedImages.has(imageSrc)) {
-                    return {
-                      ...prev,
-                      errorImages: new Set([...prev.errorImages, imageSrc]),
-                      loadingImages: new Set(
-                        [...prev.loadingImages].filter(
-                          (src) => src !== imageSrc
-                        )
-                      ),
-                    };
-                  }
-                  return prev;
-                });
-              }, 5000);
-            } else {
-              // Remove from visible images when out of view
+            setTimeout(() => {
               setImageState((prev) => {
-                const newVisibleImages = new Set(prev.visibleImages);
-                const newLoadingImages = new Set(prev.loadingImages);
-
-                newVisibleImages.delete(imageSrc);
-                newLoadingImages.delete(imageSrc);
-
-                return {
-                  ...prev,
-                  visibleImages: newVisibleImages,
-                  loadingImages: newLoadingImages,
-                };
+                if (!prev.loadedImages.has(imageSrc)) {
+                  return {
+                    ...prev,
+                    errorImages: new Set([...prev.errorImages, imageSrc]),
+                    loadingImages: new Set(
+                      [...prev.loadingImages].filter((src) => src !== imageSrc)
+                    ),
+                  };
+                }
+                return prev;
               });
-            }
-          });
-        },
-        {
-          root: containerRef.current,
-          rootMargin: `${preloadDistance}px`,
-          threshold: 0.1,
-        }
-      );
+            }, 5000);
+          } else {
+            setImageState((prev) => {
+              const newVisibleImages = new Set(prev.visibleImages);
+              const newLoadingImages = new Set(prev.loadingImages);
 
-      observerRef.current = observer;
+              newVisibleImages.delete(imageSrc);
+              newLoadingImages.delete(imageSrc);
 
-      // Observe all image containers
-      const imageContainers =
-        containerRef.current.querySelectorAll("[data-image-src]");
-      imageContainers.forEach((container) => {
-        observer.observe(container);
-      });
+              return {
+                ...prev,
+                visibleImages: newVisibleImages,
+                loadingImages: newLoadingImages,
+              };
+            });
+          }
+        });
+      },
+      {
+        root: containerRef.current,
+        rootMargin: `${preloadDistance}px`,
+        threshold: 0.1,
+      }
+    );
 
-      return () => {
-        observer.disconnect();
-        observerRef.current = null;
-      };
-    }, [preloadDistance]); // Removed duplicatedImages dependency to prevent recreation
+    observerRef.current = observer;
 
-    // Observe new images when duplicatedImages changes
-    useEffect(() => {
-      if (!observerRef.current || !containerRef.current) return;
+    const imageContainers =
+      containerRef.current.querySelectorAll("[data-image-src]");
+    imageContainers.forEach((container) => {
+      observer.observe(container);
+    });
 
-      // Disconnect and reconnect observer to avoid memory leaks
-      const observer = observerRef.current;
+    return () => {
       observer.disconnect();
-
-      // Observe all image containers
-      const imageContainers =
-        containerRef.current.querySelectorAll("[data-image-src]");
-      imageContainers.forEach((container) => {
-        observer.observe(container);
-      });
-    }, [duplicatedImages]);
-
-    return {
-      observerRef,
+      observerRef.current = null;
     };
+  }, [preloadDistance]);
+
+  // Observe new images when duplicatedImages changes
+  useEffect(() => {
+    if (!observerRef.current || !containerRef.current) return;
+
+    const observer = observerRef.current;
+    observer.disconnect();
+
+    const imageContainers =
+      containerRef.current.querySelectorAll("[data-image-src]");
+    imageContainers.forEach((container) => {
+      observer.observe(container);
+    });
+  }, [duplicatedImages]);
+
+  // Fullscreen handlers
+  const openFullscreen = (image: MarqueeImage) => {
+    setFullscreenState({
+      isFullscreen: true,
+      fullscreenImage: image,
+    });
+    document.body.style.overflow = "hidden";
+
+    setTimeout(() => {
+      if (modalRef.current) {
+        modalRef.current.focus();
+      }
+    }, 100);
   };
 
-  // Initialize image loading hook
-  useImageLoading();
+  const closeFullscreen = () => {
+    setFullscreenState({
+      isFullscreen: false,
+      fullscreenImage: null,
+    });
+    setTimeout(fixIOSScrolling, 50);
+  };
+
+  // Touch and mouse handlers
+  const handleTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      handleInteractionStart(e.touches[0].clientX, true);
+    },
+    [handleInteractionStart]
+  );
+
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      if (dragStateRef.current.isDragging) {
+        e.preventDefault();
+        handleInteractionMove(e.touches[0].clientX, true);
+      }
+    },
+    [handleInteractionMove]
+  );
+
+  const handleTouchEnd = useCallback(() => {
+    handleInteractionEnd(true);
+  }, [handleInteractionEnd]);
+
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      dragOccurredRef.current = false;
+      handleInteractionStart(e.clientX, false);
+    },
+    [handleInteractionStart]
+  );
+
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      if (dragStateRef.current.isDragging && dragStateRef.current.isMouseDrag) {
+        e.preventDefault();
+        handleInteractionMove(e.clientX, false);
+      }
+    },
+    [handleInteractionMove]
+  );
+
+  const handleMouseUp = useCallback(() => {
+    if (dragStateRef.current.isMouseDrag) {
+      handleInteractionEnd(false);
+    }
+  }, [handleInteractionEnd]);
 
   // ============================================================================
   // COMPONENT LOGIC
@@ -923,7 +785,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
             onClick={() => {
               // Only open fullscreen if no drag occurred and we have a loaded image
               if (!hasError && !dragOccurredRef.current && isLoaded) {
-                fullscreenHandlers.openFullscreen(image);
+                openFullscreen(image);
               }
             }}
             role="button"
@@ -937,7 +799,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
               !hasError &&
               e.key === "Enter" &&
               isLoaded &&
-              fullscreenHandlers.openFullscreen(image)
+              openFullscreen(image)
             }
           >
             <div className="relative">
@@ -1040,7 +902,6 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
       imageState.errorImages,
       gap,
       height,
-      fullscreenHandlers,
     ]
   );
 
@@ -1054,12 +915,12 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
           width: "100vw",
           marginLeft: "calc(-50vw + 50%)",
         }}
-        onTouchStart={touchHandlers.handleTouchStart}
-        onTouchMove={touchHandlers.handleTouchMove}
-        onTouchEnd={touchHandlers.handleTouchEnd}
-        onMouseDown={touchHandlers.handleMouseDown}
-        onMouseMove={touchHandlers.handleMouseMove}
-        onMouseUp={touchHandlers.handleMouseUp}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
         role="region"
         aria-label="Image marquee gallery"
         aria-live="polite"
@@ -1092,7 +953,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
           <motion.div
             ref={modalRef}
             className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 cursor-pointer"
-            onClick={fullscreenHandlers.closeFullscreen}
+            onClick={closeFullscreen}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
