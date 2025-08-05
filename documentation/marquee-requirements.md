@@ -13,6 +13,11 @@ The MDXMarquee component is a high-performance, accessible image marquee compone
 - **Smooth Animation**: Continuous scrolling at configurable speed (default: 50px/second)
 - **Momentum Physics**: Natural momentum transfer when users drag and release
 - **Loop Handling**: Proper handling of scroll offset wrapping when reaching total width boundaries
+- **Fullscreen Synchronization**:
+  - Pause scrolling when fullscreen modal opens
+  - Position carousel to fullscreen image when modal closes
+  - Smooth positioning animation with gradual resume of normal scrolling
+  - Track fullscreen image position during navigation
 
 ### **2. Image Management**
 
@@ -57,6 +62,11 @@ The MDXMarquee component is a high-performance, accessible image marquee compone
   - `Arrow Left/Right`: Navigate between images
   - `Home/End`: Jump to first/last image
 - **Touch Navigation**: Swipe gestures for navigation (optional)
+- **Swipe Gestures**:
+  - Swipe left/right to navigate between images
+  - Swipe up/down to close modal
+  - Velocity-based detection for quick swipes
+  - Minimum distance thresholds to prevent accidental triggers
 - **Image Counter**: Display current image position (e.g., "3 / 10")
 - **Caption Support**: Display image captions if provided
 - **Focus Management**: Proper focus trapping and restoration
@@ -69,6 +79,7 @@ The MDXMarquee component is a high-performance, accessible image marquee compone
 - **Debounced Observers**: Intersection observer callbacks should be debounced (16ms)
 - **Efficient State Management**: Minimize React re-renders during animation
 - **Memory Management**: Proper cleanup of animation frames, observers, and event listeners
+- **Direction-Based Preloading**: Optimize image loading based on scroll direction with dynamic root margins
 
 ## **Technical Requirements**
 
