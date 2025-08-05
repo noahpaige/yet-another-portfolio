@@ -175,17 +175,11 @@ const MDXMarquee2: React.FC<MDXMarquee2Props> = ({
   }, [hardwareCapability.performanceTier, frameRateConfig, hardwareCapability]);
 
   // ============================================================================
-  // STATE MANAGEMENT
+  // OPTIMIZED STATE MANAGEMENT
   // ============================================================================
 
-  /** Animation state for scroll offset and speed */
-  const [animationState, setAnimationState] = useState({
-    scrollOffset: 0,
-    currentSpeed: speed,
-  });
-
-  /** Drag state for touch interactions */
-  const [dragState, setDragState] = useState({
+  /** Consolidated drag state using refs for performance */
+  const dragStateRef = useRef({
     isDragging: false,
     isMouseDown: false,
     isTouchDown: false,
@@ -194,23 +188,30 @@ const MDXMarquee2: React.FC<MDXMarquee2Props> = ({
     lastPosition: 0,
     lastTime: 0,
     velocity: 0,
-    isMouseDrag: false,
     hasMoved: false,
     dragThreshold: 5,
   });
 
-  /** Image loading state for lazy loading and error handling */
-  const [imageState, setImageState] = useState({
+  /** Minimal state for UI updates only */
+  const [uiState, setUiState] = useState({
+    isDragging: false, // Only this triggers re-renders
+    isFullscreen: false,
+    fullscreenImage: null as MarqueeImage | null,
+  });
+
+  /** Image loading state - optimized with refs for performance */
+  const imageStateRef = useRef({
     loadedImages: new Set<string>(),
     visibleImages: new Set<string>(),
     errorImages: new Set<string>(),
     loadingImages: new Set<string>(),
   });
 
-  /** Fullscreen modal state */
-  const [fullscreenState, setFullscreenState] = useState({
-    isFullscreen: false,
-    fullscreenImage: null as MarqueeImage | null,
+  /** Minimal image state for UI updates */
+  const [imageUiState, setImageUiState] = useState({
+    loadedCount: 0,
+    errorCount: 0,
+    loadingCount: 0,
   });
 
   // ============================================================================
@@ -317,9 +318,9 @@ const MDXMarquee2: React.FC<MDXMarquee2Props> = ({
 
         // Update scroll offset using refs (no React state updates)
         if (
-          !dragState.isDragging &&
-          !dragState.isMouseDown &&
-          !dragState.isTouchDown
+          !dragStateRef.current.isDragging &&
+          !dragStateRef.current.isMouseDown &&
+          !dragStateRef.current.isTouchDown
         ) {
           const speed = currentSpeedRef.current;
           const newOffset =
@@ -354,22 +355,15 @@ const MDXMarquee2: React.FC<MDXMarquee2Props> = ({
           cancelAnimationFrame(animationId);
         }
       };
-    }, [
-      dragState.isDragging,
-      dragState.isMouseDown,
-      dragState.isTouchDown,
-      totalWidth,
-      frameRateConfig.interval,
-      frameRateConfig.maxFps,
-    ]);
+    }, [totalWidth, frameRateConfig.interval, frameRateConfig.maxFps]);
 
     // Optimized momentum decay with reduced updates
     useEffect(() => {
       const momentumInterval = setInterval(() => {
         if (
-          !dragState.isDragging &&
-          !dragState.isMouseDown &&
-          !dragState.isTouchDown
+          !dragStateRef.current.isDragging &&
+          !dragStateRef.current.isMouseDown &&
+          !dragStateRef.current.isTouchDown
         ) {
           const currentSpeed = currentSpeedRef.current;
           if (Math.abs(currentSpeed - NATURAL_SPEED) >= 0.1) {
@@ -381,7 +375,7 @@ const MDXMarquee2: React.FC<MDXMarquee2Props> = ({
       }, 16); // Update momentum at 60fps max
 
       return () => clearInterval(momentumInterval);
-    }, [dragState.isDragging, dragState.isMouseDown, dragState.isTouchDown]);
+    }, []);
 
     return {
       fpsRef,
@@ -398,11 +392,15 @@ const MDXMarquee2: React.FC<MDXMarquee2Props> = ({
   // Make all images visible by default for now
   useEffect(() => {
     const allImageSrcs = duplicatedImages.map((img) => img.src);
-    setImageState((prev) => ({
-      ...prev,
-      visibleImages: new Set(allImageSrcs),
-      loadingImages: new Set(allImageSrcs),
-    }));
+    imageStateRef.current.visibleImages = new Set(allImageSrcs);
+    imageStateRef.current.loadingImages = new Set(allImageSrcs);
+
+    // Update UI state for re-render
+    setImageUiState({
+      loadedCount: imageStateRef.current.loadedImages.size,
+      errorCount: imageStateRef.current.errorImages.size,
+      loadingCount: allImageSrcs.length,
+    });
   }, [duplicatedImages]);
 
   // ============================================================================
@@ -415,10 +413,10 @@ const MDXMarquee2: React.FC<MDXMarquee2Props> = ({
   const renderImage = useCallback(
     (image: MarqueeImage, index: number) => {
       const imageSrc = image.src;
-      const isVisible = imageState.visibleImages.has(imageSrc);
-      const isLoaded = imageState.loadedImages.has(imageSrc);
-      const isLoading = imageState.loadingImages.has(imageSrc);
-      const hasError = imageState.errorImages.has(imageSrc);
+      const isVisible = imageStateRef.current.visibleImages.has(imageSrc);
+      const isLoaded = imageStateRef.current.loadedImages.has(imageSrc);
+      const isLoading = imageStateRef.current.loadingImages.has(imageSrc);
+      const hasError = imageStateRef.current.errorImages.has(imageSrc);
 
       // Determine if we should show the image
       const shouldShowImage = isVisible && isLoaded;
@@ -481,26 +479,26 @@ const MDXMarquee2: React.FC<MDXMarquee2Props> = ({
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     priority={index < 3} // Prioritize first 3 images
                     onLoad={() => {
-                      setImageState((prev) => ({
-                        ...prev,
-                        loadedImages: new Set([...prev.loadedImages, imageSrc]),
-                        loadingImages: new Set(
-                          [...prev.loadingImages].filter(
-                            (src) => src !== imageSrc
-                          )
-                        ),
-                      }));
+                      imageStateRef.current.loadedImages.add(imageSrc);
+                      imageStateRef.current.loadingImages.delete(imageSrc);
+
+                      // Update UI state for re-render
+                      setImageUiState({
+                        loadedCount: imageStateRef.current.loadedImages.size,
+                        errorCount: imageStateRef.current.errorImages.size,
+                        loadingCount: imageStateRef.current.loadingImages.size,
+                      });
                     }}
                     onError={() => {
-                      setImageState((prev) => ({
-                        ...prev,
-                        errorImages: new Set([...prev.errorImages, imageSrc]),
-                        loadingImages: new Set(
-                          [...prev.loadingImages].filter(
-                            (src) => src !== imageSrc
-                          )
-                        ),
-                      }));
+                      imageStateRef.current.errorImages.add(imageSrc);
+                      imageStateRef.current.loadingImages.delete(imageSrc);
+
+                      // Update UI state for re-render
+                      setImageUiState({
+                        loadedCount: imageStateRef.current.loadedImages.size,
+                        errorCount: imageStateRef.current.errorImages.size,
+                        loadingCount: imageStateRef.current.loadingImages.size,
+                      });
                     }}
                   />
                 </div>
@@ -523,10 +521,9 @@ const MDXMarquee2: React.FC<MDXMarquee2Props> = ({
       );
     },
     [
-      imageState.visibleImages,
-      imageState.loadedImages,
-      imageState.loadingImages,
-      imageState.errorImages,
+      imageUiState.loadedCount,
+      imageUiState.errorCount,
+      imageUiState.loadingCount,
       gap,
       height,
     ]
