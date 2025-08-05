@@ -18,7 +18,7 @@
  * - Blur placeholder for smooth loading experience
  *
  * @author Noah Paige
- * @version 2.1.0
+ * @version 2.3.0
  * @since 2024-12-19
  */
 
@@ -288,46 +288,42 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
     []
   );
 
-  const handleInteractionMove = useCallback(
-    (clientX: number, _isTouch: boolean) => {
-      if (dragStateRef.current.isDragging) {
-        const now = Date.now();
-        const deltaX = dragStateRef.current.dragStart - clientX;
+  const handleInteractionMove = useCallback((clientX: number) => {
+    if (dragStateRef.current.isDragging) {
+      const now = Date.now();
+      const deltaX = dragStateRef.current.dragStart - clientX;
 
-        // Check if user has moved enough to consider it a drag
-        const hasMoved = Math.abs(deltaX) > dragStateRef.current.dragThreshold;
+      // Check if user has moved enough to consider it a drag
+      const hasMoved = Math.abs(deltaX) > dragStateRef.current.dragThreshold;
 
-        if (hasMoved) {
-          // Mark that a drag operation occurred
-          dragOccurredRef.current = true;
+      if (hasMoved) {
+        // Mark that a drag operation occurred
+        dragOccurredRef.current = true;
 
-          const newOffset = dragStateRef.current.dragOffset + deltaX;
+        const newOffset = dragStateRef.current.dragOffset + deltaX;
 
-          // Calculate velocity for momentum transfer
-          const timeDelta = now - dragStateRef.current.lastTime;
-          const positionDelta = clientX - dragStateRef.current.lastPosition;
-          const velocity =
-            timeDelta > 0 ? (positionDelta / timeDelta) * 1000 : 0; // pixels per second
+        // Calculate velocity for momentum transfer
+        const timeDelta = now - dragStateRef.current.lastTime;
+        const positionDelta = clientX - dragStateRef.current.lastPosition;
+        const velocity = timeDelta > 0 ? (positionDelta / timeDelta) * 1000 : 0; // pixels per second
 
-          // Update refs directly for immediate response
-          scrollOffsetRef.current = newOffset;
-          setAnimationState((prev) => ({ ...prev, scrollOffset: newOffset }));
+        // Update refs directly for immediate response
+        scrollOffsetRef.current = newOffset;
+        setAnimationState((prev) => ({ ...prev, scrollOffset: newOffset }));
 
-          // Update drag state with new position and velocity
-          setDragState((prev) => ({
-            ...prev,
-            lastPosition: clientX,
-            lastTime: now,
-            velocity: velocity,
-            hasMoved: true,
-          }));
-        }
+        // Update drag state with new position and velocity
+        setDragState((prev) => ({
+          ...prev,
+          lastPosition: clientX,
+          lastTime: now,
+          velocity: velocity,
+          hasMoved: true,
+        }));
       }
-    },
-    []
-  );
+    }
+  }, []);
 
-  const handleInteractionEnd = useCallback((_isTouch: boolean) => {
+  const handleInteractionEnd = useCallback(() => {
     const finalVelocity = dragStateRef.current.velocity;
     const hasMoved = dragStateRef.current.hasMoved;
 
@@ -505,13 +501,13 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
   useEffect(() => {
     const handleGlobalMouseMove = (e: MouseEvent) => {
       if (dragStateRef.current.isDragging && dragStateRef.current.isMouseDrag) {
-        handleInteractionMove(e.clientX, false);
+        handleInteractionMove(e.clientX);
       }
     };
 
     const handleGlobalMouseUp = () => {
       if (dragStateRef.current.isMouseDrag) {
-        handleInteractionEnd(false);
+        handleInteractionEnd();
       }
     };
 
@@ -523,6 +519,73 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
       document.removeEventListener("mouseup", handleGlobalMouseUp);
     };
   }, []);
+
+  /**
+   * Navigate to the previous image in fullscreen mode
+   */
+  const navigateToPreviousImage = useCallback(() => {
+    if (!fullscreenState.fullscreenImage) return;
+
+    const currentIndex = images.findIndex(
+      (img) => img.src === fullscreenState.fullscreenImage?.src
+    );
+
+    if (currentIndex === -1) return;
+
+    const previousIndex =
+      currentIndex === 0 ? images.length - 1 : currentIndex - 1;
+    const previousImage = images[previousIndex];
+
+    setFullscreenState({
+      isFullscreen: true,
+      fullscreenImage: previousImage,
+    });
+  }, [fullscreenState.fullscreenImage, images]);
+
+  /**
+   * Navigate to the next image in fullscreen mode
+   */
+  const navigateToNextImage = useCallback(() => {
+    if (!fullscreenState.fullscreenImage) return;
+
+    const currentIndex = images.findIndex(
+      (img) => img.src === fullscreenState.fullscreenImage?.src
+    );
+
+    if (currentIndex === -1) return;
+
+    const nextIndex = currentIndex === images.length - 1 ? 0 : currentIndex + 1;
+    const nextImage = images[nextIndex];
+
+    setFullscreenState({
+      isFullscreen: true,
+      fullscreenImage: nextImage,
+    });
+  }, [fullscreenState.fullscreenImage, images]);
+
+  /**
+   * Navigate to the first image in fullscreen mode
+   */
+  const navigateToFirstImage = useCallback(() => {
+    if (images.length === 0) return;
+
+    setFullscreenState({
+      isFullscreen: true,
+      fullscreenImage: images[0],
+    });
+  }, [images]);
+
+  /**
+   * Navigate to the last image in fullscreen mode
+   */
+  const navigateToLastImage = useCallback(() => {
+    if (images.length === 0) return;
+
+    setFullscreenState({
+      isFullscreen: true,
+      fullscreenImage: images[images.length - 1],
+    });
+  }, [images]);
 
   // Fullscreen keyboard navigation
   useEffect(() => {
@@ -539,11 +602,20 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
           setTimeout(fixIOSScrolling, 50);
           break;
         case "ArrowLeft":
+          e.preventDefault();
+          navigateToPreviousImage();
+          break;
         case "ArrowRight":
+          e.preventDefault();
+          navigateToNextImage();
+          break;
         case "Home":
+          e.preventDefault();
+          navigateToFirstImage();
+          break;
         case "End":
           e.preventDefault();
-          // TODO: Implement navigation
+          navigateToLastImage();
           break;
       }
     };
@@ -552,7 +624,13 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
       document.addEventListener("keydown", handleKeyDown);
       return () => document.removeEventListener("keydown", handleKeyDown);
     }
-  }, [fullscreenState.isFullscreen]);
+  }, [
+    fullscreenState.isFullscreen,
+    navigateToPreviousImage,
+    navigateToNextImage,
+    navigateToFirstImage,
+    navigateToLastImage,
+  ]);
 
   // Image loading with intersection observer
   useEffect(() => {
@@ -682,14 +760,14 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
     (e: React.TouchEvent) => {
       if (dragStateRef.current.isDragging) {
         e.preventDefault();
-        handleInteractionMove(e.touches[0].clientX, true);
+        handleInteractionMove(e.touches[0].clientX);
       }
     },
     [handleInteractionMove]
   );
 
   const handleTouchEnd = useCallback(() => {
-    handleInteractionEnd(true);
+    handleInteractionEnd();
   }, [handleInteractionEnd]);
 
   const handleMouseDown = useCallback(
@@ -705,7 +783,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
     (e: React.MouseEvent) => {
       if (dragStateRef.current.isDragging && dragStateRef.current.isMouseDrag) {
         e.preventDefault();
-        handleInteractionMove(e.clientX, false);
+        handleInteractionMove(e.clientX);
       }
     },
     [handleInteractionMove]
@@ -713,7 +791,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
 
   const handleMouseUp = useCallback(() => {
     if (dragStateRef.current.isMouseDrag) {
-      handleInteractionEnd(false);
+      handleInteractionEnd();
     }
   }, [handleInteractionEnd]);
 
@@ -930,7 +1008,9 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
         <div id="marquee-instructions" className="sr-only">
           Use mouse wheel, drag with mouse or touch, or touch gestures to
           control the marquee speed. Drag to pause and release to resume with
-          momentum. Click on images to view them in fullscreen.
+          momentum. Click on images to view them in fullscreen. In fullscreen
+          mode, use arrow keys to navigate between images, Home/End to jump to
+          first/last image, and Escape to close.
         </div>
         <motion.div
           ref={containerRef}
@@ -963,6 +1043,75 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
             aria-label={`Fullscreen view of ${fullscreenState.fullscreenImage.alt}`}
             tabIndex={-1}
           >
+            {/* Navigation buttons */}
+            <div className="absolute inset-0 pointer-events-none flex items-center justify-between p-4">
+              {/* Previous button */}
+              <motion.button
+                className="pointer-events-auto  hover:bg-black/20 text-white p-3 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-white/50"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateToPreviousImage();
+                }}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                aria-label="Previous image"
+                title="Previous image (←)"
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 19l-7-7 7-7"
+                  />
+                </svg>
+              </motion.button>
+
+              {/* Next button */}
+              <motion.button
+                className="pointer-events-auto hover:bg-black/70 text-white p-3 rounded-full transition-colors duration-200 focus:outline-none cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateToNextImage();
+                }}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                aria-label="Next image"
+                title="Next image (→)"
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              </motion.button>
+            </div>
+
+            {/* Image counter */}
+            <div className="absolute top-4 left-4 pointer-events-none">
+              <div className="bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+                {(() => {
+                  const currentIndex = images.findIndex(
+                    (img) => img.src === fullscreenState.fullscreenImage?.src
+                  );
+                  return `${currentIndex + 1} / ${images.length}`;
+                })()}
+              </div>
+            </div>
+
             <motion.div
               className="flex flex-col items-center justify-center w-full h-full"
               initial={{ scale: 0.8, opacity: 0 }}
@@ -984,7 +1133,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
                   alt={fullscreenState.fullscreenImage.alt}
                   width={1920}
                   height={1080}
-                  className="w-full h-full object-contain rounded-md"
+                  className="w-fit h-fit object-contain rounded-md"
                   placeholder={
                     fullscreenState.fullscreenImage.placeholder
                       ? "blur"
