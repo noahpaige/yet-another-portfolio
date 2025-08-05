@@ -15,9 +15,10 @@
  * - Comprehensive error handling
  * - WCAG 2.1 AA accessibility compliance
  * - Performance optimized with ref-based animation
+ * - Optional smallSrc for optimized marquee display with full-size fullscreen
  *
  * @author Noah Paige
- * @version 2.0.0
+ * @version 2.1.0
  * @since 2024-12-19
  */
 
@@ -43,6 +44,8 @@ export interface MarqueeImage {
   height?: number;
   /** Optional caption text to display below the image */
   captionText?: string;
+  /** Optional smaller image source for marquee display (uses src if not provided) */
+  smallSrc?: string;
 }
 
 /**
@@ -822,36 +825,68 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
         (entries) => {
           entries.forEach((entry) => {
             const imageSrc = entry.target.getAttribute("data-image-src");
+            const smallImageSrc = entry.target.getAttribute(
+              "data-small-image-src"
+            );
             if (!imageSrc) return;
 
             if (entry.isIntersecting) {
+              // Track both small and large images for visibility
+              const imagesToTrack = [imageSrc];
+              if (smallImageSrc && smallImageSrc !== imageSrc) {
+                imagesToTrack.push(smallImageSrc);
+              }
+
               setImageState((prev) => ({
                 ...prev,
-                visibleImages: new Set([...prev.visibleImages, imageSrc]),
+                visibleImages: new Set([
+                  ...prev.visibleImages,
+                  ...imagesToTrack,
+                ]),
               }));
+
               // Mark as loaded after a small delay to simulate loading
               setTimeout(() => {
                 setImageState((prev) => ({
                   ...prev,
-                  loadedImages: new Set([...prev.loadedImages, imageSrc]),
+                  loadedImages: new Set([
+                    ...prev.loadedImages,
+                    ...imagesToTrack,
+                  ]),
                 }));
               }, IMAGE_LOAD_DELAY);
+
               // Mark as error if image fails to load after timeout
               setTimeout(() => {
                 setImageState((prev) => {
-                  if (!prev.loadedImages.has(imageSrc)) {
-                    return {
-                      ...prev,
-                      errorImages: new Set([...prev.errorImages, imageSrc]),
-                    };
-                  }
-                  return prev;
+                  const newErrorImages = new Set(prev.errorImages);
+                  let hasChanges = false;
+
+                  imagesToTrack.forEach((src) => {
+                    if (!prev.loadedImages.has(src)) {
+                      newErrorImages.add(src);
+                      hasChanges = true;
+                    }
+                  });
+
+                  return hasChanges
+                    ? {
+                        ...prev,
+                        errorImages: newErrorImages,
+                      }
+                    : prev;
                 });
               }, IMAGE_LOAD_TIMEOUT); // 5 second timeout for image loading
             } else {
+              // Remove from visible images when out of view
+              const imagesToRemove = [imageSrc];
+              if (smallImageSrc && smallImageSrc !== imageSrc) {
+                imagesToRemove.push(smallImageSrc);
+              }
+
               setImageState((prev) => {
                 const newVisibleImages = new Set(prev.visibleImages);
-                newVisibleImages.delete(imageSrc);
+                imagesToRemove.forEach((src) => newVisibleImages.delete(src));
                 return {
                   ...prev,
                   visibleImages: newVisibleImages,
@@ -945,9 +980,11 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
    */
   const renderImage = useCallback(
     (image: MarqueeImage, index: number) => {
-      const isVisible = imageState.visibleImages.has(image.src);
-      const isLoaded = imageState.loadedImages.has(image.src);
-      const hasError = imageState.errorImages.has(image.src);
+      // Use smallSrc for marquee display if available, otherwise fall back to src
+      const marqueeImageSrc = image.smallSrc || image.src;
+      const isVisible = imageState.visibleImages.has(marqueeImageSrc);
+      const isLoaded = imageState.loadedImages.has(marqueeImageSrc);
+      const hasError = imageState.errorImages.has(marqueeImageSrc);
 
       return (
         <div
@@ -955,6 +992,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
           className="flex-shrink-0 relative"
           style={{ marginRight: `${gap}px` }}
           data-image-src={image.src}
+          data-small-image-src={image.smallSrc}
         >
           <motion.div
             className="cursor-pointer"
@@ -1020,7 +1058,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
                     transition={{ duration: 0.3 }}
                   >
                     <Image
-                      src={image.src}
+                      src={marqueeImageSrc}
                       alt={image.alt}
                       width={image.width || 300}
                       height={image.height || 200}
@@ -1031,7 +1069,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
                           ...prev,
                           loadedImages: new Set([
                             ...prev.loadedImages,
-                            image.src,
+                            marqueeImageSrc,
                           ]),
                         }));
                       }}
@@ -1040,7 +1078,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
                           ...prev,
                           errorImages: new Set([
                             ...prev.errorImages,
-                            image.src,
+                            marqueeImageSrc,
                           ]),
                         }));
                       }}
