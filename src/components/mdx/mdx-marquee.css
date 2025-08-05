@@ -1,0 +1,230 @@
+/* MDXMarquee CSS Styles - Phase 1: Core Scrolling Animation */
+
+/* Core marquee container with hardware acceleration */
+.marquee-container {
+  transform: translate3d(0, 0, 0);
+  will-change: transform;
+  /* Ensure smooth scrolling */
+  backface-visibility: hidden;
+  perspective: 1000px;
+  /* Phase 5: Performance Optimizations */
+  contain: layout style paint;
+  /* Force GPU layer creation */
+  transform-style: preserve-3d;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .marquee-container {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* Phase 2: Image Hover Effects */
+.marquee-image-container {
+  cursor: pointer;
+  transform: translate3d(0, 0, 0);
+  will-change: transform;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Ensure smooth hover transitions */
+  backface-visibility: hidden;
+  perspective: 1000px;
+  /* Phase 5: Performance Optimizations */
+  contain: layout style;
+  /* Optimize for GPU acceleration */
+  transform-style: preserve-3d;
+}
+
+.marquee-image-container:hover {
+  transform: translate3d(0, 0, 0) scale(1.05);
+  z-index: 10;
+}
+
+/* Reduced motion support for hover effects */
+@media (prefers-reduced-motion: reduce) {
+  .marquee-image-container {
+    transition: none !important;
+  }
+
+  .marquee-image-container:hover {
+    transform: none !important;
+  }
+}
+
+/* Phase 3: Image Loading Fade-in Animation */
+.marquee-image-fade-in {
+  opacity: 0;
+  animation: fadeIn 0.3s ease-out forwards;
+  /* Ensure smooth fade-in */
+  will-change: opacity;
+  /* Phase 5: Performance Optimizations */
+  contain: layout style;
+  /* Optimize for GPU acceleration */
+  transform: translate3d(0, 0, 0);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Reduced motion support for fade-in effects */
+@media (prefers-reduced-motion: reduce) {
+  .marquee-image-fade-in {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+}
+
+/* Phase 4: Fullscreen Modal Animations */
+.modal-backdrop {
+  opacity: 0;
+  transition: opacity 0.3s ease-out;
+  will-change: opacity;
+  /* Phase 5: Performance Optimizations */
+  contain: layout style paint;
+  /* Force GPU layer for modal */
+  transform: translate3d(0, 0, 0);
+}
+
+.modal-backdrop.visible {
+  opacity: 1;
+}
+
+.modal-content {
+  opacity: 0;
+  transform: translate3d(0, 0, 0) scale(0.8);
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+  will-change: opacity, transform;
+  /* Phase 5: Performance Optimizations */
+  contain: layout style;
+  /* Optimize for GPU acceleration */
+  transform-style: preserve-3d;
+}
+
+.modal-content.visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+}
+
+.modal-caption {
+  opacity: 0;
+  transform: translate3d(0, 20px, 0);
+  transition: opacity 0.3s ease-out 0.1s, transform 0.3s ease-out 0.1s;
+  will-change: opacity, transform;
+  /* Phase 5: Performance Optimizations */
+  contain: layout style;
+  /* Optimize for GPU acceleration */
+  transform-style: preserve-3d;
+}
+
+.modal-caption.visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+/* Reduced motion support for modal animations */
+@media (prefers-reduced-motion: reduce) {
+  .modal-backdrop,
+  .modal-content,
+  .modal-caption {
+    transition: none !important;
+  }
+
+  .modal-backdrop.visible,
+  .modal-content.visible,
+  .modal-caption.visible {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* Phase 5: Performance Optimizations */
+
+/* High-performance image rendering */
+.marquee-image {
+  /* Force GPU acceleration for images */
+  transform: translate3d(0, 0, 0);
+  will-change: transform;
+  /* Optimize image rendering */
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  /* Prevent layout shifts */
+  contain: layout style;
+}
+
+/* Optimize for low-end devices */
+@media (max-width: 768px) {
+  .marquee-container {
+    /* Reduce complexity on mobile */
+    perspective: 500px;
+  }
+
+  .marquee-image-container {
+    /* Simpler transforms on mobile */
+    transition: transform 0.15s ease-out;
+  }
+
+  .marquee-image-container:hover {
+    transform: translate3d(0, 0, 0) scale(1.02);
+  }
+}
+
+/* Optimize for high-DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .marquee-image {
+    /* Ensure crisp rendering on high-DPI displays */
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+}
+
+/* Performance optimization for reduced motion users */
+@media (prefers-reduced-motion: reduce) {
+  .marquee-container,
+  .marquee-image-container,
+  .marquee-image-fade-in,
+  .modal-backdrop,
+  .modal-content,
+  .modal-caption {
+    /* Disable all animations for reduced motion preference */
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
+    will-change: auto !important;
+  }
+
+  .marquee-image-container:hover {
+    transform: none !important;
+  }
+
+  .modal-backdrop.visible,
+  .modal-content.visible,
+  .modal-caption.visible {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* Optimize for print */
+@media print {
+  .marquee-container {
+    /* Disable animations for print */
+    animation: none !important;
+    transform: none !important;
+  }
+
+  .marquee-image-container {
+    /* Remove hover effects for print */
+    transition: none !important;
+  }
+
+  .marquee-image-container:hover {
+    transform: none !important;
+  }
+}

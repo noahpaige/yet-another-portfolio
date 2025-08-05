@@ -24,8 +24,8 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
 import { useHardwareCapability } from "../../context/HardwareCapabilityContext";
+import "./mdx-marquee.css";
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -235,6 +235,13 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
   const [fullscreenState, setFullscreenState] = useState({
     isFullscreen: false,
     fullscreenImage: null as MarqueeImage | null,
+  });
+
+  /** Modal animation state for CSS-based animations */
+  const [modalAnimationState, setModalAnimationState] = useState({
+    backdropVisible: false,
+    contentVisible: false,
+    captionVisible: false,
   });
 
   // ============================================================================
@@ -819,6 +826,29 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
       });
       document.body.style.overflow = "hidden";
 
+      // Start modal animations with staggered timing
+      setModalAnimationState({
+        backdropVisible: true,
+        contentVisible: false,
+        captionVisible: false,
+      });
+
+      // Animate content after backdrop starts
+      setTimeout(() => {
+        setModalAnimationState((prev) => ({
+          ...prev,
+          contentVisible: true,
+        }));
+      }, 50);
+
+      // Animate caption after content starts
+      setTimeout(() => {
+        setModalAnimationState((prev) => ({
+          ...prev,
+          captionVisible: true,
+        }));
+      }, 150);
+
       // Focus the modal when it opens for accessibility
       setTimeout(() => {
         if (modalRef.current) {
@@ -828,10 +858,20 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
     };
 
     const closeFullscreen = () => {
-      setFullscreenState({
-        isFullscreen: false,
-        fullscreenImage: null,
+      // Start closing animations
+      setModalAnimationState({
+        backdropVisible: false,
+        contentVisible: false,
+        captionVisible: false,
       });
+
+      // Close modal after animations complete
+      setTimeout(() => {
+        setFullscreenState({
+          isFullscreen: false,
+          fullscreenImage: null,
+        });
+      }, 300);
 
       // iOS Safari scrolling fix - multi-step process to reset internal scroll state
       const fixIOSScrolling = () => {
@@ -1175,14 +1215,8 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
           data-image-src={image.src}
           data-small-image-src={image.src}
         >
-          <motion.div
-            className="cursor-pointer"
-            whileHover={{ scale: 1.05, zIndex: 10 }}
-            transition={{
-              type: "spring",
-              stiffness: 300,
-              damping: 20,
-            }}
+          <div
+            className="marquee-image-container"
             onClick={() => {
               // Only open fullscreen if no drag occurred and we have a loaded image
               if (!hasError && !dragOccurredRef.current && isLoaded) {
@@ -1233,51 +1267,42 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
 
               {/* Actual image */}
               {shouldShowImage && (
-                <AnimatePresence>
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <Image
-                      src={imageSrc}
-                      alt={image.alt}
-                      width={image.width || 300}
-                      height={image.height || 200}
-                      className="rounded-md shadow-lg object-cover"
-                      style={{ height: `${height}px` }}
-                      placeholder={image.placeholder ? "blur" : "empty"}
-                      blurDataURL={image.placeholder}
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      priority={index < 3} // Prioritize first 3 images
-                      onLoad={() => {
-                        setImageState((prev) => ({
-                          ...prev,
-                          loadedImages: new Set([
-                            ...prev.loadedImages,
-                            imageSrc,
-                          ]),
-                          loadingImages: new Set(
-                            [...prev.loadingImages].filter(
-                              (src) => src !== imageSrc
-                            )
-                          ),
-                        }));
-                      }}
-                      onError={() => {
-                        setImageState((prev) => ({
-                          ...prev,
-                          errorImages: new Set([...prev.errorImages, imageSrc]),
-                          loadingImages: new Set(
-                            [...prev.loadingImages].filter(
-                              (src) => src !== imageSrc
-                            )
-                          ),
-                        }));
-                      }}
-                    />
-                  </motion.div>
-                </AnimatePresence>
+                <div className="marquee-image-fade-in">
+                  <Image
+                    src={imageSrc}
+                    alt={image.alt}
+                    width={image.width || 300}
+                    height={image.height || 200}
+                    className="rounded-md shadow-lg object-cover"
+                    style={{ height: `${height}px` }}
+                    placeholder={image.placeholder ? "blur" : "empty"}
+                    blurDataURL={image.placeholder}
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    priority={index < 3} // Prioritize first 3 images
+                    onLoad={() => {
+                      setImageState((prev) => ({
+                        ...prev,
+                        loadedImages: new Set([...prev.loadedImages, imageSrc]),
+                        loadingImages: new Set(
+                          [...prev.loadingImages].filter(
+                            (src) => src !== imageSrc
+                          )
+                        ),
+                      }));
+                    }}
+                    onError={() => {
+                      setImageState((prev) => ({
+                        ...prev,
+                        errorImages: new Set([...prev.errorImages, imageSrc]),
+                        loadingImages: new Set(
+                          [...prev.loadingImages].filter(
+                            (src) => src !== imageSrc
+                          )
+                        ),
+                      }));
+                    }}
+                  />
+                </div>
               )}
 
               {/* Loading indicator overlay */}
@@ -1287,7 +1312,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
                 </div>
               )}
             </div>
-          </motion.div>
+          </div>
           {image.captionText && (
             <p className="text-sm text-zinc-400 text-center mt-2 italic">
               {image.captionText}
@@ -1309,7 +1334,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
 
   return (
     <>
-      <motion.div
+      <div
         className={`my-10 ${className}`}
         style={{
           height: `${height}px`,
@@ -1334,84 +1359,73 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
           control the marquee speed. Drag to pause and release to resume with
           momentum. Click on images to view them in fullscreen.
         </div>
-        <motion.div
+        <div
           ref={containerRef}
-          className="flex items-center"
-          style={{ width: `${totalWidth * 2}px` }}
-          animate={{ x: -(animationState.scrollOffset % totalWidth) }}
-          transition={{
-            type: "tween",
-            ease: "linear",
-            duration: dragState.isDragging ? 0 : 0.1,
+          className="flex items-center marquee-container"
+          style={{
+            width: `${totalWidth * 2}px`,
+            transform: `translateX(${-(
+              animationState.scrollOffset % totalWidth
+            )}px)`,
           }}
         >
           {duplicatedImages.map((image, index) => renderImage(image, index))}
-        </motion.div>
-      </motion.div>
+        </div>
+      </div>
 
       {/* Fullscreen Modal */}
-      <AnimatePresence>
-        {fullscreenState.isFullscreen && fullscreenState.fullscreenImage && (
-          <motion.div
-            ref={modalRef}
-            className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 cursor-pointer"
-            onClick={fullscreenHandlers.closeFullscreen}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            role="dialog"
-            aria-modal="true"
-            aria-label={`Fullscreen view of ${fullscreenState.fullscreenImage.alt}`}
-            tabIndex={-1}
+      {fullscreenState.isFullscreen && fullscreenState.fullscreenImage && (
+        <div
+          ref={modalRef}
+          className={`fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 cursor-pointer modal-backdrop ${
+            modalAnimationState.backdropVisible ? "visible" : ""
+          }`}
+          onClick={fullscreenHandlers.closeFullscreen}
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Fullscreen view of ${fullscreenState.fullscreenImage.alt}`}
+          tabIndex={-1}
+        >
+          <div
+            className={`flex flex-col items-center justify-center w-full h-full modal-content ${
+              modalAnimationState.contentVisible ? "visible" : ""
+            }`}
           >
-            <motion.div
-              className="flex flex-col items-center justify-center w-full h-full"
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              transition={{ duration: 0.3 }}
+            <div
+              className="rounded-md flex-1 flex items-center justify-center"
+              style={{
+                maxWidth: "calc(100vw - 2rem)",
+                maxHeight: fullscreenState.fullscreenImage.captionText
+                  ? "calc(100vh - 24rem)"
+                  : "calc(100vh - 14rem)",
+              }}
             >
+              <Image
+                src={fullscreenState.fullscreenImage.src}
+                alt={fullscreenState.fullscreenImage.alt}
+                width={1920}
+                height={1080}
+                className="w-full h-full object-contain rounded-md"
+                placeholder={
+                  fullscreenState.fullscreenImage.placeholder ? "blur" : "empty"
+                }
+                blurDataURL={fullscreenState.fullscreenImage.placeholder}
+              />
+            </div>
+            {fullscreenState.fullscreenImage.captionText && (
               <div
-                className="rounded-md flex-1 flex items-center justify-center"
-                style={{
-                  maxWidth: "calc(100vw - 2rem)",
-                  maxHeight: fullscreenState.fullscreenImage.captionText
-                    ? "calc(100vh - 24rem)"
-                    : "calc(100vh - 14rem)",
-                }}
+                className={`flex-shrink-0 px-4 py-2 modal-caption ${
+                  modalAnimationState.captionVisible ? "visible" : ""
+                }`}
               >
-                <Image
-                  src={fullscreenState.fullscreenImage.src}
-                  alt={fullscreenState.fullscreenImage.alt}
-                  width={1920}
-                  height={1080}
-                  className="w-full h-full object-contain rounded-md"
-                  placeholder={
-                    fullscreenState.fullscreenImage.placeholder
-                      ? "blur"
-                      : "empty"
-                  }
-                  blurDataURL={fullscreenState.fullscreenImage.placeholder}
-                />
+                <p className="text-white text-center text-lg max-w-2xl">
+                  {fullscreenState.fullscreenImage.captionText}
+                </p>
               </div>
-              {fullscreenState.fullscreenImage.captionText && (
-                <motion.div
-                  className="flex-shrink-0 px-4 py-2"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 20 }}
-                  transition={{ duration: 0.3, delay: 0.1 }}
-                >
-                  <p className="text-white text-center text-lg max-w-2xl">
-                    {fullscreenState.fullscreenImage.captionText}
-                  </p>
-                </motion.div>
-              )}
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            )}
+          </div>
+        </div>
+      )}
     </>
   );
 };
