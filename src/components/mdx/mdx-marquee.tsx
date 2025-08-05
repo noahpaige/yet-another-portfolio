@@ -375,6 +375,44 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
     }));
   }, []);
 
+  /**
+   * iOS Safari scrolling fix - multi-step process to reset internal scroll state
+   * This function is duplicated in multiple places, so we've extracted it here
+   */
+  const fixIOSScrolling = useCallback(() => {
+    // Step 1: Trigger scroll events to wake up iOS Safari's scroll handling
+    window.dispatchEvent(new Event("scroll"));
+    window.dispatchEvent(new Event("resize"));
+
+    // Step 2: Enable touch scrolling explicitly
+    document.body.style.setProperty("-webkit-overflow-scrolling", "touch");
+    document.body.style.setProperty("overflow-scrolling", "touch");
+
+    // Step 3: Force scroll position reset
+    const currentScrollY = window.scrollY;
+    window.scrollTo(0, currentScrollY + 1);
+    setTimeout(() => {
+      window.scrollTo(0, currentScrollY);
+    }, 10);
+
+    // Step 4: Set overflow properties
+    document.documentElement.style.overflow = "auto";
+    document.body.style.overflow = "auto";
+
+    // Step 5: Dispatch touch event to re-enable touch scrolling
+    const touchEvent = new TouchEvent("touchstart", {
+      bubbles: true,
+      cancelable: true,
+      view: window,
+    });
+    document.dispatchEvent(touchEvent);
+
+    // Step 6: Force layout recalculation
+    document.body.style.display = "none";
+    void document.body.offsetHeight;
+    document.body.style.display = "";
+  }, []);
+
   // ============================================================================
   // CUSTOM HOOKS
   // ============================================================================
@@ -664,41 +702,6 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
         fullscreenImage: null,
       });
 
-      // iOS Safari scrolling fix - multi-step process to reset internal scroll state
-      const fixIOSScrolling = () => {
-        // Step 1: Trigger scroll events to wake up iOS Safari's scroll handling
-        window.dispatchEvent(new Event("scroll"));
-        window.dispatchEvent(new Event("resize"));
-
-        // Step 2: Enable touch scrolling explicitly
-        document.body.style.setProperty("-webkit-overflow-scrolling", "touch");
-        document.body.style.setProperty("overflow-scrolling", "touch");
-
-        // Step 3: Force scroll position reset
-        const currentScrollY = window.scrollY;
-        window.scrollTo(0, currentScrollY + 1);
-        setTimeout(() => {
-          window.scrollTo(0, currentScrollY);
-        }, 10);
-
-        // Step 4: Set overflow properties
-        document.documentElement.style.overflow = "auto";
-        document.body.style.overflow = "auto";
-
-        // Step 5: Dispatch touch event to re-enable touch scrolling
-        const touchEvent = new TouchEvent("touchstart", {
-          bubbles: true,
-          cancelable: true,
-          view: window,
-        });
-        document.dispatchEvent(touchEvent);
-
-        // Step 6: Force layout recalculation
-        document.body.style.display = "none";
-        void document.body.offsetHeight;
-        document.body.style.display = "";
-      };
-
       // Apply the fix with a small delay to ensure modal is fully closed
       setTimeout(fixIOSScrolling, 50);
     };
@@ -741,48 +744,10 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
     // Cleanup body style on unmount
     useEffect(() => {
       return () => {
-        // iOS Safari scrolling fix on unmount
-        const fixIOSScrolling = () => {
-          // Step 1: Trigger scroll events to wake up iOS Safari's scroll handling
-          window.dispatchEvent(new Event("scroll"));
-          window.dispatchEvent(new Event("resize"));
-
-          // Step 2: Enable touch scrolling explicitly
-          document.body.style.setProperty(
-            "-webkit-overflow-scrolling",
-            "touch"
-          );
-          document.body.style.setProperty("overflow-scrolling", "touch");
-
-          // Step 3: Force scroll position reset
-          const currentScrollY = window.scrollY;
-          window.scrollTo(0, currentScrollY + 1);
-          setTimeout(() => {
-            window.scrollTo(0, currentScrollY);
-          }, 10);
-
-          // Step 4: Set overflow properties
-          document.documentElement.style.overflow = "auto";
-          document.body.style.overflow = "auto";
-
-          // Step 5: Dispatch touch event to re-enable touch scrolling
-          const touchEvent = new TouchEvent("touchstart", {
-            bubbles: true,
-            cancelable: true,
-            view: window,
-          });
-          document.dispatchEvent(touchEvent);
-
-          // Step 6: Force layout recalculation
-          document.body.style.display = "none";
-          void document.body.offsetHeight;
-          document.body.style.display = "";
-        };
-
         // Apply the fix immediately on unmount
         fixIOSScrolling();
       };
-    }, []);
+    }, [fixIOSScrolling]);
 
     return {
       openFullscreen,
@@ -940,45 +905,10 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
         observerRef.current = null;
       }
 
-      // iOS Safari scrolling fix on unmount
-      const fixIOSScrolling = () => {
-        // Step 1: Trigger scroll events to wake up iOS Safari's scroll handling
-        window.dispatchEvent(new Event("scroll"));
-        window.dispatchEvent(new Event("resize"));
-
-        // Step 2: Enable touch scrolling explicitly
-        document.body.style.setProperty("-webkit-overflow-scrolling", "touch");
-        document.body.style.setProperty("overflow-scrolling", "touch");
-
-        // Step 3: Force scroll position reset
-        const currentScrollY = window.scrollY;
-        window.scrollTo(0, currentScrollY + 1);
-        setTimeout(() => {
-          window.scrollTo(0, currentScrollY);
-        }, 10);
-
-        // Step 4: Set overflow properties
-        document.documentElement.style.overflow = "auto";
-        document.body.style.overflow = "auto";
-
-        // Step 5: Dispatch touch event to re-enable touch scrolling
-        const touchEvent = new TouchEvent("touchstart", {
-          bubbles: true,
-          cancelable: true,
-          view: window,
-        });
-        document.dispatchEvent(touchEvent);
-
-        // Step 6: Force layout recalculation
-        document.body.style.display = "none";
-        void document.body.offsetHeight;
-        document.body.style.display = "";
-      };
-
       // Apply the fix immediately on unmount
       fixIOSScrolling();
     };
-  }, []);
+  }, [fixIOSScrolling]);
 
   /**
    * Renders an individual image in the marquee
