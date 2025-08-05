@@ -12,14 +12,14 @@
  * - Touch and mouse wheel controls with pause/resume
  * - Direction-based image preloading for optimal performance
  * - Lazy loading with intersection observer
- * - Fullscreen modal with keyboard navigation
+ * - Fullscreen modal with keyboard navigation and swipe gestures
  * - Comprehensive error handling
  * - WCAG 2.1 AA accessibility compliance
  * - Performance optimized with ref-based animation
  * - Blur placeholder for smooth loading experience
  *
  * @author Noah Paige
- * @version 2.4.0
+ * @version 2.5.0
  * @since 2024-12-19
  */
 
@@ -186,6 +186,28 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
     isFullscreen: false,
     fullscreenImage: null as MarqueeImage | null,
   });
+
+  /** Swipe gesture state for fullscreen modal */
+  const [swipeState, setSwipeState] = useState({
+    isSwiping: false,
+    startX: 0,
+    startY: 0,
+    currentX: 0,
+    currentY: 0,
+    deltaX: 0,
+    deltaY: 0,
+    velocity: 0,
+    direction: null as "left" | "right" | "up" | "down" | null,
+  });
+
+  /** Swipe gesture refs for performance */
+  const swipeStateRef = useRef(swipeState);
+  const swipeStartTimeRef = useRef(0);
+
+  // Keep swipe refs in sync with state
+  useEffect(() => {
+    swipeStateRef.current = swipeState;
+  }, [swipeState]);
 
   // ============================================================================
   // REFS
@@ -891,6 +913,141 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
     setTimeout(fixIOSScrolling, 50);
   };
 
+  /**
+   * Swipe gesture detection for fullscreen modal
+   *
+   * Implements touch-based navigation for mobile devices:
+   * - Swipe left/right: Navigate between images
+   * - Swipe up/down: Close modal
+   * - Velocity-based detection for quick swipes
+   * - Minimum distance thresholds to prevent accidental triggers
+   */
+  const handleSwipeStart = useCallback(
+    (e: React.TouchEvent) => {
+      if (!fullscreenState.isFullscreen) return;
+
+      // Prevent swipe detection if touching navigation buttons
+      const target = e.target as HTMLElement;
+      if (target.closest("button")) return;
+
+      const touch = e.touches[0];
+      const now = Date.now();
+
+      setSwipeState({
+        isSwiping: true,
+        startX: touch.clientX,
+        startY: touch.clientY,
+        currentX: touch.clientX,
+        currentY: touch.clientY,
+        deltaX: 0,
+        deltaY: 0,
+        velocity: 0,
+        direction: null,
+      });
+
+      swipeStartTimeRef.current = now;
+    },
+    [fullscreenState.isFullscreen]
+  );
+
+  const handleSwipeMove = useCallback(
+    (e: React.TouchEvent) => {
+      if (!fullscreenState.isFullscreen || !swipeStateRef.current.isSwiping)
+        return;
+
+      const touch = e.touches[0];
+      const currentState = swipeStateRef.current;
+
+      const deltaX = touch.clientX - currentState.startX;
+      const deltaY = touch.clientY - currentState.startY;
+
+      // Determine swipe direction based on dominant axis
+      let direction: "left" | "right" | "up" | "down" | null = null;
+      const minSwipeDistance = 50; // Minimum distance to consider a swipe
+
+      if (
+        Math.abs(deltaX) > Math.abs(deltaY) &&
+        Math.abs(deltaX) > minSwipeDistance
+      ) {
+        direction = deltaX > 0 ? "right" : "left";
+      } else if (
+        Math.abs(deltaY) > Math.abs(deltaX) &&
+        Math.abs(deltaY) > minSwipeDistance
+      ) {
+        direction = deltaY > 0 ? "down" : "up";
+      }
+
+      setSwipeState({
+        ...currentState,
+        currentX: touch.clientX,
+        currentY: touch.clientY,
+        deltaX,
+        deltaY,
+        direction,
+      });
+    },
+    [fullscreenState.isFullscreen]
+  );
+
+  const handleSwipeEnd = useCallback(() => {
+    if (!fullscreenState.isFullscreen || !swipeStateRef.current.isSwiping)
+      return;
+
+    const currentState = swipeStateRef.current;
+    const now = Date.now();
+    const duration = now - swipeStartTimeRef.current;
+
+    // Calculate velocity (pixels per second)
+    const velocity =
+      duration > 0 ? Math.abs(currentState.deltaX) / (duration / 1000) : 0;
+
+    // Determine if swipe should trigger action
+    const minSwipeDistance = 100; // Minimum distance for swipe action
+    const minVelocity = 300; // Minimum velocity for swipe action
+
+    if (
+      Math.abs(currentState.deltaX) > minSwipeDistance ||
+      velocity > minVelocity
+    ) {
+      if (currentState.direction === "left") {
+        // Swipe left - next image
+        navigateToNextImage();
+      } else if (currentState.direction === "right") {
+        // Swipe right - previous image
+        navigateToPreviousImage();
+      }
+    } else if (
+      Math.abs(currentState.deltaY) > minSwipeDistance ||
+      velocity > minVelocity
+    ) {
+      if (
+        currentState.direction === "up" ||
+        currentState.direction === "down"
+      ) {
+        // Swipe up or down - close modal
+        closeFullscreen();
+      }
+    }
+
+    // Reset swipe state
+    setSwipeState({
+      isSwiping: false,
+      startX: 0,
+      startY: 0,
+      currentX: 0,
+      currentY: 0,
+      deltaX: 0,
+      deltaY: 0,
+      velocity: 0,
+      direction: null,
+    });
+  }, [
+    fullscreenState.isFullscreen,
+    navigateToNextImage,
+    navigateToPreviousImage,
+    closeFullscreen,
+  ]);
+
   // Touch and mouse handlers
   const handleTouchStart = useCallback(
     (e: React.TouchEvent) => {
@@ -1208,13 +1365,16 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
             ref={modalRef}
             className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 cursor-pointer"
             onClick={closeFullscreen}
+            onTouchStart={handleSwipeStart}
+            onTouchMove={handleSwipeMove}
+            onTouchEnd={handleSwipeEnd}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
             role="dialog"
             aria-modal="true"
-            aria-label={`Fullscreen view of ${fullscreenState.fullscreenImage.alt}`}
+            aria-label={`Fullscreen view of ${fullscreenState.fullscreenImage.alt}. Swipe left or right to navigate between images, swipe up or down to close.`}
             tabIndex={-1}
           >
             {/* Navigation buttons */}
@@ -1289,7 +1449,12 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
             <motion.div
               className="flex flex-col items-center justify-center w-full h-full"
               initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
+              animate={{
+                scale: 1,
+                opacity: 1,
+                x: swipeState.isSwiping ? swipeState.deltaX * 0.3 : 0,
+                y: swipeState.isSwiping ? swipeState.deltaY * 0.3 : 0,
+              }}
               exit={{ scale: 0.8, opacity: 0 }}
               transition={{ duration: 0.3 }}
             >
