@@ -89,27 +89,8 @@ const MAX_SPEED_MULTIPLIER = 20;
 /** Momentum decay rate for smooth speed transitions */
 const MOMENTUM_DECAY_RATE = 0.1;
 
-/** Frame rate throttling based on performance tier */
-const FRAME_RATE_CONFIG = {
-  low: { interval: 32, maxFps: 30 }, // 32ms = ~30fps for low-end devices
-  medium: { interval: 20, maxFps: 50 }, // 20ms = ~50fps for medium devices
-  high: { interval: 16, maxFps: 60 }, // 16ms = ~60fps for high-end devices
-};
-
-/** Image loading timeout in milliseconds */
-const IMAGE_LOAD_TIMEOUT = 5000;
-
-/** Image loading simulation delay in milliseconds */
-const IMAGE_LOAD_DELAY = 100;
-
-/** Modal focus delay in milliseconds */
-const MODAL_FOCUS_DELAY = 100;
-
 /** Momentum transfer factor (0-1) */
 const MOMENTUM_TRANSFER = 0.8;
-
-/** Speed recovery rate when resuming from drag */
-const SPEED_RECOVERY_RATE = 0.05;
 
 /** Minimum velocity threshold for momentum transfer */
 const MIN_VELOCITY_THRESHOLD = 50;
@@ -153,23 +134,18 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
   /** Hardware capability information for performance optimization */
   const hardwareCapability = useHardwareCapability();
 
-  /** Get frame rate configuration based on performance tier */
-  const frameRateConfig = FRAME_RATE_CONFIG[hardwareCapability.performanceTier];
-
-  // Log frame rate configuration in development
+  // Log hardware capability in development
   useEffect(() => {
     if (process.env.NODE_ENV === "development") {
-      console.log(`🎬 Marquee Frame Rate Config:`, {
+      console.log(`🎬 Marquee Hardware Config:`, {
         performanceTier: hardwareCapability.performanceTier,
-        targetFps: frameRateConfig.maxFps,
-        updateInterval: frameRateConfig.interval,
         isMobile: hardwareCapability.isMobile,
         gpuTier: hardwareCapability.gpuTier,
         ram: `${hardwareCapability.ram}GB`,
         cores: hardwareCapability.cores,
       });
     }
-  }, [hardwareCapability.performanceTier, frameRateConfig, hardwareCapability]);
+  }, [hardwareCapability]);
 
   // ============================================================================
   // STATE MANAGEMENT
@@ -251,8 +227,6 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
   const scrollOffsetRef = useRef(animationState.scrollOffset);
   /** Animation frame reference for cleanup */
   const animationFrameRef = useRef<number | null>(null);
-  /** Performance monitoring reference */
-  const performanceRef = useRef({ frameCount: 0, lastTime: 0, fps: 0 });
   /** Modal reference for focus management */
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -302,38 +276,11 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
       let lastTime = 0;
       let needsStateUpdate = false;
       let stateUpdateTimeout: NodeJS.Timeout | null = null;
-      let frameCount = 0;
-      let lastFpsCheck = 0;
 
       const animate = (currentTime: number) => {
-        // Frame rate throttling for performance optimization
-        frameCount++;
-        if (currentTime - lastFpsCheck >= 1000) {
-          const currentFps = frameCount;
-          frameCount = 0;
-          lastFpsCheck = currentTime;
-
-          // Skip frames if we're exceeding the target FPS for this performance tier
-          if (currentFps > frameRateConfig.maxFps) {
-            animationFrameRef.current = requestAnimationFrame(animate);
-            return;
-          }
-        }
         // Calculate delta time for smooth animation regardless of frame rate
         const deltaTime = currentTime - lastTime;
         lastTime = currentTime;
-
-        // Performance monitoring
-        performanceRef.current.frameCount++;
-        if (currentTime - performanceRef.current.lastTime >= 1000) {
-          performanceRef.current.fps = performanceRef.current.frameCount;
-          performanceRef.current.frameCount = 0;
-          performanceRef.current.lastTime = currentTime;
-          // Log FPS in development
-          if (process.env.NODE_ENV === "development") {
-            console.log(`Marquee FPS: ${performanceRef.current.fps}`);
-          }
-        }
 
         // Update animation values using refs (no re-renders)
         // Stop animation when mouse is down OR touch is down OR dragging
@@ -392,7 +339,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
             });
             needsStateUpdate = false;
             stateUpdateTimeout = null;
-          }, frameRateConfig.interval); // Performance-based update rate
+          }, 16); // ~60fps update rate
         }
 
         // Continue animation loop
@@ -417,7 +364,6 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
       currentSpeedRef,
       scrollOffsetRef,
       animationFrameRef,
-      performanceRef,
     };
   };
 
@@ -514,10 +460,10 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
           }));
         } else {
           // Gradually resume natural speed if no significant velocity
-          currentSpeedRef.current = NATURAL_SPEED * SPEED_RECOVERY_RATE;
+          currentSpeedRef.current = NATURAL_SPEED * 0.1;
           setAnimationState((prev) => ({
             ...prev,
-            currentSpeed: NATURAL_SPEED * SPEED_RECOVERY_RATE,
+            currentSpeed: NATURAL_SPEED * 0.1,
           }));
         }
       } else {
@@ -661,10 +607,10 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
             }));
           } else {
             // Gradually resume natural speed if no significant velocity
-            currentSpeedRef.current = NATURAL_SPEED * SPEED_RECOVERY_RATE;
+            currentSpeedRef.current = NATURAL_SPEED * 0.1;
             setAnimationState((prev) => ({
               ...prev,
-              currentSpeed: NATURAL_SPEED * SPEED_RECOVERY_RATE,
+              currentSpeed: NATURAL_SPEED * 0.1,
             }));
           }
         } else {
@@ -751,10 +697,10 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
               }));
             } else {
               // Gradually resume natural speed if no significant velocity
-              currentSpeedRef.current = NATURAL_SPEED * SPEED_RECOVERY_RATE;
+              currentSpeedRef.current = NATURAL_SPEED * 0.1;
               setAnimationState((prev) => ({
                 ...prev,
-                currentSpeed: NATURAL_SPEED * SPEED_RECOVERY_RATE,
+                currentSpeed: NATURAL_SPEED * 0.1,
               }));
             }
           } else {
@@ -824,7 +770,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
         if (modalRef.current) {
           modalRef.current.focus();
         }
-      }, MODAL_FOCUS_DELAY);
+      }, 100);
     };
 
     const closeFullscreen = () => {
@@ -1000,7 +946,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
                     [...prev.loadingImages].filter((src) => src !== imageSrc)
                   ),
                 }));
-              }, IMAGE_LOAD_DELAY);
+              }, 100);
 
               // Error handling
               setTimeout(() => {
@@ -1018,7 +964,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
                   }
                   return prev;
                 });
-              }, IMAGE_LOAD_TIMEOUT);
+              }, 5000);
             } else {
               // Remove from visible images when out of view
               setImageState((prev) => {
