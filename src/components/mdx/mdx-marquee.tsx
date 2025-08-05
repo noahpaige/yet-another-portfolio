@@ -25,7 +25,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { useHardwareCapability } from "../../context/HardwareCapabilityContext";
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -128,26 +127,6 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
   preloadDistance = DEFAULT_PRELOAD_DISTANCE,
 }) => {
   // ============================================================================
-  // HARDWARE CAPABILITY DETECTION
-  // ============================================================================
-
-  /** Hardware capability information for performance optimization */
-  const hardwareCapability = useHardwareCapability();
-
-  // Log hardware capability in development
-  useEffect(() => {
-    if (process.env.NODE_ENV === "development") {
-      console.log(`🎬 Marquee Hardware Config:`, {
-        performanceTier: hardwareCapability.performanceTier,
-        isMobile: hardwareCapability.isMobile,
-        gpuTier: hardwareCapability.gpuTier,
-        ram: `${hardwareCapability.ram}GB`,
-        cores: hardwareCapability.cores,
-      });
-    }
-  }, [hardwareCapability]);
-
-  // ============================================================================
   // STATE MANAGEMENT
   // ============================================================================
 
@@ -247,14 +226,11 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
     }, 0);
   }, [images, gap]);
 
-  /** Duplicate images for seamless infinite loop with performance optimization */
+  /** Duplicate images for seamless infinite loop */
   const duplicatedImages = React.useMemo(() => {
-    // For low-end devices, reduce the number of duplicated images to improve performance
-    const duplicationFactor =
-      hardwareCapability.performanceTier === "low" ? 1.5 : 2;
-    const duplicateCount = Math.ceil(duplicationFactor);
-    return Array(duplicateCount).fill(images).flat();
-  }, [images, hardwareCapability.performanceTier]);
+    // Use 2x duplication for seamless infinite scrolling
+    return Array(2).fill(images).flat();
+  }, [images]);
 
   // ============================================================================
   // HELPER FUNCTIONS
