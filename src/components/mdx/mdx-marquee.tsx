@@ -1095,7 +1095,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
               {/* Loading placeholder */}
               {!shouldShowImage && !hasError && (
                 <div
-                  className="rounded-lg shadow-lg bg-zinc-800 animate-pulse"
+                  className="rounded-md shadow-lg bg-zinc-800 animate-pulse"
                   style={{
                     width: image.width || 300,
                     height: `${height}px`,
@@ -1106,7 +1106,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
               {/* Error placeholder */}
               {hasError && (
                 <div
-                  className="rounded-lg shadow-lg bg-red-900/20 border border-red-500/30 flex items-center justify-center"
+                  className="rounded-md shadow-lg bg-red-900/20 border border-red-500/30 flex items-center justify-center"
                   style={{
                     width: image.width || 300,
                     height: `${height}px`,
@@ -1132,7 +1132,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
                       alt={image.alt}
                       width={image.width || 300}
                       height={image.height || 200}
-                      className="rounded-lg shadow-lg object-cover"
+                      className="rounded-md shadow-lg object-cover"
                       style={{ height: `${height}px` }}
                       placeholder={image.placeholder ? "blur" : "empty"}
                       blurDataURL={image.placeholder}
@@ -1170,7 +1170,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
 
               {/* Loading indicator overlay */}
               {isLoading && !hasError && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-lg">
+                <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-md">
                   <div className="text-white text-sm">Loading...</div>
                 </div>
               )}
@@ -1254,17 +1254,19 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
             tabIndex={-1}
           >
             <motion.div
-              className="flex flex-col items-center justify-center"
+              className="flex flex-col items-center justify-center w-full h-full"
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
               transition={{ duration: 0.3 }}
             >
               <div
-                className="rounded-lg "
+                className="rounded-md flex-1 flex items-center justify-center"
                 style={{
                   maxWidth: "calc(100vw - 2rem)",
-                  maxHeight: "calc(100vh - 14rem)",
+                  maxHeight: fullscreenState.fullscreenImage.captionText
+                    ? "calc(100vh - 24rem)"
+                    : "calc(100vh - 14rem)",
                 }}
               >
                 <Image
@@ -1272,7 +1274,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
                   alt={fullscreenState.fullscreenImage.alt}
                   width={1920}
                   height={1080}
-                  className="w-full h-full object-contain"
+                  className="w-full h-full object-contain rounded-md"
                   placeholder={
                     fullscreenState.fullscreenImage.placeholder
                       ? "blur"
@@ -1282,15 +1284,17 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
                 />
               </div>
               {fullscreenState.fullscreenImage.captionText && (
-                <motion.p
-                  className="text-white text-center mt-4 text-lg"
+                <motion.div
+                  className="flex-shrink-0 px-4 py-2"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 20 }}
                   transition={{ duration: 0.3, delay: 0.1 }}
                 >
-                  {fullscreenState.fullscreenImage.captionText}
-                </motion.p>
+                  <p className="text-white text-center text-lg max-w-2xl">
+                    {fullscreenState.fullscreenImage.captionText}
+                  </p>
+                </motion.div>
               )}
             </motion.div>
           </motion.div>
