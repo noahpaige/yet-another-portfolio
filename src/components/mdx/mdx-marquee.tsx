@@ -1,143 +1,43 @@
 "use client";
 
-/**
- * MDXMarquee Component
- *
- * A high-performance, accessible image marquee component for displaying
- * a horizontally scrolling gallery of images with smooth animations,
- * touch/wheel controls, and fullscreen viewing capabilities.
- *
- * Features:
- * - Smooth infinite scrolling animation
- * - Touch and mouse wheel controls
- * - Lazy loading with intersection observer
- * - Fullscreen modal with keyboard navigation
- * - Comprehensive error handling
- * - WCAG 2.1 AA accessibility compliance
- * - Performance optimized with ref-based animation
- * - Blur placeholder for smooth loading experience
- *
- * @author Noah Paige
- * @version 2.1.0
- * @since 2024-12-19
- */
-
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import { useHardwareCapability } from "../../context/HardwareCapabilityContext";
 import "./mdx-marquee.css";
 
-// ============================================================================
-// TYPE DEFINITIONS
-// ============================================================================
-
-/**
- * Represents an image in the marquee gallery
- */
 export interface MarqueeImage {
-  /** Source URL of the image */
   src: string;
-  /** Alt text for accessibility */
   alt: string;
-  /** Optional width of the image in pixels */
   width?: number;
-  /** Optional height of the image in pixels */
   height?: number;
-  /** Optional caption text to display below the image */
   captionText?: string;
-  /** Optional base64 encoded placeholder for blur-up effect */
   placeholder?: string;
 }
 
-/**
- * Props for the MDXMarquee component
- */
 interface MDXMarqueeProps {
-  /** Array of images to display in the marquee */
   images: MarqueeImage[];
-  /** Animation speed in pixels per second (default: 50) */
   speed?: number;
-  /** Gap between images in pixels (default: 20) */
   gap?: number;
-  /** Additional CSS classes for styling */
   className?: string;
-  /** Fixed height for the marquee container in pixels (default: 300) */
   height?: number;
-  /** Distance in pixels before viewport to start preloading images (default: 500) */
   preloadDistance?: number;
 }
 
-// ============================================================================
-// CONFIGURATION CONSTANTS
-// ============================================================================
-
-/** Default animation speed in pixels per second */
 const DEFAULT_SPEED = 50;
-
-/** Default gap between images in pixels */
 const DEFAULT_GAP = 20;
-
-/** Default height of the marquee container in pixels */
 const DEFAULT_HEIGHT = 300;
-
-/** Default preload distance in pixels */
 const DEFAULT_PRELOAD_DISTANCE = 500;
-
-/** Maximum speed multiplier relative to natural speed */
 const MAX_SPEED_MULTIPLIER = 20;
-
-/** Momentum decay rate for smooth speed transitions */
-const MOMENTUM_DECAY_RATE = 0.1;
-
-/** Frame rate throttling based on performance tier */
-const FRAME_RATE_CONFIG = {
-  low: { interval: 32, maxFps: 30 }, // 32ms = ~30fps for low-end devices
-  medium: { interval: 20, maxFps: 50 }, // 20ms = ~50fps for medium devices
-  high: { interval: 16, maxFps: 60 }, // 16ms = ~60fps for high-end devices
-};
-
-/** Image loading timeout in milliseconds */
-const IMAGE_LOAD_TIMEOUT = 5000;
-
-/** Image loading simulation delay in milliseconds */
-const IMAGE_LOAD_DELAY = 100;
-
-/** Modal focus delay in milliseconds */
-const MODAL_FOCUS_DELAY = 100;
-
-/** Momentum transfer factor (0-1) */
+const MOMENTUM_DECAY_RATE = 0.05;
 const MOMENTUM_TRANSFER = 0.8;
-
-/** Speed recovery rate when resuming from drag */
-const SPEED_RECOVERY_RATE = 0.05;
-
-/** Minimum velocity threshold for momentum transfer */
 const MIN_VELOCITY_THRESHOLD = 50;
 
-// ============================================================================
-// MAIN COMPONENT
-// ============================================================================
+const FRAME_RATE_CONFIG = {
+  low: { interval: 32, maxFps: 30 },
+  medium: { interval: 20, maxFps: 50 },
+  high: { interval: 16, maxFps: 60 },
+};
 
-/**
- * MDXMarquee Component Implementation
- *
- * Renders a horizontally scrolling image gallery with smooth animations,
- * touch controls, and fullscreen viewing capabilities.
- *
- * Features:
- * - Smooth infinite scroll animation with momentum
- * - Touch and mouse drag controls with pause/resume
- * - Fullscreen modal with keyboard navigation
- * - Comprehensive error handling
- * - WCAG 2.1 AA accessibility compliance
- * - Performance optimized with ref-based animation
- * - Blur placeholder for smooth loading experience
- * - Lazy loading with intersection observer for optimal performance
- *
- * @author Noah Paige
- * @version 2.3.0
- * @since 2024-12-19
- */
 const MDXMarquee: React.FC<MDXMarqueeProps> = ({
   images,
   speed = DEFAULT_SPEED,
@@ -146,133 +46,55 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
   height = DEFAULT_HEIGHT,
   preloadDistance = DEFAULT_PRELOAD_DISTANCE,
 }) => {
-  // ============================================================================
-  // HARDWARE CAPABILITY DETECTION
-  // ============================================================================
-
-  /** Hardware capability information for performance optimization */
   const hardwareCapability = useHardwareCapability();
-
-  /** Get frame rate configuration based on performance tier */
   const frameRateConfig = FRAME_RATE_CONFIG[hardwareCapability.performanceTier];
 
-  // Log frame rate configuration in development
-  useEffect(() => {
-    if (process.env.NODE_ENV === "development") {
-      console.log(`🎬 Marquee Frame Rate Config:`, {
-        performanceTier: hardwareCapability.performanceTier,
-        targetFps: frameRateConfig.maxFps,
-        updateInterval: frameRateConfig.interval,
-        isMobile: hardwareCapability.isMobile,
-        gpuTier: hardwareCapability.gpuTier,
-        ram: `${hardwareCapability.ram}GB`,
-        cores: hardwareCapability.cores,
-      });
-    }
-  }, [hardwareCapability.performanceTier, frameRateConfig, hardwareCapability]);
-
-  // ============================================================================
-  // STATE MANAGEMENT
-  // ============================================================================
-
-  /** Animation state for scroll offset and speed */
+  // State
   const [animationState, setAnimationState] = useState({
     scrollOffset: 0,
     currentSpeed: speed,
   });
 
-  /** Drag state for touch interactions */
   const [dragState, setDragState] = useState({
     isDragging: false,
-    isMouseDown: false, // Track if mouse is down (regardless of movement)
-    isTouchDown: false, // Track if touch is down (regardless of movement)
+    isMouseDown: false,
+    isTouchDown: false,
     dragStart: 0,
     dragOffset: 0,
     lastPosition: 0,
     lastTime: 0,
     velocity: 0,
-    isMouseDrag: false,
-    hasMoved: false, // Track if user has moved during drag
-    dragThreshold: 5, // Minimum pixels to move before considering it a drag
+    hasMoved: false,
   });
 
-  /** Drag state ref for useCallback access */
-  const dragStateRef = useRef(dragState);
-
-  // Keep ref in sync with state
-  useEffect(() => {
-    dragStateRef.current = dragState;
-  }, [dragState]);
-
-  /** Ref to track if a drag operation occurred during the current mouse/touch session */
-  const dragOccurredRef = useRef(false);
-
-  /** Interaction state ref for animation loop access */
-  const interactionStateRef = useRef({
-    isMouseDown: false,
-    isTouchDown: false,
-    isDragging: false,
-  });
-
-  // Keep interaction ref in sync with drag state
-  useEffect(() => {
-    interactionStateRef.current = {
-      isMouseDown: dragState.isMouseDown,
-      isTouchDown: dragState.isTouchDown,
-      isDragging: dragState.isDragging,
-    };
-  }, [dragState.isMouseDown, dragState.isTouchDown, dragState.isDragging]);
-
-  /** Image loading state for lazy loading and error handling */
   const [imageState, setImageState] = useState({
     loadedImages: new Set<string>(),
     visibleImages: new Set<string>(),
     errorImages: new Set<string>(),
-    loadingImages: new Set<string>(), // Images currently loading
   });
 
-  /** Fullscreen modal state */
   const [fullscreenState, setFullscreenState] = useState({
     isFullscreen: false,
     fullscreenImage: null as MarqueeImage | null,
   });
 
-  /** Modal animation state for CSS-based animations */
   const [modalAnimationState, setModalAnimationState] = useState({
     backdropVisible: false,
     contentVisible: false,
     captionVisible: false,
   });
 
-  // ============================================================================
-  // REFS
-  // ============================================================================
-
-  /** Container element reference for intersection observer */
+  // Refs
   const containerRef = useRef<HTMLDivElement>(null);
-  /** Intersection observer reference for cleanup */
   const observerRef = useRef<IntersectionObserver | null>(null);
-  /** Current animation speed reference for performance optimization */
-  const currentSpeedRef = useRef(animationState.currentSpeed);
-  /** Scroll offset reference for performance optimization */
-  const scrollOffsetRef = useRef(animationState.scrollOffset);
-  /** Animation frame reference for cleanup */
+  const currentSpeedRef = useRef(speed);
+  const scrollOffsetRef = useRef(0);
   const animationFrameRef = useRef<number | null>(null);
-  /** Performance monitoring reference */
-  const performanceRef = useRef({ frameCount: 0, lastTime: 0, fps: 0 });
-  /** Modal reference for focus management */
   const modalRef = useRef<HTMLDivElement>(null);
+  const dragStateRef = useRef(dragState);
+  const dragOccurredRef = useRef(false);
 
-  // ============================================================================
-  // COMPUTED VALUES
-  // ============================================================================
-
-  /** Animation speed constants */
-  const NATURAL_SPEED = speed;
-  const MAX_SPEED = speed * MAX_SPEED_MULTIPLIER;
-  const MOMENTUM_DECAY = MOMENTUM_DECAY_RATE;
-
-  /** Calculate total width needed for seamless loop */
+  // Computed values
   const totalWidth = React.useMemo(() => {
     return images.reduce((acc, image) => {
       const imgWidth = image.width || 300;
@@ -280,257 +102,217 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
     }, 0);
   }, [images, gap]);
 
-  /** Duplicate images for seamless infinite loop with performance optimization */
   const duplicatedImages = React.useMemo(() => {
-    // For low-end devices, reduce the number of duplicated images to improve performance
     const duplicationFactor =
       hardwareCapability.performanceTier === "low" ? 1.5 : 2;
-    const duplicateCount = Math.ceil(duplicationFactor);
-    return Array(duplicateCount).fill(images).flat();
+    return Array(Math.ceil(duplicationFactor)).fill(images).flat();
   }, [images, hardwareCapability.performanceTier]);
 
-  // ============================================================================
-  // CUSTOM HOOKS
-  // ============================================================================
+  // Animation loop
+  useEffect(() => {
+    let lastTime = 0;
+    let needsStateUpdate = false;
+    let stateUpdateTimeout: NodeJS.Timeout | null = null;
 
-  /**
-   * useMarqueeAnimation Hook
-   *
-   * Manages the core animation loop with performance optimizations:
-   * - Uses refs to avoid re-renders on every frame
-   * - Implements batched state updates
-   * - Handles infinite loop wrapping
-   * - Provides performance monitoring
-   */
+    const animate = (currentTime: number) => {
+      const deltaTime = currentTime - lastTime;
+      lastTime = currentTime;
 
-  const useMarqueeAnimation = () => {
-    // Optimized animation loop using refs to avoid state updates on every frame
-    useEffect(() => {
-      let lastTime = 0;
-      let needsStateUpdate = false;
-      let stateUpdateTimeout: NodeJS.Timeout | null = null;
-      let frameCount = 0;
-      let lastFpsCheck = 0;
+      const isInteracting =
+        dragStateRef.current.isMouseDown ||
+        dragStateRef.current.isTouchDown ||
+        dragStateRef.current.isDragging;
 
-      const animate = (currentTime: number) => {
-        // Frame rate throttling for performance optimization
-        frameCount++;
-        if (currentTime - lastFpsCheck >= 1000) {
-          const currentFps = frameCount;
-          frameCount = 0;
-          lastFpsCheck = currentTime;
+      if (!isInteracting) {
+        const currentSpeed = currentSpeedRef.current;
+        const newOffset =
+          scrollOffsetRef.current + (currentSpeed * deltaTime) / 1000;
 
-          // Skip frames if we're exceeding the target FPS for this performance tier
-          if (currentFps > frameRateConfig.maxFps) {
-            animationFrameRef.current = requestAnimationFrame(animate);
-            return;
-          }
-        }
-        // Calculate delta time for smooth animation regardless of frame rate
-        const deltaTime = currentTime - lastTime;
-        lastTime = currentTime;
-
-        // Performance monitoring
-        performanceRef.current.frameCount++;
-        if (currentTime - performanceRef.current.lastTime >= 1000) {
-          performanceRef.current.fps = performanceRef.current.frameCount;
-          performanceRef.current.frameCount = 0;
-          performanceRef.current.lastTime = currentTime;
-          // Log FPS in development
-          if (process.env.NODE_ENV === "development") {
-            console.log(`Marquee FPS: ${performanceRef.current.fps}`);
-          }
-        }
-
-        // Update animation values using refs (no re-renders)
-        // Stop animation when mouse is down OR touch is down OR dragging
-        const isInteracting =
-          interactionStateRef.current.isMouseDown ||
-          interactionStateRef.current.isTouchDown ||
-          interactionStateRef.current.isDragging;
-
-        if (!isInteracting) {
-          const speed = currentSpeedRef.current;
-          const newOffset =
-            scrollOffsetRef.current + (speed * deltaTime) / 1000;
-
-          // Handle infinite loop
-          if (newOffset >= totalWidth) {
-            scrollOffsetRef.current = newOffset - totalWidth;
-          } else if (newOffset < 0) {
-            scrollOffsetRef.current = newOffset + totalWidth;
-          } else {
-            scrollOffsetRef.current = newOffset;
-          }
-
-          needsStateUpdate = true;
+        if (newOffset >= totalWidth) {
+          scrollOffsetRef.current = newOffset - totalWidth;
+        } else if (newOffset < 0) {
+          scrollOffsetRef.current = newOffset + totalWidth;
         } else {
-          // During any interaction, we don't update scroll offset at all
-          // The position is controlled entirely by interaction handlers
-          // This prevents any conflict between animation and user input
-          needsStateUpdate = false; // Don't trigger state updates during interaction
-        }
-
-        // Update momentum decay using refs (only when not interacting)
-        // During any interaction, we completely pause all speed updates to prevent conflicts
-        if (!isInteracting) {
-          const currentSpeedValue = currentSpeedRef.current;
-          if (Math.abs(currentSpeedValue - NATURAL_SPEED) >= 0.1) {
-            const decayRate = MOMENTUM_DECAY;
-            currentSpeedRef.current =
-              currentSpeedValue +
-              (NATURAL_SPEED - currentSpeedValue) * decayRate;
-            needsStateUpdate = true;
-          }
-        } else {
-          // During interaction, ensure speed stays at 0 to prevent any animation interference
-          if (Math.abs(currentSpeedRef.current) > 0.1) {
-            currentSpeedRef.current = 0;
-            needsStateUpdate = true;
-          }
-        }
-
-        // Batch state updates to reduce re-renders
-        if (needsStateUpdate && !stateUpdateTimeout) {
-          stateUpdateTimeout = setTimeout(() => {
-            setAnimationState({
-              scrollOffset: scrollOffsetRef.current,
-              currentSpeed: currentSpeedRef.current,
-            });
-            needsStateUpdate = false;
-            stateUpdateTimeout = null;
-          }, frameRateConfig.interval); // Performance-based update rate
-        }
-
-        // Continue animation loop
-        animationFrameRef.current = requestAnimationFrame(animate);
-      };
-
-      // Start animation loop
-      animationFrameRef.current = requestAnimationFrame(animate);
-
-      // Cleanup
-      return () => {
-        if (animationFrameRef.current) {
-          cancelAnimationFrame(animationFrameRef.current);
-        }
-        if (stateUpdateTimeout) {
-          clearTimeout(stateUpdateTimeout);
-        }
-      };
-    }, []);
-
-    return {
-      currentSpeedRef,
-      scrollOffsetRef,
-      animationFrameRef,
-      performanceRef,
-    };
-  };
-
-  // Initialize animation hook
-  useMarqueeAnimation();
-
-  /**
-   * useTouchHandling Hook
-   *
-   * Manages touch and wheel interactions:
-   * - Touch events for mobile swipe gestures
-   * - Wheel events for desktop scrolling
-   * - Momentum-based speed changes
-   * - Cross-browser compatibility
-   */
-
-  const useTouchHandling = () => {
-    // Touch handlers for mobile swipe
-    const handleTouchStart = useCallback((e: React.TouchEvent) => {
-      const now = Date.now();
-      setDragState({
-        isDragging: true,
-        isMouseDown: false,
-        isTouchDown: true,
-        dragStart: e.touches[0].clientX,
-        dragOffset: scrollOffsetRef.current,
-        lastPosition: e.touches[0].clientX,
-        lastTime: now,
-        velocity: 0,
-        isMouseDrag: false,
-        hasMoved: false,
-        dragThreshold: 5,
-      });
-
-      // Stop the marquee during drag
-      currentSpeedRef.current = 0;
-      setAnimationState((prev) => ({ ...prev, currentSpeed: 0 }));
-    }, []);
-
-    const handleTouchMove = useCallback((e: React.TouchEvent) => {
-      if (dragStateRef.current.isDragging) {
-        e.preventDefault();
-        const currentX = e.touches[0].clientX;
-        const now = Date.now();
-        const deltaX = dragStateRef.current.dragStart - currentX;
-
-        // Check if user has moved enough to consider it a drag
-        const hasMoved = Math.abs(deltaX) > dragStateRef.current.dragThreshold;
-
-        if (hasMoved) {
-          // Mark that a drag operation occurred
-          dragOccurredRef.current = true;
-
-          const newOffset = dragStateRef.current.dragOffset + deltaX;
-
-          // Calculate velocity for momentum transfer
-          const timeDelta = now - dragStateRef.current.lastTime;
-          const positionDelta = currentX - dragStateRef.current.lastPosition;
-          const velocity =
-            timeDelta > 0 ? (positionDelta / timeDelta) * 1000 : 0; // pixels per second
-
-          // Update refs directly for immediate response
           scrollOffsetRef.current = newOffset;
-          setAnimationState((prev) => ({ ...prev, scrollOffset: newOffset }));
+        }
 
-          // Update drag state with new position and velocity
-          setDragState((prev) => ({
-            ...prev,
-            lastPosition: currentX,
-            lastTime: now,
-            velocity: velocity,
-            hasMoved: true,
-          }));
+        needsStateUpdate = true;
+
+        // Momentum decay - gradually return to natural speed
+        const naturalSpeed = speed;
+        if (Math.abs(currentSpeed - naturalSpeed) >= 0.1) {
+          currentSpeedRef.current =
+            currentSpeed + (naturalSpeed - currentSpeed) * MOMENTUM_DECAY_RATE;
+          needsStateUpdate = true;
         }
       }
-    }, []);
 
-    const handleTouchEnd = useCallback(() => {
+      if (needsStateUpdate && !stateUpdateTimeout) {
+        stateUpdateTimeout = setTimeout(() => {
+          setAnimationState({
+            scrollOffset: scrollOffsetRef.current,
+            currentSpeed: currentSpeedRef.current,
+          });
+          needsStateUpdate = false;
+          stateUpdateTimeout = null;
+        }, frameRateConfig.interval);
+      }
+
+      animationFrameRef.current = requestAnimationFrame(animate);
+    };
+
+    animationFrameRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      if (stateUpdateTimeout) {
+        clearTimeout(stateUpdateTimeout);
+      }
+    };
+  }, [totalWidth, frameRateConfig.interval]);
+
+  // Touch and mouse handlers
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    const now = Date.now();
+    setDragState({
+      isDragging: true,
+      isMouseDown: false,
+      isTouchDown: true,
+      dragStart: e.touches[0].clientX,
+      dragOffset: scrollOffsetRef.current,
+      lastPosition: e.touches[0].clientX,
+      lastTime: now,
+      velocity: 0,
+      hasMoved: false,
+    });
+    currentSpeedRef.current = 0;
+    setAnimationState((prev) => ({ ...prev, currentSpeed: 0 }));
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (dragStateRef.current.isDragging) {
+      e.preventDefault();
+      const currentX = e.touches[0].clientX;
+      const now = Date.now();
+      const deltaX = dragStateRef.current.dragStart - currentX;
+      const hasMoved = Math.abs(deltaX) > 5;
+
+      if (hasMoved) {
+        dragOccurredRef.current = true;
+        const newOffset = dragStateRef.current.dragOffset + deltaX;
+        const timeDelta = now - dragStateRef.current.lastTime;
+        const positionDelta = currentX - dragStateRef.current.lastPosition;
+        const velocity = timeDelta > 0 ? (positionDelta / timeDelta) * 1000 : 0;
+
+        scrollOffsetRef.current = newOffset;
+        setAnimationState((prev) => ({ ...prev, scrollOffset: newOffset }));
+
+        setDragState((prev) => ({
+          ...prev,
+          lastPosition: currentX,
+          lastTime: now,
+          velocity: velocity,
+          hasMoved: true,
+        }));
+      }
+    }
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    const finalVelocity = dragStateRef.current.velocity;
+    const hasMoved = dragStateRef.current.hasMoved;
+
+    if (hasMoved && Math.abs(finalVelocity) > MIN_VELOCITY_THRESHOLD) {
+      const momentumSpeed = -finalVelocity * MOMENTUM_TRANSFER;
+      const clampedSpeed = Math.max(
+        -speed * MAX_SPEED_MULTIPLIER,
+        Math.min(speed * MAX_SPEED_MULTIPLIER, momentumSpeed)
+      );
+      currentSpeedRef.current = clampedSpeed;
+      setAnimationState((prev) => ({ ...prev, currentSpeed: clampedSpeed }));
+    } else {
+      currentSpeedRef.current = speed;
+      setAnimationState((prev) => ({ ...prev, currentSpeed: speed }));
+    }
+
+    setDragState((prev) => ({
+      ...prev,
+      isDragging: false,
+      isMouseDown: false,
+      isTouchDown: false,
+      velocity: 0,
+      hasMoved: false,
+    }));
+  }, [speed]);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    const now = Date.now();
+    dragOccurredRef.current = false;
+
+    setDragState({
+      isDragging: true,
+      isMouseDown: true,
+      isTouchDown: false,
+      dragStart: e.clientX,
+      dragOffset: scrollOffsetRef.current,
+      lastPosition: e.clientX,
+      lastTime: now,
+      velocity: 0,
+      hasMoved: false,
+    });
+
+    currentSpeedRef.current = 0;
+    setAnimationState((prev) => ({ ...prev, currentSpeed: 0 }));
+  }, []);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (dragStateRef.current.isDragging && dragStateRef.current.isMouseDown) {
+      e.preventDefault();
+      const currentX = e.clientX;
+      const now = Date.now();
+      const deltaX = dragStateRef.current.dragStart - currentX;
+      const hasMoved = Math.abs(deltaX) > 5;
+
+      if (hasMoved) {
+        dragOccurredRef.current = true;
+        const newOffset = dragStateRef.current.dragOffset + deltaX;
+        const timeDelta = now - dragStateRef.current.lastTime;
+        const positionDelta = currentX - dragStateRef.current.lastPosition;
+        const velocity = timeDelta > 0 ? (positionDelta / timeDelta) * 1000 : 0;
+
+        scrollOffsetRef.current = newOffset;
+        setAnimationState((prev) => ({ ...prev, scrollOffset: newOffset }));
+
+        setDragState((prev) => ({
+          ...prev,
+          lastPosition: currentX,
+          lastTime: now,
+          velocity: velocity,
+          hasMoved: true,
+        }));
+      }
+    }
+  }, []);
+
+  const handleMouseUp = useCallback(() => {
+    if (dragStateRef.current.isMouseDown) {
       const finalVelocity = dragStateRef.current.velocity;
       const hasMoved = dragStateRef.current.hasMoved;
 
-      // Only apply momentum if user actually dragged
-      if (hasMoved) {
-        if (Math.abs(finalVelocity) > MIN_VELOCITY_THRESHOLD) {
-          const momentumSpeed = -finalVelocity * MOMENTUM_TRANSFER; // Negative because we want opposite direction
-          const clampedSpeed = Math.max(
-            -MAX_SPEED,
-            Math.min(MAX_SPEED, momentumSpeed)
-          );
-          currentSpeedRef.current = clampedSpeed;
-          setAnimationState((prev) => ({
-            ...prev,
-            currentSpeed: clampedSpeed,
-          }));
-        } else {
-          // Gradually resume natural speed if no significant velocity
-          currentSpeedRef.current = NATURAL_SPEED * SPEED_RECOVERY_RATE;
-          setAnimationState((prev) => ({
-            ...prev,
-            currentSpeed: NATURAL_SPEED * SPEED_RECOVERY_RATE,
-          }));
-        }
+      if (hasMoved && Math.abs(finalVelocity) > MIN_VELOCITY_THRESHOLD) {
+        const momentumSpeed = -finalVelocity * MOMENTUM_TRANSFER;
+        const clampedSpeed = Math.max(
+          -speed * MAX_SPEED_MULTIPLIER,
+          Math.min(speed * MAX_SPEED_MULTIPLIER, momentumSpeed)
+        );
+        currentSpeedRef.current = clampedSpeed;
+        setAnimationState((prev) => ({ ...prev, currentSpeed: clampedSpeed }));
       } else {
-        // If no drag occurred, resume natural speed immediately
-        currentSpeedRef.current = NATURAL_SPEED;
-        setAnimationState((prev) => ({ ...prev, currentSpeed: NATURAL_SPEED }));
+        currentSpeedRef.current = speed;
+        setAnimationState((prev) => ({ ...prev, currentSpeed: speed }));
       }
 
       setDragState((prev) => ({
@@ -541,102 +323,62 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
         velocity: 0,
         hasMoved: false,
       }));
-    }, []);
+    }
+  }, [speed]);
 
-    // Add wheel event listener directly to the container
-    useEffect(() => {
-      const container = containerRef.current;
-      if (!container) return;
+  // Wheel handler
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
 
-      const handleWheel = (e: Event) => {
-        e.preventDefault();
-        e.stopPropagation();
-
-        // Handle different wheel event formats across browsers
-        const wheelEvent = e as WheelEvent;
-        let deltaY = wheelEvent.deltaY;
-
-        // Fallback for older browsers
-        if (deltaY === undefined) {
-          const legacyEvent = e as WheelEvent & { wheelDelta?: number };
-          deltaY = legacyEvent.wheelDelta ? -legacyEvent.wheelDelta : 0;
-        }
-
-        const direction = deltaY > 0 ? -1 : 1;
-
-        // More responsive speed change for better cross-browser compatibility
-        const speedChange = direction * MAX_SPEED; // Increased sensitivity for Chrome/Arc
-        const newSpeed = currentSpeedRef.current - speedChange;
-        const clampedSpeed = Math.max(
-          -MAX_SPEED,
-          Math.min(MAX_SPEED, newSpeed)
-        );
-        currentSpeedRef.current = clampedSpeed;
-        setAnimationState((prev) => ({ ...prev, currentSpeed: clampedSpeed }));
-      };
-
-      // Use wheel event with passive: false for better cross-browser support
-      container.addEventListener("wheel", handleWheel, { passive: false });
-
-      return () => {
-        container.removeEventListener("wheel", handleWheel);
-      };
-    }, []); // Removed currentSpeed to prevent circular dependencies
-
-    // Mouse handlers for desktop drag
-    const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    const handleWheel = (e: Event) => {
       e.preventDefault();
-      const now = Date.now();
+      e.stopPropagation();
 
-      // Reset drag occurred flag for new interaction
-      dragOccurredRef.current = false;
+      const wheelEvent = e as WheelEvent;
+      let deltaY = wheelEvent.deltaY;
 
-      setDragState({
-        isDragging: true,
-        isMouseDown: true,
-        isTouchDown: false,
-        dragStart: e.clientX,
-        dragOffset: scrollOffsetRef.current,
-        lastPosition: e.clientX,
-        lastTime: now,
-        velocity: 0,
-        isMouseDrag: true,
-        hasMoved: false,
-        dragThreshold: 5,
-      });
+      if (deltaY === undefined) {
+        const legacyEvent = e as WheelEvent & { wheelDelta?: number };
+        deltaY = legacyEvent.wheelDelta ? -legacyEvent.wheelDelta : 0;
+      }
 
-      // Stop the marquee during drag
-      currentSpeedRef.current = 0;
-      setAnimationState((prev) => ({ ...prev, currentSpeed: 0 }));
-    }, []);
+      const direction = deltaY > 0 ? -1 : 1;
+      const speedChange = direction * speed * MAX_SPEED_MULTIPLIER;
+      const newSpeed = currentSpeedRef.current - speedChange;
+      const clampedSpeed = Math.max(
+        -speed * MAX_SPEED_MULTIPLIER,
+        Math.min(speed * MAX_SPEED_MULTIPLIER, newSpeed)
+      );
 
-    const handleMouseMove = useCallback((e: React.MouseEvent) => {
-      if (dragStateRef.current.isDragging && dragStateRef.current.isMouseDrag) {
-        e.preventDefault();
+      currentSpeedRef.current = clampedSpeed;
+      setAnimationState((prev) => ({ ...prev, currentSpeed: clampedSpeed }));
+    };
+
+    container.addEventListener("wheel", handleWheel, { passive: false });
+    return () => container.removeEventListener("wheel", handleWheel);
+  }, [speed]);
+
+  // Global mouse handlers
+  useEffect(() => {
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      if (dragStateRef.current.isDragging && dragStateRef.current.isMouseDown) {
         const currentX = e.clientX;
         const now = Date.now();
         const deltaX = dragStateRef.current.dragStart - currentX;
-
-        // Check if user has moved enough to consider it a drag
-        const hasMoved = Math.abs(deltaX) > dragStateRef.current.dragThreshold;
+        const hasMoved = Math.abs(deltaX) > 5;
 
         if (hasMoved) {
-          // Mark that a drag operation occurred
           dragOccurredRef.current = true;
-
           const newOffset = dragStateRef.current.dragOffset + deltaX;
-
-          // Calculate velocity for momentum transfer
           const timeDelta = now - dragStateRef.current.lastTime;
           const positionDelta = currentX - dragStateRef.current.lastPosition;
           const velocity =
-            timeDelta > 0 ? (positionDelta / timeDelta) * 1000 : 0; // pixels per second
+            timeDelta > 0 ? (positionDelta / timeDelta) * 1000 : 0;
 
-          // Update refs directly for immediate response
           scrollOffsetRef.current = newOffset;
           setAnimationState((prev) => ({ ...prev, scrollOffset: newOffset }));
 
-          // Update drag state with new position and velocity
           setDragState((prev) => ({
             ...prev,
             lastPosition: currentX,
@@ -646,41 +388,27 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
           }));
         }
       }
-    }, []);
+    };
 
-    const handleMouseUp = useCallback(() => {
-      if (dragStateRef.current.isMouseDrag) {
+    const handleGlobalMouseUp = () => {
+      if (dragStateRef.current.isMouseDown) {
         const finalVelocity = dragStateRef.current.velocity;
         const hasMoved = dragStateRef.current.hasMoved;
 
-        // Only apply momentum if user actually dragged
-        if (hasMoved) {
-          if (Math.abs(finalVelocity) > MIN_VELOCITY_THRESHOLD) {
-            const momentumSpeed = -finalVelocity * MOMENTUM_TRANSFER; // Negative because we want opposite direction
-            const clampedSpeed = Math.max(
-              -MAX_SPEED,
-              Math.min(MAX_SPEED, momentumSpeed)
-            );
-            currentSpeedRef.current = clampedSpeed;
-            setAnimationState((prev) => ({
-              ...prev,
-              currentSpeed: clampedSpeed,
-            }));
-          } else {
-            // Gradually resume natural speed if no significant velocity
-            currentSpeedRef.current = NATURAL_SPEED * SPEED_RECOVERY_RATE;
-            setAnimationState((prev) => ({
-              ...prev,
-              currentSpeed: NATURAL_SPEED * SPEED_RECOVERY_RATE,
-            }));
-          }
-        } else {
-          // If no drag occurred, resume natural speed immediately
-          currentSpeedRef.current = NATURAL_SPEED;
+        if (hasMoved && Math.abs(finalVelocity) > MIN_VELOCITY_THRESHOLD) {
+          const momentumSpeed = -finalVelocity * MOMENTUM_TRANSFER;
+          const clampedSpeed = Math.max(
+            -speed * MAX_SPEED_MULTIPLIER,
+            Math.min(speed * MAX_SPEED_MULTIPLIER, momentumSpeed)
+          );
+          currentSpeedRef.current = clampedSpeed;
           setAnimationState((prev) => ({
             ...prev,
-            currentSpeed: NATURAL_SPEED,
+            currentSpeed: clampedSpeed,
           }));
+        } else {
+          currentSpeedRef.current = speed;
+          setAnimationState((prev) => ({ ...prev, currentSpeed: speed }));
         }
 
         setDragState((prev) => ({
@@ -689,522 +417,164 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
           isMouseDown: false,
           isTouchDown: false,
           velocity: 0,
-          isMouseDrag: false,
           hasMoved: false,
         }));
       }
-    }, []);
-
-    // Add global mouse event listeners for drag outside the component
-    useEffect(() => {
-      const handleGlobalMouseMove = (e: MouseEvent) => {
-        if (
-          dragStateRef.current.isDragging &&
-          dragStateRef.current.isMouseDrag
-        ) {
-          const currentX = e.clientX;
-          const now = Date.now();
-          const deltaX = dragStateRef.current.dragStart - currentX;
-
-          // Check if user has moved enough to consider it a drag
-          const hasMoved =
-            Math.abs(deltaX) > dragStateRef.current.dragThreshold;
-
-          if (hasMoved) {
-            // Mark that a drag operation occurred
-            dragOccurredRef.current = true;
-
-            const newOffset = dragStateRef.current.dragOffset + deltaX;
-
-            // Calculate velocity for momentum transfer
-            const timeDelta = now - dragStateRef.current.lastTime;
-            const positionDelta = currentX - dragStateRef.current.lastPosition;
-            const velocity =
-              timeDelta > 0 ? (positionDelta / timeDelta) * 1000 : 0;
-
-            // Update refs directly for immediate response
-            scrollOffsetRef.current = newOffset;
-            setAnimationState((prev) => ({ ...prev, scrollOffset: newOffset }));
-
-            // Update drag state with new position and velocity
-            setDragState((prev) => ({
-              ...prev,
-              lastPosition: currentX,
-              lastTime: now,
-              velocity: velocity,
-              hasMoved: true,
-            }));
-          }
-        }
-      };
-
-      const handleGlobalMouseUp = () => {
-        if (dragStateRef.current.isMouseDrag) {
-          const finalVelocity = dragStateRef.current.velocity;
-          const hasMoved = dragStateRef.current.hasMoved;
-
-          // Only apply momentum if user actually dragged
-          if (hasMoved) {
-            if (Math.abs(finalVelocity) > MIN_VELOCITY_THRESHOLD) {
-              const momentumSpeed = -finalVelocity * MOMENTUM_TRANSFER;
-              const clampedSpeed = Math.max(
-                -MAX_SPEED,
-                Math.min(MAX_SPEED, momentumSpeed)
-              );
-              currentSpeedRef.current = clampedSpeed;
-              setAnimationState((prev) => ({
-                ...prev,
-                currentSpeed: clampedSpeed,
-              }));
-            } else {
-              // Gradually resume natural speed if no significant velocity
-              currentSpeedRef.current = NATURAL_SPEED * SPEED_RECOVERY_RATE;
-              setAnimationState((prev) => ({
-                ...prev,
-                currentSpeed: NATURAL_SPEED * SPEED_RECOVERY_RATE,
-              }));
-            }
-          } else {
-            // If no drag occurred, resume natural speed immediately
-            currentSpeedRef.current = NATURAL_SPEED;
-            setAnimationState((prev) => ({
-              ...prev,
-              currentSpeed: NATURAL_SPEED,
-            }));
-          }
-
-          setDragState((prev) => ({
-            ...prev,
-            isDragging: false,
-            isMouseDown: false,
-            isTouchDown: false,
-            velocity: 0,
-            isMouseDrag: false,
-            hasMoved: false,
-          }));
-        }
-      };
-
-      document.addEventListener("mousemove", handleGlobalMouseMove);
-      document.addEventListener("mouseup", handleGlobalMouseUp);
-
-      return () => {
-        document.removeEventListener("mousemove", handleGlobalMouseMove);
-        document.removeEventListener("mouseup", handleGlobalMouseUp);
-      };
-    }, []);
-
-    return {
-      handleTouchStart,
-      handleTouchMove,
-      handleTouchEnd,
-      handleMouseDown,
-      handleMouseMove,
-      handleMouseUp,
-    };
-  };
-
-  // Initialize touch handling hook
-  const touchHandlers = useTouchHandling();
-
-  /**
-   * useFullscreen Hook
-   *
-   * Manages fullscreen modal functionality:
-   * - Modal state management
-   * - Focus trap and keyboard navigation
-   * - Body overflow control
-   * - Accessibility features
-   * - iOS Safari scrolling fix
-   */
-
-  const useFullscreen = () => {
-    const openFullscreen = (image: MarqueeImage) => {
-      setFullscreenState({
-        isFullscreen: true,
-        fullscreenImage: image,
-      });
-      document.body.style.overflow = "hidden";
-
-      // Start modal animations with staggered timing
-      setModalAnimationState({
-        backdropVisible: true,
-        contentVisible: false,
-        captionVisible: false,
-      });
-
-      // Animate content after backdrop starts
-      setTimeout(() => {
-        setModalAnimationState((prev) => ({
-          ...prev,
-          contentVisible: true,
-        }));
-      }, 50);
-
-      // Animate caption after content starts
-      setTimeout(() => {
-        setModalAnimationState((prev) => ({
-          ...prev,
-          captionVisible: true,
-        }));
-      }, 150);
-
-      // Focus the modal when it opens for accessibility
-      setTimeout(() => {
-        if (modalRef.current) {
-          modalRef.current.focus();
-        }
-      }, MODAL_FOCUS_DELAY);
     };
 
-    const closeFullscreen = () => {
-      // Start closing animations
-      setModalAnimationState({
-        backdropVisible: false,
-        contentVisible: false,
-        captionVisible: false,
-      });
+    document.addEventListener("mousemove", handleGlobalMouseMove);
+    document.addEventListener("mouseup", handleGlobalMouseUp);
 
-      // Close modal after animations complete
-      setTimeout(() => {
-        setFullscreenState({
-          isFullscreen: false,
-          fullscreenImage: null,
-        });
-      }, 300);
-
-      // iOS Safari scrolling fix - multi-step process to reset internal scroll state
-      const fixIOSScrolling = () => {
-        // Step 1: Trigger scroll events to wake up iOS Safari's scroll handling
-        window.dispatchEvent(new Event("scroll"));
-        window.dispatchEvent(new Event("resize"));
-
-        // Step 2: Enable touch scrolling explicitly
-        document.body.style.setProperty("-webkit-overflow-scrolling", "touch");
-        document.body.style.setProperty("overflow-scrolling", "touch");
-
-        // Step 3: Force scroll position reset
-        const currentScrollY = window.scrollY;
-        window.scrollTo(0, currentScrollY + 1);
-        setTimeout(() => {
-          window.scrollTo(0, currentScrollY);
-        }, 10);
-
-        // Step 4: Set overflow properties
-        document.documentElement.style.overflow = "auto";
-        document.body.style.overflow = "auto";
-
-        // Step 5: Dispatch touch event to re-enable touch scrolling
-        const touchEvent = new TouchEvent("touchstart", {
-          bubbles: true,
-          cancelable: true,
-          view: window,
-        });
-        document.dispatchEvent(touchEvent);
-
-        // Step 6: Force layout recalculation
-        document.body.style.display = "none";
-        void document.body.offsetHeight;
-        document.body.style.display = "";
-      };
-
-      // Apply the fix with a small delay to ensure modal is fully closed
-      setTimeout(fixIOSScrolling, 50);
+    return () => {
+      document.removeEventListener("mousemove", handleGlobalMouseMove);
+      document.removeEventListener("mouseup", handleGlobalMouseUp);
     };
+  }, [speed]);
 
-    // Handle keyboard navigation and body style cleanup
-    useEffect(() => {
-      const handleKeyDown = (e: KeyboardEvent) => {
-        if (!fullscreenState.isFullscreen) return;
+  // Fullscreen handlers
+  const openFullscreen = useCallback((image: MarqueeImage) => {
+    setFullscreenState({ isFullscreen: true, fullscreenImage: image });
+    document.body.style.overflow = "hidden";
 
-        switch (e.key) {
-          case "Escape":
-            e.preventDefault();
-            closeFullscreen();
-            break;
-          case "ArrowLeft":
-            e.preventDefault();
-            // TODO: Navigate to previous image
-            break;
-          case "ArrowRight":
-            e.preventDefault();
-            // TODO: Navigate to next image
-            break;
-          case "Home":
-            e.preventDefault();
-            // TODO: Go to first image
-            break;
-          case "End":
-            e.preventDefault();
-            // TODO: Go to last image
-            break;
-        }
-      };
+    setModalAnimationState({
+      backdropVisible: true,
+      contentVisible: false,
+      captionVisible: false,
+    });
 
-      if (fullscreenState.isFullscreen) {
-        document.addEventListener("keydown", handleKeyDown);
-        return () => document.removeEventListener("keydown", handleKeyDown);
+    setTimeout(() => {
+      setModalAnimationState((prev) => ({ ...prev, contentVisible: true }));
+    }, 50);
+
+    setTimeout(() => {
+      setModalAnimationState((prev) => ({ ...prev, captionVisible: true }));
+    }, 150);
+
+    setTimeout(() => {
+      if (modalRef.current) {
+        modalRef.current.focus();
       }
-    }, [fullscreenState.isFullscreen, closeFullscreen]);
+    }, 100);
+  }, []);
 
-    // Cleanup body style on unmount
-    useEffect(() => {
-      return () => {
-        // iOS Safari scrolling fix on unmount
-        const fixIOSScrolling = () => {
-          // Step 1: Trigger scroll events to wake up iOS Safari's scroll handling
-          window.dispatchEvent(new Event("scroll"));
-          window.dispatchEvent(new Event("resize"));
+  const closeFullscreen = useCallback(() => {
+    setModalAnimationState({
+      backdropVisible: false,
+      contentVisible: false,
+      captionVisible: false,
+    });
 
-          // Step 2: Enable touch scrolling explicitly
-          document.body.style.setProperty(
-            "-webkit-overflow-scrolling",
-            "touch"
-          );
-          document.body.style.setProperty("overflow-scrolling", "touch");
+    setTimeout(() => {
+      setFullscreenState({ isFullscreen: false, fullscreenImage: null });
+    }, 300);
 
-          // Step 3: Force scroll position reset
-          const currentScrollY = window.scrollY;
-          window.scrollTo(0, currentScrollY + 1);
-          setTimeout(() => {
-            window.scrollTo(0, currentScrollY);
-          }, 10);
+    setTimeout(() => {
+      document.body.style.overflow = "auto";
+    }, 50);
+  }, []);
 
-          // Step 4: Set overflow properties
-          document.documentElement.style.overflow = "auto";
-          document.body.style.overflow = "auto";
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!fullscreenState.isFullscreen) return;
 
-          // Step 5: Dispatch touch event to re-enable touch scrolling
-          const touchEvent = new TouchEvent("touchstart", {
-            bubbles: true,
-            cancelable: true,
-            view: window,
-          });
-          document.dispatchEvent(touchEvent);
-
-          // Step 6: Force layout recalculation
-          document.body.style.display = "none";
-          void document.body.offsetHeight;
-          document.body.style.display = "";
-        };
-
-        // Apply the fix immediately on unmount
-        fixIOSScrolling();
-      };
-    }, []);
-
-    return {
-      openFullscreen,
-      closeFullscreen,
+      if (e.key === "Escape") {
+        e.preventDefault();
+        closeFullscreen();
+      }
     };
-  };
 
-  // Initialize fullscreen hook
-  const fullscreenHandlers = useFullscreen();
+    if (fullscreenState.isFullscreen) {
+      document.addEventListener("keydown", handleKeyDown);
+      return () => document.removeEventListener("keydown", handleKeyDown);
+    }
+  }, [fullscreenState.isFullscreen, closeFullscreen]);
 
-  /**
-   * useImageLoading Hook
-   *
-   * Manages image loading and visibility:
-   * - Intersection observer for lazy loading
-   * - Image loading state tracking
-   * - Error handling and timeouts
-   * - Memory leak prevention
-   */
+  // Image loading with intersection observer
+  useEffect(() => {
+    if (!containerRef.current) return;
 
-  const useImageLoading = () => {
-    // Intersection observer for lazy loading
-    useEffect(() => {
-      if (!containerRef.current) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const imageSrc = entry.target.getAttribute("data-image-src");
+          if (!imageSrc) return;
 
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            const imageSrc = entry.target.getAttribute("data-image-src");
-            if (!imageSrc) return;
+          if (entry.isIntersecting) {
+            setImageState((prev) => ({
+              ...prev,
+              visibleImages: new Set([...prev.visibleImages, imageSrc]),
+            }));
 
-            if (entry.isIntersecting) {
-              // Load image when it becomes visible
+            setTimeout(() => {
               setImageState((prev) => ({
                 ...prev,
-                visibleImages: new Set([...prev.visibleImages, imageSrc]),
-                loadingImages: new Set([...prev.loadingImages, imageSrc]),
+                loadedImages: new Set([...prev.loadedImages, imageSrc]),
               }));
+            }, 100);
+          }
+        });
+      },
+      {
+        root: containerRef.current,
+        rootMargin: `${preloadDistance}px`,
+        threshold: 0.1,
+      }
+    );
 
-              // Mark image as loaded after delay
-              setTimeout(() => {
-                setImageState((prev) => ({
-                  ...prev,
-                  loadedImages: new Set([...prev.loadedImages, imageSrc]),
-                  loadingImages: new Set(
-                    [...prev.loadingImages].filter((src) => src !== imageSrc)
-                  ),
-                }));
-              }, IMAGE_LOAD_DELAY);
+    observerRef.current = observer;
 
-              // Error handling
-              setTimeout(() => {
-                setImageState((prev) => {
-                  if (!prev.loadedImages.has(imageSrc)) {
-                    return {
-                      ...prev,
-                      errorImages: new Set([...prev.errorImages, imageSrc]),
-                      loadingImages: new Set(
-                        [...prev.loadingImages].filter(
-                          (src) => src !== imageSrc
-                        )
-                      ),
-                    };
-                  }
-                  return prev;
-                });
-              }, IMAGE_LOAD_TIMEOUT);
-            } else {
-              // Remove from visible images when out of view
-              setImageState((prev) => {
-                const newVisibleImages = new Set(prev.visibleImages);
-                const newLoadingImages = new Set(prev.loadingImages);
+    const imageContainers =
+      containerRef.current.querySelectorAll("[data-image-src]");
+    imageContainers.forEach((container) => {
+      observer.observe(container);
+    });
 
-                newVisibleImages.delete(imageSrc);
-                newLoadingImages.delete(imageSrc);
-
-                return {
-                  ...prev,
-                  visibleImages: newVisibleImages,
-                  loadingImages: newLoadingImages,
-                };
-              });
-            }
-          });
-        },
-        {
-          root: containerRef.current,
-          rootMargin: `${preloadDistance}px`,
-          threshold: 0.1,
-        }
-      );
-
-      observerRef.current = observer;
-
-      // Observe all image containers
-      const imageContainers =
-        containerRef.current.querySelectorAll("[data-image-src]");
-      imageContainers.forEach((container) => {
-        observer.observe(container);
-      });
-
-      return () => {
-        observer.disconnect();
-        observerRef.current = null;
-      };
-    }, [preloadDistance]); // Removed duplicatedImages dependency to prevent recreation
-
-    // Observe new images when duplicatedImages changes
-    useEffect(() => {
-      if (!observerRef.current || !containerRef.current) return;
-
-      // Disconnect and reconnect observer to avoid memory leaks
-      const observer = observerRef.current;
+    return () => {
       observer.disconnect();
-
-      // Observe all image containers
-      const imageContainers =
-        containerRef.current.querySelectorAll("[data-image-src]");
-      imageContainers.forEach((container) => {
-        observer.observe(container);
-      });
-    }, [duplicatedImages]);
-
-    return {
-      observerRef,
+      observerRef.current = null;
     };
-  };
+  }, [preloadDistance]);
 
-  // Initialize image loading hook
-  useImageLoading();
+  // Observe new images
+  useEffect(() => {
+    if (!observerRef.current || !containerRef.current) return;
 
-  // ============================================================================
-  // COMPONENT LOGIC
-  // ============================================================================
+    const observer = observerRef.current;
+    observer.disconnect();
 
-  /**
-   * Comprehensive cleanup on component unmount
-   *
-   * Ensures proper cleanup of:
-   * - Animation frames
-   * - Intersection observers
-   * - Body overflow styles
-   * - iOS Safari scrolling state
-   */
+    const imageContainers =
+      containerRef.current.querySelectorAll("[data-image-src]");
+    imageContainers.forEach((container) => {
+      observer.observe(container);
+    });
+  }, [duplicatedImages]);
+
+  // Cleanup
   useEffect(() => {
     return () => {
-      // Cleanup animation frame
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
-
-      // Cleanup intersection observer
       if (observerRef.current) {
         observerRef.current.disconnect();
-        observerRef.current = null;
       }
-
-      // iOS Safari scrolling fix on unmount
-      const fixIOSScrolling = () => {
-        // Step 1: Trigger scroll events to wake up iOS Safari's scroll handling
-        window.dispatchEvent(new Event("scroll"));
-        window.dispatchEvent(new Event("resize"));
-
-        // Step 2: Enable touch scrolling explicitly
-        document.body.style.setProperty("-webkit-overflow-scrolling", "touch");
-        document.body.style.setProperty("overflow-scrolling", "touch");
-
-        // Step 3: Force scroll position reset
-        const currentScrollY = window.scrollY;
-        window.scrollTo(0, currentScrollY + 1);
-        setTimeout(() => {
-          window.scrollTo(0, currentScrollY);
-        }, 10);
-
-        // Step 4: Set overflow properties
-        document.documentElement.style.overflow = "auto";
-        document.body.style.overflow = "auto";
-
-        // Step 5: Dispatch touch event to re-enable touch scrolling
-        const touchEvent = new TouchEvent("touchstart", {
-          bubbles: true,
-          cancelable: true,
-          view: window,
-        });
-        document.dispatchEvent(touchEvent);
-
-        // Step 6: Force layout recalculation
-        document.body.style.display = "none";
-        void document.body.offsetHeight;
-        document.body.style.display = "";
-      };
-
-      // Apply the fix immediately on unmount
-      fixIOSScrolling();
+      document.body.style.overflow = "auto";
     };
   }, []);
 
-  /**
-   * Renders an individual image in the marquee
-   *
-   * @param image - The image data to render
-   * @param index - The index of the image in the array
-   * @returns JSX element for the image
-   */
+  // Keep refs in sync
+  useEffect(() => {
+    dragStateRef.current = dragState;
+  }, [dragState]);
+
+  // Render image
   const renderImage = useCallback(
     (image: MarqueeImage, index: number) => {
       const imageSrc = image.src;
       const isVisible = imageState.visibleImages.has(imageSrc);
       const isLoaded = imageState.loadedImages.has(imageSrc);
-      const isLoading = imageState.loadingImages.has(imageSrc);
       const hasError = imageState.errorImages.has(imageSrc);
-
-      // Determine if we should show the image
       const shouldShowImage = isVisible && isLoaded;
 
       return (
@@ -1213,14 +583,12 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
           className="flex-shrink-0 relative"
           style={{ marginRight: `${gap}px` }}
           data-image-src={image.src}
-          data-small-image-src={image.src}
         >
           <div
             className="marquee-image-container"
             onClick={() => {
-              // Only open fullscreen if no drag occurred and we have a loaded image
               if (!hasError && !dragOccurredRef.current && isLoaded) {
-                fullscreenHandlers.openFullscreen(image);
+                openFullscreen(image);
               }
             }}
             role="button"
@@ -1234,29 +602,21 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
               !hasError &&
               e.key === "Enter" &&
               isLoaded &&
-              fullscreenHandlers.openFullscreen(image)
+              openFullscreen(image)
             }
           >
             <div className="relative">
-              {/* Loading placeholder */}
               {!shouldShowImage && !hasError && (
                 <div
                   className="rounded-md shadow-lg bg-zinc-800 animate-pulse"
-                  style={{
-                    width: image.width || 300,
-                    height: `${height}px`,
-                  }}
+                  style={{ width: image.width || 300, height: `${height}px` }}
                 />
               )}
 
-              {/* Error placeholder */}
               {hasError && (
                 <div
                   className="rounded-md shadow-lg bg-red-900/20 border border-red-500/30 flex items-center justify-center"
-                  style={{
-                    width: image.width || 300,
-                    height: `${height}px`,
-                  }}
+                  style={{ width: image.width || 300, height: `${height}px` }}
                 >
                   <div className="text-center text-red-400">
                     <div className="text-2xl mb-2">⚠️</div>
@@ -1265,7 +625,6 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
                 </div>
               )}
 
-              {/* Actual image */}
               {shouldShowImage && (
                 <div className="marquee-image-fade-in">
                   <Image
@@ -1278,37 +637,20 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
                     placeholder={image.placeholder ? "blur" : "empty"}
                     blurDataURL={image.placeholder}
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    priority={index < 3} // Prioritize first 3 images
+                    priority={index < 3}
                     onLoad={() => {
                       setImageState((prev) => ({
                         ...prev,
                         loadedImages: new Set([...prev.loadedImages, imageSrc]),
-                        loadingImages: new Set(
-                          [...prev.loadingImages].filter(
-                            (src) => src !== imageSrc
-                          )
-                        ),
                       }));
                     }}
                     onError={() => {
                       setImageState((prev) => ({
                         ...prev,
                         errorImages: new Set([...prev.errorImages, imageSrc]),
-                        loadingImages: new Set(
-                          [...prev.loadingImages].filter(
-                            (src) => src !== imageSrc
-                          )
-                        ),
                       }));
                     }}
                   />
-                </div>
-              )}
-
-              {/* Loading indicator overlay */}
-              {isLoading && !hasError && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-md">
-                  <div className="text-white text-sm">Loading...</div>
                 </div>
               )}
             </div>
@@ -1324,11 +666,10 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
     [
       imageState.visibleImages,
       imageState.loadedImages,
-      imageState.loadingImages,
       imageState.errorImages,
       gap,
       height,
-      fullscreenHandlers,
+      openFullscreen,
     ]
   );
 
@@ -1342,18 +683,17 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
           width: "100vw",
           marginLeft: "calc(-50vw + 50%)",
         }}
-        onTouchStart={touchHandlers.handleTouchStart}
-        onTouchMove={touchHandlers.handleTouchMove}
-        onTouchEnd={touchHandlers.handleTouchEnd}
-        onMouseDown={touchHandlers.handleMouseDown}
-        onMouseMove={touchHandlers.handleMouseMove}
-        onMouseUp={touchHandlers.handleMouseUp}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
         role="region"
         aria-label="Image marquee gallery"
         aria-live="polite"
         aria-describedby="marquee-instructions"
       >
-        {/* Screen reader instructions */}
         <div id="marquee-instructions" className="sr-only">
           Use mouse wheel, drag with mouse or touch, or touch gestures to
           control the marquee speed. Drag to pause and release to resume with
@@ -1373,14 +713,13 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
         </div>
       </div>
 
-      {/* Fullscreen Modal */}
       {fullscreenState.isFullscreen && fullscreenState.fullscreenImage && (
         <div
           ref={modalRef}
           className={`fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 cursor-pointer modal-backdrop ${
             modalAnimationState.backdropVisible ? "visible" : ""
           }`}
-          onClick={fullscreenHandlers.closeFullscreen}
+          onClick={closeFullscreen}
           role="dialog"
           aria-modal="true"
           aria-label={`Fullscreen view of ${fullscreenState.fullscreenImage.alt}`}
@@ -1429,9 +768,5 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
     </>
   );
 };
-
-// ============================================================================
-// EXPORT
-// ============================================================================
 
 export default MDXMarquee;
