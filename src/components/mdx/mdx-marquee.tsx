@@ -204,6 +204,9 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
     dragStateRef.current = dragState;
   }, [dragState]);
 
+  /** Ref to track if a drag operation occurred during the current mouse/touch session */
+  const dragOccurredRef = useRef(false);
+
   /** Interaction state ref for animation loop access */
   const interactionStateRef = useRef({
     isMouseDown: false,
@@ -465,6 +468,9 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
         const hasMoved = Math.abs(deltaX) > dragStateRef.current.dragThreshold;
 
         if (hasMoved) {
+          // Mark that a drag operation occurred
+          dragOccurredRef.current = true;
+
           const newOffset = dragStateRef.current.dragOffset + deltaX;
 
           // Calculate velocity for momentum transfer
@@ -574,6 +580,10 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
     const handleMouseDown = useCallback((e: React.MouseEvent) => {
       e.preventDefault();
       const now = Date.now();
+
+      // Reset drag occurred flag for new interaction
+      dragOccurredRef.current = false;
+
       setDragState({
         isDragging: true,
         isMouseDown: true,
@@ -604,6 +614,9 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
         const hasMoved = Math.abs(deltaX) > dragStateRef.current.dragThreshold;
 
         if (hasMoved) {
+          // Mark that a drag operation occurred
+          dragOccurredRef.current = true;
+
           const newOffset = dragStateRef.current.dragOffset + deltaX;
 
           // Calculate velocity for momentum transfer
@@ -691,6 +704,9 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
             Math.abs(deltaX) > dragStateRef.current.dragThreshold;
 
           if (hasMoved) {
+            // Mark that a drag operation occurred
+            dragOccurredRef.current = true;
+
             const newOffset = dragStateRef.current.dragOffset + deltaX;
 
             // Calculate velocity for momentum transfer
@@ -1057,7 +1073,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
             }}
             onClick={() => {
               // Only open fullscreen if no drag occurred and we have a loaded image
-              if (!hasError && !dragState.hasMoved && isLoaded) {
+              if (!hasError && !dragOccurredRef.current && isLoaded) {
                 fullscreenHandlers.openFullscreen(image);
               }
             }}
