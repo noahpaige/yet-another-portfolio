@@ -13,13 +13,14 @@
  * - Direction-based image preloading for optimal performance
  * - Lazy loading with intersection observer
  * - Fullscreen modal with keyboard navigation and swipe gestures
+ * - Fullscreen-synchronized carousel positioning
  * - Comprehensive error handling
  * - WCAG 2.1 AA accessibility compliance
  * - Performance optimized with ref-based animation
  * - Blur placeholder for smooth loading experience
  *
  * @author Noah Paige
- * @version 2.5.0
+ * @version 2.6.0
  * @since 2024-12-19
  */
 
@@ -187,6 +188,14 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
     fullscreenImage: null as MarqueeImage | null,
   });
 
+  /** Fullscreen position tracking and animation state */
+  const [fullscreenPositionState, setFullscreenPositionState] = useState({
+    targetImageIndex: -1,
+    isPositioning: false,
+    targetScrollOffset: 0,
+    shouldResumeScrolling: false,
+  });
+
   /** Swipe gesture state for fullscreen modal */
   const [swipeState, setSwipeState] = useState({
     isSwiping: false,
@@ -203,11 +212,58 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
   /** Swipe gesture refs for performance */
   const swipeStateRef = useRef(swipeState);
   const swipeStartTimeRef = useRef(0);
+  /** Fullscreen position refs for performance */
+  const fullscreenPositionRef = useRef(fullscreenPositionState);
 
   // Keep swipe refs in sync with state
   useEffect(() => {
     swipeStateRef.current = swipeState;
   }, [swipeState]);
+
+  // Keep fullscreen position refs in sync with state
+  useEffect(() => {
+    fullscreenPositionRef.current = fullscreenPositionState;
+  }, [fullscreenPositionState]);
+
+  // ============================================================================
+  // COMPUTED VALUES
+  // ============================================================================
+
+  /** Animation speed constants */
+  const NATURAL_SPEED = speed;
+  const MAX_SPEED = speed * MAX_SPEED_MULTIPLIER;
+  const MOMENTUM_DECAY = MOMENTUM_DECAY_RATE;
+
+  /** Calculate total width needed for seamless loop */
+  const totalWidth = React.useMemo(() => {
+    return images.reduce((acc, image) => {
+      const imgWidth = image.width || 300;
+      return acc + imgWidth + gap;
+    }, 0);
+  }, [images, gap]);
+
+  /** Duplicate images for seamless infinite loop */
+  const duplicatedImages = React.useMemo(() => {
+    // Use 2x duplication for seamless infinite scrolling
+    return Array(2).fill(images).flat();
+  }, [images]);
+
+  // Handle resuming scrolling after positioning
+  useEffect(() => {
+    if (fullscreenPositionState.shouldResumeScrolling) {
+      // Reset the positioning state
+      setFullscreenPositionState((prev) => ({
+        ...prev,
+        shouldResumeScrolling: false,
+        targetImageIndex: -1,
+        isPositioning: false,
+        targetScrollOffset: 0,
+      }));
+
+      // Gradually resume natural scrolling speed
+      currentSpeedRef.current = NATURAL_SPEED * 0.1;
+    }
+  }, [fullscreenPositionState.shouldResumeScrolling, NATURAL_SPEED]);
 
   // ============================================================================
   // REFS
@@ -235,29 +291,6 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
   const scrollDirectionRef = useRef(0);
   /** Last scroll direction change time for debouncing */
   const lastDirectionChangeRef = useRef(0);
-
-  // ============================================================================
-  // COMPUTED VALUES
-  // ============================================================================
-
-  /** Animation speed constants */
-  const NATURAL_SPEED = speed;
-  const MAX_SPEED = speed * MAX_SPEED_MULTIPLIER;
-  const MOMENTUM_DECAY = MOMENTUM_DECAY_RATE;
-
-  /** Calculate total width needed for seamless loop */
-  const totalWidth = React.useMemo(() => {
-    return images.reduce((acc, image) => {
-      const imgWidth = image.width || 300;
-      return acc + imgWidth + gap;
-    }, 0);
-  }, [images, gap]);
-
-  /** Duplicate images for seamless infinite loop */
-  const duplicatedImages = React.useMemo(() => {
-    // Use 2x duplication for seamless infinite scrolling
-    return Array(2).fill(images).flat();
-  }, [images]);
 
   // ============================================================================
   // HELPER FUNCTIONS
@@ -441,6 +474,40 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
   }, [preloadDistance, debouncedIntersectionCallback]);
 
   /**
+   * Calculates the target scroll offset for positioning to a specific image
+   */
+  const calculateTargetScrollOffset = useCallback(
+    (imageIndex: number) => {
+      if (imageIndex < 0 || imageIndex >= images.length) return 0;
+
+      let targetOffset = 0;
+
+      // Calculate offset by summing up widths of all images before the target
+      for (let i = 0; i < imageIndex; i++) {
+        const image = images[i];
+        const imageWidth = image.width || 300;
+        targetOffset += imageWidth + gap;
+      }
+
+      // Center the image in the viewport (assuming viewport width is 100vw)
+      const viewportWidth =
+        typeof window !== "undefined" ? window.innerWidth : 1200;
+      const targetImageWidth = images[imageIndex].width || 300;
+      const centerOffset = (viewportWidth - targetImageWidth) / 2;
+
+      targetOffset = Math.max(0, targetOffset - centerOffset);
+
+      // Handle infinite loop - ensure the offset is within the total width
+      if (targetOffset >= totalWidth) {
+        targetOffset = targetOffset % totalWidth;
+      }
+
+      return targetOffset;
+    },
+    [images, gap, totalWidth]
+  );
+
+  /**
    * Unified interaction handler for both touch and mouse events
    * @param clientX - The client X coordinate
    * @param isTouch - Whether this is a touch event
@@ -585,6 +652,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
   }, [speed]);
 
   // Animation loop - optimized for performance using direct DOM manipulation
+  // Enhanced with fullscreen positioning and pause functionality
   useEffect(() => {
     let lastTime = 0;
 
@@ -597,7 +665,11 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
         interactionStateRef.current.isTouchDown ||
         interactionStateRef.current.isDragging;
 
-      if (!isInteracting) {
+      const isFullscreen = fullscreenState.isFullscreen;
+      const isPositioning = fullscreenPositionRef.current.isPositioning;
+
+      // Stop scrolling if fullscreen is open or positioning is in progress
+      if (!isInteracting && !isFullscreen && !isPositioning) {
         const speed = currentSpeedRef.current;
         const newOffset = scrollOffsetRef.current + (speed * deltaTime) / 1000;
 
@@ -645,10 +717,55 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
           const transformX = -(scrollOffsetRef.current % totalWidth);
           animationContainerRef.current.style.transform = `translateX(${transformX}px)`;
         }
+      } else if (isPositioning) {
+        // Handle positioning animation
+        const targetOffset = fullscreenPositionRef.current.targetScrollOffset;
+        const currentOffset = scrollOffsetRef.current;
+        let distance = targetOffset - currentOffset;
+
+        // Handle infinite loop wrapping for positioning
+        if (Math.abs(distance) > totalWidth / 2) {
+          if (distance > 0) {
+            distance -= totalWidth;
+          } else {
+            distance += totalWidth;
+          }
+        }
+
+        // Smooth positioning animation
+        const positioningSpeed = 1000; // pixels per second
+        const maxDistance = positioningSpeed * (deltaTime / 1000);
+
+        if (Math.abs(distance) > 1) {
+          const step =
+            Math.sign(distance) * Math.min(Math.abs(distance), maxDistance);
+          scrollOffsetRef.current += step;
+
+          // Handle wrapping during positioning
+          if (scrollOffsetRef.current >= totalWidth) {
+            scrollOffsetRef.current -= totalWidth;
+          } else if (scrollOffsetRef.current < 0) {
+            scrollOffsetRef.current += totalWidth;
+          }
+
+          // Apply transform directly to DOM
+          if (animationContainerRef.current) {
+            const transformX = -(scrollOffsetRef.current % totalWidth);
+            animationContainerRef.current.style.transform = `translateX(${transformX}px)`;
+          }
+        } else {
+          // Positioning complete
+          scrollOffsetRef.current = targetOffset;
+          setFullscreenPositionState((prev) => ({
+            ...prev,
+            isPositioning: false,
+            shouldResumeScrolling: true,
+          }));
+        }
       }
 
-      // Update momentum decay
-      if (!isInteracting) {
+      // Update momentum decay (only when not positioning)
+      if (!isInteracting && !isFullscreen && !isPositioning) {
         const currentSpeedValue = currentSpeedRef.current;
         if (Math.abs(currentSpeedValue - NATURAL_SPEED) >= 0.1) {
           const decayRate = MOMENTUM_DECAY;
@@ -671,7 +788,13 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [totalWidth, NATURAL_SPEED, MOMENTUM_DECAY, updateIntersectionObserver]);
+  }, [
+    totalWidth,
+    NATURAL_SPEED,
+    MOMENTUM_DECAY,
+    updateIntersectionObserver,
+    fullscreenState.isFullscreen,
+  ]);
 
   // Wheel event handling
   useEffect(() => {
@@ -748,6 +871,12 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
       isFullscreen: true,
       fullscreenImage: previousImage,
     });
+
+    // Update the tracked position
+    setFullscreenPositionState((prev) => ({
+      ...prev,
+      targetImageIndex: previousIndex,
+    }));
   }, [fullscreenState.fullscreenImage, images]);
 
   /**
@@ -769,6 +898,12 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
       isFullscreen: true,
       fullscreenImage: nextImage,
     });
+
+    // Update the tracked position
+    setFullscreenPositionState((prev) => ({
+      ...prev,
+      targetImageIndex: nextIndex,
+    }));
   }, [fullscreenState.fullscreenImage, images]);
 
   /**
@@ -892,10 +1027,22 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
 
   // Fullscreen handlers
   const openFullscreen = (image: MarqueeImage) => {
+    // Find the image index
+    const imageIndex = images.findIndex((img) => img.src === image.src);
+
     setFullscreenState({
       isFullscreen: true,
       fullscreenImage: image,
     });
+
+    // Track the current image position
+    setFullscreenPositionState({
+      targetImageIndex: imageIndex,
+      isPositioning: false,
+      targetScrollOffset: 0,
+      shouldResumeScrolling: false,
+    });
+
     document.body.style.overflow = "hidden";
 
     setTimeout(() => {
@@ -906,10 +1053,42 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
   };
 
   const closeFullscreen = () => {
+    const currentPositionState = fullscreenPositionRef.current;
+
     setFullscreenState({
       isFullscreen: false,
       fullscreenImage: null,
     });
+
+    // If we have a target image, position the carousel to it
+    if (currentPositionState.targetImageIndex >= 0) {
+      const targetOffset = calculateTargetScrollOffset(
+        currentPositionState.targetImageIndex
+      );
+
+      // Calculate the shortest path to the target (considering infinite loop)
+      const currentOffset = scrollOffsetRef.current;
+      let distance = targetOffset - currentOffset;
+
+      // Handle infinite loop - find the shortest path
+      if (Math.abs(distance) > totalWidth / 2) {
+        if (distance > 0) {
+          distance -= totalWidth;
+        } else {
+          distance += totalWidth;
+        }
+      }
+
+      const finalTargetOffset = currentOffset + distance;
+
+      setFullscreenPositionState({
+        targetImageIndex: currentPositionState.targetImageIndex,
+        isPositioning: true,
+        targetScrollOffset: finalTargetOffset,
+        shouldResumeScrolling: false,
+      });
+    }
+
     setTimeout(fixIOSScrolling, 50);
   };
 
