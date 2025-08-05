@@ -1199,7 +1199,12 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
     <>
       <motion.div
         className={`my-10 ${className}`}
-        style={{ height: `${height}px` }}
+        style={{
+          height: `${height}px`,
+          position: "relative",
+          width: "100vw",
+          marginLeft: "calc(-50vw + 50%)",
+        }}
         onTouchStart={touchHandlers.handleTouchStart}
         onTouchMove={touchHandlers.handleTouchMove}
         onTouchEnd={touchHandlers.handleTouchEnd}
