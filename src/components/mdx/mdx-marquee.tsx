@@ -257,6 +257,33 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
   }, [images, hardwareCapability.performanceTier]);
 
   // ============================================================================
+  // HELPER FUNCTIONS
+  // ============================================================================
+
+  /**
+   * Applies momentum to the marquee based on final velocity
+   * @param finalVelocity - The final velocity from drag interaction
+   */
+  const applyMomentum = useCallback((finalVelocity: number) => {
+    if (Math.abs(finalVelocity) > MIN_VELOCITY_THRESHOLD) {
+      const momentumSpeed = -finalVelocity * MOMENTUM_TRANSFER; // Negative because we want opposite direction
+      const clampedSpeed = Math.max(
+        -MAX_SPEED,
+        Math.min(MAX_SPEED, momentumSpeed)
+      );
+      currentSpeedRef.current = clampedSpeed;
+      setAnimationState((prev) => ({ ...prev, currentSpeed: clampedSpeed }));
+    } else {
+      // Gradually resume natural speed if no significant velocity
+      currentSpeedRef.current = NATURAL_SPEED * 0.1;
+      setAnimationState((prev) => ({
+        ...prev,
+        currentSpeed: NATURAL_SPEED * 0.1,
+      }));
+    }
+  }, []);
+
+  // ============================================================================
   // CUSTOM HOOKS
   // ============================================================================
 
@@ -447,25 +474,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
 
       // Only apply momentum if user actually dragged
       if (hasMoved) {
-        if (Math.abs(finalVelocity) > MIN_VELOCITY_THRESHOLD) {
-          const momentumSpeed = -finalVelocity * MOMENTUM_TRANSFER; // Negative because we want opposite direction
-          const clampedSpeed = Math.max(
-            -MAX_SPEED,
-            Math.min(MAX_SPEED, momentumSpeed)
-          );
-          currentSpeedRef.current = clampedSpeed;
-          setAnimationState((prev) => ({
-            ...prev,
-            currentSpeed: clampedSpeed,
-          }));
-        } else {
-          // Gradually resume natural speed if no significant velocity
-          currentSpeedRef.current = NATURAL_SPEED * 0.1;
-          setAnimationState((prev) => ({
-            ...prev,
-            currentSpeed: NATURAL_SPEED * 0.1,
-          }));
-        }
+        applyMomentum(finalVelocity);
       } else {
         // If no drag occurred, resume natural speed immediately
         currentSpeedRef.current = NATURAL_SPEED;
@@ -594,25 +603,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
 
         // Only apply momentum if user actually dragged
         if (hasMoved) {
-          if (Math.abs(finalVelocity) > MIN_VELOCITY_THRESHOLD) {
-            const momentumSpeed = -finalVelocity * MOMENTUM_TRANSFER; // Negative because we want opposite direction
-            const clampedSpeed = Math.max(
-              -MAX_SPEED,
-              Math.min(MAX_SPEED, momentumSpeed)
-            );
-            currentSpeedRef.current = clampedSpeed;
-            setAnimationState((prev) => ({
-              ...prev,
-              currentSpeed: clampedSpeed,
-            }));
-          } else {
-            // Gradually resume natural speed if no significant velocity
-            currentSpeedRef.current = NATURAL_SPEED * 0.1;
-            setAnimationState((prev) => ({
-              ...prev,
-              currentSpeed: NATURAL_SPEED * 0.1,
-            }));
-          }
+          applyMomentum(finalVelocity);
         } else {
           // If no drag occurred, resume natural speed immediately
           currentSpeedRef.current = NATURAL_SPEED;
@@ -684,25 +675,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
 
           // Only apply momentum if user actually dragged
           if (hasMoved) {
-            if (Math.abs(finalVelocity) > MIN_VELOCITY_THRESHOLD) {
-              const momentumSpeed = -finalVelocity * MOMENTUM_TRANSFER;
-              const clampedSpeed = Math.max(
-                -MAX_SPEED,
-                Math.min(MAX_SPEED, momentumSpeed)
-              );
-              currentSpeedRef.current = clampedSpeed;
-              setAnimationState((prev) => ({
-                ...prev,
-                currentSpeed: clampedSpeed,
-              }));
-            } else {
-              // Gradually resume natural speed if no significant velocity
-              currentSpeedRef.current = NATURAL_SPEED * 0.1;
-              setAnimationState((prev) => ({
-                ...prev,
-                currentSpeed: NATURAL_SPEED * 0.1,
-              }));
-            }
+            applyMomentum(finalVelocity);
           } else {
             // If no drag occurred, resume natural speed immediately
             currentSpeedRef.current = NATURAL_SPEED;
