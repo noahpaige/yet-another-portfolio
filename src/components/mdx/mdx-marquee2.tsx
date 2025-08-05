@@ -259,25 +259,129 @@ const MDXMarquee2: React.FC<MDXMarquee2Props> = ({
   }, [images, hardwareCapability.performanceTier]);
 
   // ============================================================================
-  // PLACEHOLDER FOR FUTURE IMPLEMENTATION
-  // ============================================================================
-
-  // TODO: Implement CSS transform animation system
-  // TODO: Implement optimized animation loop
-  // TODO: Implement touch and mouse controls
-  // TODO: Implement fullscreen modal
-  // TODO: Implement image loading and lazy loading
-  // TODO: Implement accessibility features
-
-  // ============================================================================
-  // TEMPORARY RENDER (TO BE REPLACED)
+  // CSS TRANSFORM ANIMATION SYSTEM
   // ============================================================================
 
   /**
-   * Temporary render function - will be replaced with full implementation
+   * CSS Transform Animation Hook
+   *
+   * Manages smooth infinite scrolling using CSS transforms with GPU acceleration.
+   * Uses direct DOM manipulation for optimal performance.
+   */
+  const useCSSTransformAnimation = () => {
+    // Animation loop using requestAnimationFrame
+    useEffect(() => {
+      let lastTime = 0;
+      let animationId: number | null = null;
+
+      const animate = (currentTime: number) => {
+        // Calculate delta time for consistent speed across devices
+        const deltaTime = currentTime - lastTime;
+        lastTime = currentTime;
+
+        // Update scroll offset using refs (no React state updates)
+        if (
+          !dragState.isDragging &&
+          !dragState.isMouseDown &&
+          !dragState.isTouchDown
+        ) {
+          const speed = currentSpeedRef.current;
+          const newOffset =
+            scrollOffsetRef.current + (speed * deltaTime) / 1000;
+
+          // Handle infinite loop wrapping
+          if (newOffset >= totalWidth) {
+            scrollOffsetRef.current = newOffset - totalWidth;
+          } else if (newOffset < 0) {
+            scrollOffsetRef.current = newOffset + totalWidth;
+          } else {
+            scrollOffsetRef.current = newOffset;
+          }
+
+          // Apply CSS transform directly to DOM for GPU acceleration
+          if (containerRef.current) {
+            const transformValue = `translateX(${-scrollOffsetRef.current}px)`;
+            containerRef.current.style.transform = `translate3d(${-scrollOffsetRef.current}px, 0, 0)`;
+          }
+        }
+
+        // Continue animation loop
+        animationId = requestAnimationFrame(animate);
+      };
+
+      // Start animation
+      animationId = requestAnimationFrame(animate);
+
+      // Cleanup
+      return () => {
+        if (animationId) {
+          cancelAnimationFrame(animationId);
+        }
+      };
+    }, [
+      dragState.isDragging,
+      dragState.isMouseDown,
+      dragState.isTouchDown,
+      totalWidth,
+    ]);
+
+    // Update momentum decay
+    useEffect(() => {
+      if (
+        !dragState.isDragging &&
+        !dragState.isMouseDown &&
+        !dragState.isTouchDown
+      ) {
+        const currentSpeed = currentSpeedRef.current;
+        if (Math.abs(currentSpeed - NATURAL_SPEED) >= 0.1) {
+          const decayRate = MOMENTUM_DECAY;
+          currentSpeedRef.current =
+            currentSpeed + (NATURAL_SPEED - currentSpeed) * decayRate;
+        }
+      }
+    }, [dragState.isDragging, dragState.isMouseDown, dragState.isTouchDown]);
+
+    return {
+      currentSpeedRef,
+      scrollOffsetRef,
+    };
+  };
+
+  // Initialize CSS transform animation
+  useCSSTransformAnimation();
+
+  // ============================================================================
+  // SIMPLE IMAGE LOADING SYSTEM (Temporary - will be replaced with intersection observer)
+  // ============================================================================
+
+  // Make all images visible by default for now
+  useEffect(() => {
+    const allImageSrcs = duplicatedImages.map((img) => img.src);
+    setImageState((prev) => ({
+      ...prev,
+      visibleImages: new Set(allImageSrcs),
+      loadingImages: new Set(allImageSrcs),
+    }));
+  }, [duplicatedImages]);
+
+  // ============================================================================
+  // IMAGE RENDERING WITH CSS TRANSFORMS
+  // ============================================================================
+
+  /**
+   * Renders an individual image with proper loading states and CSS transforms
    */
   const renderImage = useCallback(
     (image: MarqueeImage, index: number) => {
+      const imageSrc = image.src;
+      const isVisible = imageState.visibleImages.has(imageSrc);
+      const isLoaded = imageState.loadedImages.has(imageSrc);
+      const isLoading = imageState.loadingImages.has(imageSrc);
+      const hasError = imageState.errorImages.has(imageSrc);
+
+      // Determine if we should show the image
+      const shouldShowImage = isVisible && isLoaded;
+
       return (
         <div
           key={`${image.src}-${index}`}
@@ -287,14 +391,86 @@ const MDXMarquee2: React.FC<MDXMarquee2Props> = ({
         >
           <div className="cursor-pointer">
             <div className="relative">
-              {/* Temporary placeholder - will be replaced with proper image rendering */}
-              <div
-                className="rounded-md shadow-lg bg-zinc-800 animate-pulse"
-                style={{
-                  width: image.width || 300,
-                  height: `${height}px`,
-                }}
-              />
+              {/* Loading placeholder */}
+              {!shouldShowImage && !hasError && (
+                <div
+                  className="rounded-md shadow-lg bg-zinc-800 animate-pulse"
+                  style={{
+                    width: image.width || 300,
+                    height: `${height}px`,
+                  }}
+                />
+              )}
+
+              {/* Error placeholder */}
+              {hasError && (
+                <div
+                  className="rounded-md shadow-lg bg-red-900/20 border border-red-500/30 flex items-center justify-center"
+                  style={{
+                    width: image.width || 300,
+                    height: `${height}px`,
+                  }}
+                >
+                  <div className="text-center text-red-400">
+                    <div className="text-2xl mb-2">⚠️</div>
+                    <div className="text-sm">Failed to load image</div>
+                  </div>
+                </div>
+              )}
+
+              {/* Actual image with CSS transforms */}
+              {shouldShowImage && (
+                <div
+                  className="rounded-md shadow-lg overflow-hidden"
+                  style={{
+                    width: image.width || 300,
+                    height: `${height}px`,
+                    transform: "translate3d(0, 0, 0)", // Force GPU acceleration
+                    willChange: "transform", // Optimize for animations
+                  }}
+                >
+                  <Image
+                    src={imageSrc}
+                    alt={image.alt}
+                    width={image.width || 300}
+                    height={image.height || 200}
+                    className="w-full h-full object-cover"
+                    placeholder={image.placeholder ? "blur" : "empty"}
+                    blurDataURL={image.placeholder}
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    priority={index < 3} // Prioritize first 3 images
+                    onLoad={() => {
+                      setImageState((prev) => ({
+                        ...prev,
+                        loadedImages: new Set([...prev.loadedImages, imageSrc]),
+                        loadingImages: new Set(
+                          [...prev.loadingImages].filter(
+                            (src) => src !== imageSrc
+                          )
+                        ),
+                      }));
+                    }}
+                    onError={() => {
+                      setImageState((prev) => ({
+                        ...prev,
+                        errorImages: new Set([...prev.errorImages, imageSrc]),
+                        loadingImages: new Set(
+                          [...prev.loadingImages].filter(
+                            (src) => src !== imageSrc
+                          )
+                        ),
+                      }));
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* Loading indicator overlay */}
+              {isLoading && !hasError && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-md">
+                  <div className="text-white text-sm">Loading...</div>
+                </div>
+              )}
             </div>
           </div>
           {image.captionText && (
@@ -305,7 +481,14 @@ const MDXMarquee2: React.FC<MDXMarquee2Props> = ({
         </div>
       );
     },
-    [gap, height]
+    [
+      imageState.visibleImages,
+      imageState.loadedImages,
+      imageState.loadingImages,
+      imageState.errorImages,
+      gap,
+      height,
+    ]
   );
 
   return (
@@ -330,11 +513,17 @@ const MDXMarquee2: React.FC<MDXMarquee2Props> = ({
           momentum. Click on images to view them in fullscreen.
         </div>
 
-        {/* Temporary container - will be replaced with CSS transform implementation */}
+        {/* CSS Transform Container with GPU Acceleration */}
         <div
           ref={containerRef}
           className="flex items-center"
-          style={{ width: `${totalWidth * 2}px` }}
+          style={{
+            width: `${totalWidth * 2}px`,
+            transform: "translate3d(0, 0, 0)", // Force GPU acceleration
+            willChange: "transform", // Optimize for animations
+            backfaceVisibility: "hidden", // Prevent flickering
+            perspective: "1000px", // Enable 3D transforms
+          }}
         >
           {duplicatedImages.map((image, index) => renderImage(image, index))}
         </div>
