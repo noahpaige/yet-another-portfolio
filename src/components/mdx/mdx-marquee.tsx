@@ -204,6 +204,8 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
   const modalRef = useRef<HTMLDivElement>(null);
   /** Animation container ref for direct DOM manipulation */
   const animationContainerRef = useRef<HTMLDivElement>(null);
+  /** Timeout ref for intersection observer debouncing */
+  const intersectionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // ============================================================================
   // COMPUTED VALUES
@@ -253,6 +255,76 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
       }
     },
     [MAX_SPEED, NATURAL_SPEED]
+  );
+
+  /**
+   * Debounced intersection observer callback to reduce jitter
+   */
+  const debouncedIntersectionCallback = useCallback(
+    (entries: IntersectionObserverEntry[]) => {
+      if (intersectionTimeoutRef.current) {
+        clearTimeout(intersectionTimeoutRef.current);
+      }
+
+      intersectionTimeoutRef.current = setTimeout(() => {
+        entries.forEach((entry) => {
+          const imageSrc = entry.target.getAttribute("data-image-src");
+          if (!imageSrc) return;
+
+          if (entry.isIntersecting) {
+            setImageState((prev) => ({
+              ...prev,
+              visibleImages: new Set([...prev.visibleImages, imageSrc]),
+              loadingImages: new Set([...prev.loadingImages, imageSrc]),
+            }));
+
+            // Simulate image load after a short delay
+            setTimeout(() => {
+              setImageState((prev) => ({
+                ...prev,
+                loadedImages: new Set([...prev.loadedImages, imageSrc]),
+                loadingImages: new Set(
+                  [...prev.loadingImages].filter((src) => src !== imageSrc)
+                ),
+              }));
+            }, 100);
+
+            // Set error timeout
+            setTimeout(() => {
+              setImageState((prev) => {
+                if (!prev.loadedImages.has(imageSrc)) {
+                  return {
+                    ...prev,
+                    errorImages: new Set([...prev.errorImages, imageSrc]),
+                    loadingImages: new Set(
+                      [...prev.loadingImages].filter((src) => src !== imageSrc)
+                    ),
+                  };
+                }
+                return prev;
+              });
+            }, 5000);
+          } else {
+            // Only remove from visible images, keep loaded images for backward scrolling
+            setImageState((prev) => {
+              const newVisibleImages = new Set(prev.visibleImages);
+              const newLoadingImages = new Set(prev.loadingImages);
+
+              newVisibleImages.delete(imageSrc);
+              newLoadingImages.delete(imageSrc);
+
+              return {
+                ...prev,
+                visibleImages: newVisibleImages,
+                loadingImages: newLoadingImages,
+                // Don't remove from loadedImages - keep them for backward scrolling
+              };
+            });
+          }
+        });
+      }, 16); // 16ms debounce for 60fps
+    },
+    []
   );
 
   /**
@@ -629,73 +701,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
   useEffect(() => {
     if (!containerRef.current) return;
 
-    // Debounce intersection observer callbacks to reduce jitter
-    let debounceTimeout: NodeJS.Timeout | null = null;
-    const debouncedCallback = (entries: IntersectionObserverEntry[]) => {
-      if (debounceTimeout) {
-        clearTimeout(debounceTimeout);
-      }
-
-      debounceTimeout = setTimeout(() => {
-        entries.forEach((entry) => {
-          const imageSrc = entry.target.getAttribute("data-image-src");
-          if (!imageSrc) return;
-
-          if (entry.isIntersecting) {
-            setImageState((prev) => ({
-              ...prev,
-              visibleImages: new Set([...prev.visibleImages, imageSrc]),
-              loadingImages: new Set([...prev.loadingImages, imageSrc]),
-            }));
-
-            // Simulate image load after a short delay
-            setTimeout(() => {
-              setImageState((prev) => ({
-                ...prev,
-                loadedImages: new Set([...prev.loadedImages, imageSrc]),
-                loadingImages: new Set(
-                  [...prev.loadingImages].filter((src) => src !== imageSrc)
-                ),
-              }));
-            }, 100);
-
-            // Set error timeout
-            setTimeout(() => {
-              setImageState((prev) => {
-                if (!prev.loadedImages.has(imageSrc)) {
-                  return {
-                    ...prev,
-                    errorImages: new Set([...prev.errorImages, imageSrc]),
-                    loadingImages: new Set(
-                      [...prev.loadingImages].filter((src) => src !== imageSrc)
-                    ),
-                  };
-                }
-                return prev;
-              });
-            }, 5000);
-          } else {
-            // Only remove from visible images, keep loaded images for backward scrolling
-            setImageState((prev) => {
-              const newVisibleImages = new Set(prev.visibleImages);
-              const newLoadingImages = new Set(prev.loadingImages);
-
-              newVisibleImages.delete(imageSrc);
-              newLoadingImages.delete(imageSrc);
-
-              return {
-                ...prev,
-                visibleImages: newVisibleImages,
-                loadingImages: newLoadingImages,
-                // Don't remove from loadedImages - keep them for backward scrolling
-              };
-            });
-          }
-        });
-      }, 16); // 16ms debounce for 60fps
-    };
-
-    const observer = new IntersectionObserver(debouncedCallback, {
+    const observer = new IntersectionObserver(debouncedIntersectionCallback, {
       root: containerRef.current,
       // Extend root margin in both directions for better backward scrolling
       rootMargin: `${preloadDistance}px ${preloadDistance}px ${preloadDistance}px ${preloadDistance}px`,
@@ -711,13 +717,14 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
     });
 
     return () => {
-      if (debounceTimeout) {
-        clearTimeout(debounceTimeout);
+      if (intersectionTimeoutRef.current) {
+        clearTimeout(intersectionTimeoutRef.current);
+        intersectionTimeoutRef.current = null;
       }
       observer.disconnect();
       observerRef.current = null;
     };
-  }, [preloadDistance]);
+  }, [preloadDistance, debouncedIntersectionCallback]);
 
   // Observe new images when duplicatedImages changes - improved for bidirectional scrolling
   useEffect(() => {
@@ -996,6 +1003,30 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
       height,
     ]
   );
+
+  // ============================================================================
+  // EARLY RETURN FOR EMPTY IMAGES
+  // ============================================================================
+
+  if (!images || images.length === 0) {
+    return (
+      <div
+        className={`my-10 ${className}`}
+        style={{
+          height: `${height}px`,
+          position: "relative",
+          width: "100vw",
+          marginLeft: "calc(-50vw + 50%)",
+        }}
+        role="region"
+        aria-label="Image marquee gallery"
+      >
+        <div className="flex items-center justify-center h-full">
+          <p className="text-zinc-400 text-center">No images to display</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
