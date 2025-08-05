@@ -15,7 +15,7 @@
  * - Comprehensive error handling
  * - WCAG 2.1 AA accessibility compliance
  * - Performance optimized with ref-based animation
- * - Optional smallSrc for optimized marquee display with full-size fullscreen
+ * - Blur placeholder for smooth loading experience
  *
  * @author Noah Paige
  * @version 2.1.0
@@ -44,8 +44,6 @@ export interface MarqueeImage {
   height?: number;
   /** Optional caption text to display below the image */
   captionText?: string;
-  /** Optional smaller image source for marquee display (uses src if not provided) */
-  smallSrc?: string;
   /** Optional base64 encoded placeholder for blur-up effect */
   placeholder?: string;
 }
@@ -128,9 +126,8 @@ const MIN_VELOCITY_THRESHOLD = 50;
  * - Comprehensive error handling
  * - WCAG 2.1 AA accessibility compliance
  * - Performance optimized with ref-based animation
- * - Optional smallSrc for optimized marquee display with full-size fullscreen
- * - Priority-based loading: smallSrc loads first for marquee, src loads in background for fullscreen
- * - Progressive loading with blur-up effect for smooth visual transitions
+ * - Blur placeholder for smooth loading experience
+ * - Lazy loading with intersection observer for optimal performance
  *
  * @author Noah Paige
  * @version 2.3.0
@@ -198,11 +195,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
     loadedImages: new Set<string>(),
     visibleImages: new Set<string>(),
     errorImages: new Set<string>(),
-    // New priority-based loading states
-    priorityLoadedImages: new Set<string>(), // smallSrc images loaded for marquee
-    backgroundLoadedImages: new Set<string>(), // src images loaded for fullscreen
-    loadingPriorityImages: new Set<string>(), // smallSrc images currently loading
-    loadingBackgroundImages: new Set<string>(), // src images currently loading
+    loadingImages: new Set<string>(), // Images currently loading
   });
 
   /** Fullscreen modal state */
@@ -847,84 +840,37 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
         (entries) => {
           entries.forEach((entry) => {
             const imageSrc = entry.target.getAttribute("data-image-src");
-            const smallImageSrc = entry.target.getAttribute(
-              "data-small-image-src"
-            );
             if (!imageSrc) return;
 
             if (entry.isIntersecting) {
-              // Phase 1: Load smallSrc immediately for marquee display
-              const prioritySrc =
-                smallImageSrc && smallImageSrc !== imageSrc
-                  ? smallImageSrc
-                  : imageSrc;
-
+              // Load image when it becomes visible
               setImageState((prev) => ({
                 ...prev,
-                visibleImages: new Set([...prev.visibleImages, prioritySrc]),
-                loadingPriorityImages: new Set([
-                  ...prev.loadingPriorityImages,
-                  prioritySrc,
-                ]),
+                visibleImages: new Set([...prev.visibleImages, imageSrc]),
+                loadingImages: new Set([...prev.loadingImages, imageSrc]),
               }));
 
-              // Mark priority image as loaded after delay
+              // Mark image as loaded after delay
               setTimeout(() => {
                 setImageState((prev) => ({
                   ...prev,
-                  priorityLoadedImages: new Set([
-                    ...prev.priorityLoadedImages,
-                    prioritySrc,
-                  ]),
-                  loadedImages: new Set([...prev.loadedImages, prioritySrc]),
-                  loadingPriorityImages: new Set(
-                    [...prev.loadingPriorityImages].filter(
-                      (src) => src !== prioritySrc
-                    )
+                  loadedImages: new Set([...prev.loadedImages, imageSrc]),
+                  loadingImages: new Set(
+                    [...prev.loadingImages].filter((src) => src !== imageSrc)
                   ),
                 }));
               }, IMAGE_LOAD_DELAY);
 
-              // Phase 2: Load full-size src in background for fullscreen (only if different from priority)
-              if (smallImageSrc && smallImageSrc !== imageSrc) {
-                // Delay background loading to prioritize marquee images
-                setTimeout(() => {
-                  setImageState((prev) => ({
-                    ...prev,
-                    loadingBackgroundImages: new Set([
-                      ...prev.loadingBackgroundImages,
-                      imageSrc,
-                    ]),
-                  }));
-
-                  // Mark background image as loaded after delay
-                  setTimeout(() => {
-                    setImageState((prev) => ({
-                      ...prev,
-                      backgroundLoadedImages: new Set([
-                        ...prev.backgroundLoadedImages,
-                        imageSrc,
-                      ]),
-                      loadingBackgroundImages: new Set(
-                        [...prev.loadingBackgroundImages].filter(
-                          (src) => src !== imageSrc
-                        )
-                      ),
-                    }));
-                  }, IMAGE_LOAD_DELAY);
-                }, IMAGE_LOAD_DELAY * 2); // Delay background loading by 2x the priority delay
-              }
-
-              // Error handling for priority images
+              // Error handling
               setTimeout(() => {
                 setImageState((prev) => {
-                  if (!prev.priorityLoadedImages.has(prioritySrc)) {
+                  if (!prev.loadedImages.has(imageSrc)) {
                     return {
                       ...prev,
-                      errorImages: new Set([...prev.errorImages, prioritySrc]),
-                      loadingPriorityImages: new Set(
-                        [...prev.loadingPriorityImages].filter(
-                          (src) => src !== prioritySrc
+                      errorImages: new Set([...prev.errorImages, imageSrc]),
+                      loadingImages: new Set(
+                        [...prev.loadingImages].filter(
+                          (src) => src !== imageSrc
                         )
                       ),
                     };
@@ -932,51 +878,19 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
                   return prev;
                 });
               }, IMAGE_LOAD_TIMEOUT);
-
-              // Error handling for background images
-              if (smallImageSrc && smallImageSrc !== imageSrc) {
-                setTimeout(() => {
-                  setImageState((prev) => {
-                    if (!prev.backgroundLoadedImages.has(imageSrc)) {
-                      return {
-                        ...prev,
-                        errorImages: new Set([...prev.errorImages, imageSrc]),
-                        loadingBackgroundImages: new Set(
-                          [...prev.loadingBackgroundImages].filter(
-                            (src) => src !== imageSrc
-                          )
-                        ),
-                      };
-                    }
-                    return prev;
-                  });
-                }, IMAGE_LOAD_TIMEOUT + IMAGE_LOAD_DELAY * 2); // Extended timeout for background images
-              }
             } else {
               // Remove from visible images when out of view
-              const imagesToRemove = [imageSrc];
-              if (smallImageSrc && smallImageSrc !== imageSrc) {
-                imagesToRemove.push(smallImageSrc);
-              }
-
               setImageState((prev) => {
                 const newVisibleImages = new Set(prev.visibleImages);
-                const newLoadingPriority = new Set(prev.loadingPriorityImages);
-                const newLoadingBackground = new Set(
-                  prev.loadingBackgroundImages
-                );
+                const newLoadingImages = new Set(prev.loadingImages);
 
-                imagesToRemove.forEach((src) => {
-                  newVisibleImages.delete(src);
-                  newLoadingPriority.delete(src);
-                  newLoadingBackground.delete(src);
-                });
+                newVisibleImages.delete(imageSrc);
+                newLoadingImages.delete(imageSrc);
 
                 return {
                   ...prev,
                   visibleImages: newVisibleImages,
-                  loadingPriorityImages: newLoadingPriority,
-                  loadingBackgroundImages: newLoadingBackground,
+                  loadingImages: newLoadingImages,
                 };
               });
             }
@@ -1067,28 +981,14 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
    */
   const renderImage = useCallback(
     (image: MarqueeImage, index: number) => {
-      // Use smallSrc for marquee display if available, otherwise fall back to src
-      const marqueeImageSrc = image.smallSrc || image.src;
-      const isVisible = imageState.visibleImages.has(marqueeImageSrc);
-      const isPriorityLoaded =
-        imageState.priorityLoadedImages.has(marqueeImageSrc);
-      const isBackgroundLoaded = imageState.backgroundLoadedImages.has(
-        image.src
-      );
-      const isPriorityLoading =
-        imageState.loadingPriorityImages.has(marqueeImageSrc);
-      const isBackgroundLoading = imageState.loadingBackgroundImages.has(
-        image.src
-      );
-      const hasError =
-        imageState.errorImages.has(marqueeImageSrc) ||
-        imageState.errorImages.has(image.src);
+      const imageSrc = image.src;
+      const isVisible = imageState.visibleImages.has(imageSrc);
+      const isLoaded = imageState.loadedImages.has(imageSrc);
+      const isLoading = imageState.loadingImages.has(imageSrc);
+      const hasError = imageState.errorImages.has(imageSrc);
 
-      // Determine if we should show the image (priority loaded or fallback to background)
-      const shouldShowImage =
-        isVisible &&
-        (isPriorityLoaded || (isBackgroundLoaded && !isPriorityLoaded));
-      const isCurrentlyLoading = isPriorityLoading || isBackgroundLoading;
+      // Determine if we should show the image
+      const shouldShowImage = isVisible && isLoaded;
 
       return (
         <div
@@ -1096,7 +996,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
           className="flex-shrink-0 relative"
           style={{ marginRight: `${gap}px` }}
           data-image-src={image.src}
-          data-small-image-src={image.smallSrc}
+          data-small-image-src={image.src}
         >
           <motion.div
             className="cursor-pointer"
@@ -1108,11 +1008,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
             }}
             onClick={() => {
               // Only open fullscreen if no drag occurred and we have a loaded image
-              if (
-                !hasError &&
-                !dragState.hasMoved &&
-                (isPriorityLoaded || isBackgroundLoaded)
-              ) {
+              if (!hasError && !dragState.hasMoved && isLoaded) {
                 fullscreenHandlers.openFullscreen(image);
               }
             }}
@@ -1126,7 +1022,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
             onKeyDown={(e) =>
               !hasError &&
               e.key === "Enter" &&
-              (isPriorityLoaded || isBackgroundLoaded) &&
+              isLoaded &&
               fullscreenHandlers.openFullscreen(image)
             }
           >
@@ -1163,11 +1059,11 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
                 <AnimatePresence>
                   <motion.div
                     initial={{ opacity: 0 }}
-                    animate={{ opacity: isPriorityLoaded ? 1 : 0.8 }}
+                    animate={{ opacity: 1 }}
                     transition={{ duration: 0.3 }}
                   >
                     <Image
-                      src={marqueeImageSrc}
+                      src={imageSrc}
                       alt={image.alt}
                       width={image.width || 300}
                       height={image.height || 200}
@@ -1175,20 +1071,18 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
                       style={{ height: `${height}px` }}
                       placeholder={image.placeholder ? "blur" : "empty"}
                       blurDataURL={image.placeholder}
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      priority={index < 3} // Prioritize first 3 images
                       onLoad={() => {
                         setImageState((prev) => ({
                           ...prev,
-                          priorityLoadedImages: new Set([
-                            ...prev.priorityLoadedImages,
-                            marqueeImageSrc,
-                          ]),
                           loadedImages: new Set([
                             ...prev.loadedImages,
-                            marqueeImageSrc,
+                            imageSrc,
                           ]),
-                          loadingPriorityImages: new Set(
-                            [...prev.loadingPriorityImages].filter(
-                              (src) => src !== marqueeImageSrc
+                          loadingImages: new Set(
+                            [...prev.loadingImages].filter(
+                              (src) => src !== imageSrc
                             )
                           ),
                         }));
@@ -1196,13 +1090,10 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
                       onError={() => {
                         setImageState((prev) => ({
                           ...prev,
-                          errorImages: new Set([
-                            ...prev.errorImages,
-                            marqueeImageSrc,
-                          ]),
-                          loadingPriorityImages: new Set(
-                            [...prev.loadingPriorityImages].filter(
-                              (src) => src !== marqueeImageSrc
+                          errorImages: new Set([...prev.errorImages, imageSrc]),
+                          loadingImages: new Set(
+                            [...prev.loadingImages].filter(
+                              (src) => src !== imageSrc
                             )
                           ),
                         }));
@@ -1213,11 +1104,9 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
               )}
 
               {/* Loading indicator overlay */}
-              {isCurrentlyLoading && !hasError && (
+              {isLoading && !hasError && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-lg">
-                  <div className="text-white text-sm">
-                    {isPriorityLoading ? "Loading..." : "Preloading..."}
-                  </div>
+                  <div className="text-white text-sm">Loading...</div>
                 </div>
               )}
             </div>
@@ -1232,10 +1121,8 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
     },
     [
       imageState.visibleImages,
-      imageState.priorityLoadedImages,
-      imageState.backgroundLoadedImages,
-      imageState.loadingPriorityImages,
-      imageState.loadingBackgroundImages,
+      imageState.loadedImages,
+      imageState.loadingImages,
       imageState.errorImages,
       gap,
       height,
