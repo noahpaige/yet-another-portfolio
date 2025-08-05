@@ -8,8 +8,9 @@
  * touch/wheel controls, and fullscreen viewing capabilities.
  *
  * Features:
- * - Smooth infinite scrolling animation
- * - Touch and mouse wheel controls
+ * - Smooth infinite scrolling animation with momentum physics
+ * - Touch and mouse wheel controls with pause/resume
+ * - Direction-based image preloading for optimal performance
  * - Lazy loading with intersection observer
  * - Fullscreen modal with keyboard navigation
  * - Comprehensive error handling
@@ -18,7 +19,7 @@
  * - Blur placeholder for smooth loading experience
  *
  * @author Noah Paige
- * @version 2.3.0
+ * @version 2.4.0
  * @since 2024-12-19
  */
 
@@ -206,6 +207,12 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
   const animationContainerRef = useRef<HTMLDivElement>(null);
   /** Timeout ref for intersection observer debouncing */
   const intersectionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  /** Previous scroll offset for direction detection */
+  const previousScrollOffsetRef = useRef(0);
+  /** Scroll direction: 1 for right (forward), -1 for left (backward), 0 for no movement */
+  const scrollDirectionRef = useRef(0);
+  /** Last scroll direction change time for debouncing */
+  const lastDirectionChangeRef = useRef(0);
 
   // ============================================================================
   // COMPUTED VALUES
@@ -259,6 +266,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
 
   /**
    * Debounced intersection observer callback to reduce jitter
+   * Enhanced with scroll direction-based preloading
    */
   const debouncedIntersectionCallback = useCallback(
     (entries: IntersectionObserverEntry[]) => {
@@ -267,31 +275,66 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
       }
 
       intersectionTimeoutRef.current = setTimeout(() => {
+        const currentDirection = scrollDirectionRef.current;
+
         entries.forEach((entry) => {
           const imageSrc = entry.target.getAttribute("data-image-src");
           if (!imageSrc) return;
 
           if (entry.isIntersecting) {
-            setImageState((prev) => ({
-              ...prev,
-              visibleImages: new Set([...prev.visibleImages, imageSrc]),
-              loadingImages: new Set([...prev.loadingImages, imageSrc]),
-            }));
+            setImageState((prev) => {
+              // Check if image is already loaded to prevent loading state flash
+              const isAlreadyLoaded = prev.loadedImages.has(imageSrc);
+              const isAlreadyLoading = prev.loadingImages.has(imageSrc);
 
-            // Simulate image load after a short delay
-            setTimeout(() => {
-              setImageState((prev) => ({
+              // Only add to loading state if not already loaded and not already loading
+              const newLoadingImages =
+                isAlreadyLoaded || isAlreadyLoading
+                  ? prev.loadingImages
+                  : new Set([...prev.loadingImages, imageSrc]);
+
+              return {
                 ...prev,
-                loadedImages: new Set([...prev.loadedImages, imageSrc]),
-                loadingImages: new Set(
-                  [...prev.loadingImages].filter((src) => src !== imageSrc)
-                ),
-              }));
-            }, 100);
+                visibleImages: new Set([...prev.visibleImages, imageSrc]),
+                loadingImages: newLoadingImages,
+              };
+            });
 
-            // Set error timeout
+            // Only trigger loading logic if image is not already loaded
+            setImageState((prev) => {
+              if (prev.loadedImages.has(imageSrc)) {
+                return prev; // Image already loaded, no need to process
+              }
+              return prev;
+            });
+
+            // Prioritize loading based on scroll direction
+            const loadDelay = currentDirection !== 0 ? 50 : 100; // Faster loading in scroll direction
+
+            // Simulate image load after a short delay (only if not already loaded)
             setTimeout(() => {
               setImageState((prev) => {
+                if (prev.loadedImages.has(imageSrc)) {
+                  return prev; // Image already loaded, skip
+                }
+
+                return {
+                  ...prev,
+                  loadedImages: new Set([...prev.loadedImages, imageSrc]),
+                  loadingImages: new Set(
+                    [...prev.loadingImages].filter((src) => src !== imageSrc)
+                  ),
+                };
+              });
+            }, loadDelay);
+
+            // Set error timeout (only if not already loaded)
+            setTimeout(() => {
+              setImageState((prev) => {
+                if (prev.loadedImages.has(imageSrc)) {
+                  return prev; // Image already loaded, skip error handling
+                }
+
                 if (!prev.loadedImages.has(imageSrc)) {
                   return {
                     ...prev,
@@ -326,6 +369,54 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
     },
     []
   );
+
+  /**
+   * Updates the intersection observer with direction-based root margins
+   */
+  const updateIntersectionObserver = useCallback(() => {
+    if (!observerRef.current || !containerRef.current) return;
+
+    const currentDirection = scrollDirectionRef.current;
+    const baseMargin = preloadDistance;
+
+    // Calculate direction-based root margins for optimized preloading
+    let rootMargin: string;
+    if (currentDirection === 1) {
+      // Scrolling right (forward) - preload more ahead
+      rootMargin = `${baseMargin}px ${
+        baseMargin * 2
+      }px ${baseMargin}px ${baseMargin}px`;
+    } else if (currentDirection === -1) {
+      // Scrolling left (backward) - preload more behind
+      rootMargin = `${baseMargin}px ${baseMargin}px ${baseMargin}px ${
+        baseMargin * 2
+      }px`;
+    } else {
+      // No direction or stationary - preload equally in both directions
+      rootMargin = `${baseMargin}px ${baseMargin}px ${baseMargin}px ${baseMargin}px`;
+    }
+
+    // Disconnect and recreate observer with new root margin
+    observerRef.current.disconnect();
+
+    const newObserver = new IntersectionObserver(
+      debouncedIntersectionCallback,
+      {
+        root: containerRef.current,
+        rootMargin,
+        threshold: 0.1,
+      }
+    );
+
+    observerRef.current = newObserver;
+
+    // Re-observe all image containers
+    const imageContainers =
+      containerRef.current.querySelectorAll("[data-image-src]");
+    imageContainers.forEach((container) => {
+      newObserver.observe(container);
+    });
+  }, [preloadDistance, debouncedIntersectionCallback]);
 
   /**
    * Unified interaction handler for both touch and mouse events
@@ -497,6 +588,36 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
           scrollOffsetRef.current = newOffset;
         }
 
+        // Track scroll direction for preloading optimization
+        // This enables direction-based image preloading for smoother performance
+        const currentOffset = scrollOffsetRef.current;
+        const previousOffset = previousScrollOffsetRef.current;
+
+        if (Math.abs(currentOffset - previousOffset) > 1) {
+          const direction = currentOffset > previousOffset ? 1 : -1;
+          const now = Date.now();
+
+          // Only update direction if it's been stable for a short time (debounce)
+          if (
+            direction !== scrollDirectionRef.current ||
+            now - lastDirectionChangeRef.current > 100
+          ) {
+            const previousDirection = scrollDirectionRef.current;
+            scrollDirectionRef.current = direction;
+            lastDirectionChangeRef.current = now;
+
+            // Update intersection observer when direction changes for optimized preloading
+            if (previousDirection !== direction) {
+              // Debounce the observer update to avoid excessive reconnections
+              setTimeout(() => {
+                updateIntersectionObserver();
+              }, 50);
+            }
+          }
+
+          previousScrollOffsetRef.current = currentOffset;
+        }
+
         // Apply transform directly to DOM for better performance
         if (animationContainerRef.current) {
           const transformX = -(scrollOffsetRef.current % totalWidth);
@@ -528,7 +649,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [totalWidth, NATURAL_SPEED, MOMENTUM_DECAY]);
+  }, [totalWidth, NATURAL_SPEED, MOMENTUM_DECAY, updateIntersectionObserver]);
 
   // Wheel event handling
   useEffect(() => {
@@ -697,13 +818,13 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
     navigateToLastImage,
   ]);
 
-  // Image loading with intersection observer - optimized for bidirectional scrolling
+  // Image loading with intersection observer - optimized for bidirectional scrolling with direction-based preloading
   useEffect(() => {
     if (!containerRef.current) return;
 
     const observer = new IntersectionObserver(debouncedIntersectionCallback, {
       root: containerRef.current,
-      // Extend root margin in both directions for better backward scrolling
+      // Use direction-based root margin for optimized preloading
       rootMargin: `${preloadDistance}px ${preloadDistance}px ${preloadDistance}px ${preloadDistance}px`,
       threshold: 0.1,
     });
