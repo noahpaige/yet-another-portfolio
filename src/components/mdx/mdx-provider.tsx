@@ -2,7 +2,6 @@ import React from "react";
 import { ArticleH1, ArticleH2, ArticleH3, ArticleH4 } from "./article-headings";
 import MDXImage from "./mdx-image";
 import MDXMarquee from "./mdx-marquee";
-import MDXMarquee2 from "./mdx-marquee2";
 
 // Utility function to generate unique fragment IDs from heading text
 const generateHeadingId = (children: React.ReactNode): string => {
@@ -244,7 +243,6 @@ export const mdxComponents = {
   Divider,
   YouTubeVideo,
   Marquee: MDXMarquee,
-  Marquee2: MDXMarquee2,
 
   // Override default HTML elements with enhanced styling
   h1: (props: React.HTMLAttributes<HTMLHeadingElement>) => (
@@ -326,5 +324,4 @@ export {
   Divider,
   YouTubeVideo,
   MDXMarquee as Marquee,
-  MDXMarquee2 as Marquee2,
 };
