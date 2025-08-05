@@ -25,6 +25,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
+import { useHardwareCapability } from "../../context/HardwareCapabilityContext";
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -88,8 +89,12 @@ const MAX_SPEED_MULTIPLIER = 20;
 /** Momentum decay rate for smooth speed transitions */
 const MOMENTUM_DECAY_RATE = 0.1;
 
-/** Animation frame rate for state updates (16ms = ~60fps) */
-const STATE_UPDATE_INTERVAL = 16;
+/** Frame rate throttling based on performance tier */
+const FRAME_RATE_CONFIG = {
+  low: { interval: 32, maxFps: 30 }, // 32ms = ~30fps for low-end devices
+  medium: { interval: 20, maxFps: 50 }, // 20ms = ~50fps for medium devices
+  high: { interval: 16, maxFps: 60 }, // 16ms = ~60fps for high-end devices
+};
 
 /** Image loading timeout in milliseconds */
 const IMAGE_LOAD_TIMEOUT = 5000;
@@ -101,7 +106,7 @@ const IMAGE_LOAD_DELAY = 100;
 const MODAL_FOCUS_DELAY = 100;
 
 /** Momentum transfer factor (0-1) */
-const MOMENTUM_TRANSFER = 0.3;
+const MOMENTUM_TRANSFER = 0.8;
 
 /** Speed recovery rate when resuming from drag */
 const SPEED_RECOVERY_RATE = 0.05;
@@ -141,6 +146,31 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
   height = DEFAULT_HEIGHT,
   preloadDistance = DEFAULT_PRELOAD_DISTANCE,
 }) => {
+  // ============================================================================
+  // HARDWARE CAPABILITY DETECTION
+  // ============================================================================
+
+  /** Hardware capability information for performance optimization */
+  const hardwareCapability = useHardwareCapability();
+
+  /** Get frame rate configuration based on performance tier */
+  const frameRateConfig = FRAME_RATE_CONFIG[hardwareCapability.performanceTier];
+
+  // Log frame rate configuration in development
+  useEffect(() => {
+    if (process.env.NODE_ENV === "development") {
+      console.log(`🎬 Marquee Frame Rate Config:`, {
+        performanceTier: hardwareCapability.performanceTier,
+        targetFps: frameRateConfig.maxFps,
+        updateInterval: frameRateConfig.interval,
+        isMobile: hardwareCapability.isMobile,
+        gpuTier: hardwareCapability.gpuTier,
+        ram: `${hardwareCapability.ram}GB`,
+        cores: hardwareCapability.cores,
+      });
+    }
+  }, [hardwareCapability.performanceTier, frameRateConfig, hardwareCapability]);
+
   // ============================================================================
   // STATE MANAGEMENT
   // ============================================================================
@@ -240,10 +270,14 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
     }, 0);
   }, [images, gap]);
 
-  /** Duplicate images for seamless infinite loop */
+  /** Duplicate images for seamless infinite loop with performance optimization */
   const duplicatedImages = React.useMemo(() => {
-    return [...images, ...images];
-  }, [images]);
+    // For low-end devices, reduce the number of duplicated images to improve performance
+    const duplicationFactor =
+      hardwareCapability.performanceTier === "low" ? 1.5 : 2;
+    const duplicateCount = Math.ceil(duplicationFactor);
+    return Array(duplicateCount).fill(images).flat();
+  }, [images, hardwareCapability.performanceTier]);
 
   // ============================================================================
   // CUSTOM HOOKS
@@ -265,8 +299,23 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
       let lastTime = 0;
       let needsStateUpdate = false;
       let stateUpdateTimeout: NodeJS.Timeout | null = null;
+      let frameCount = 0;
+      let lastFpsCheck = 0;
 
       const animate = (currentTime: number) => {
+        // Frame rate throttling for performance optimization
+        frameCount++;
+        if (currentTime - lastFpsCheck >= 1000) {
+          const currentFps = frameCount;
+          frameCount = 0;
+          lastFpsCheck = currentTime;
+
+          // Skip frames if we're exceeding the target FPS for this performance tier
+          if (currentFps > frameRateConfig.maxFps) {
+            animationFrameRef.current = requestAnimationFrame(animate);
+            return;
+          }
+        }
         // Calculate delta time for smooth animation regardless of frame rate
         const deltaTime = currentTime - lastTime;
         lastTime = currentTime;
@@ -340,7 +389,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
             });
             needsStateUpdate = false;
             stateUpdateTimeout = null;
-          }, STATE_UPDATE_INTERVAL); // ~60fps update rate
+          }, frameRateConfig.interval); // Performance-based update rate
         }
 
         // Continue animation loop
