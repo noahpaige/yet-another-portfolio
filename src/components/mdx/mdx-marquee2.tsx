@@ -222,9 +222,9 @@ const MDXMarquee2: React.FC<MDXMarquee2Props> = ({
   /** Intersection observer reference for cleanup */
   const observerRef = useRef<IntersectionObserver | null>(null);
   /** Current animation speed reference for performance optimization */
-  const currentSpeedRef = useRef(animationState.currentSpeed);
+  const currentSpeedRef = useRef(speed);
   /** Scroll offset reference for performance optimization */
-  const scrollOffsetRef = useRef(animationState.scrollOffset);
+  const scrollOffsetRef = useRef(0);
   /** Animation frame reference for cleanup */
   const animationFrameRef = useRef<number | null>(null);
   /** Performance monitoring reference */
@@ -263,20 +263,56 @@ const MDXMarquee2: React.FC<MDXMarquee2Props> = ({
   // ============================================================================
 
   /**
-   * CSS Transform Animation Hook
+   * Optimized CSS Transform Animation Hook
    *
    * Manages smooth infinite scrolling using CSS transforms with GPU acceleration.
-   * Uses direct DOM manipulation for optimal performance.
+   * Uses direct DOM manipulation and frame rate throttling for optimal performance.
    */
   const useCSSTransformAnimation = () => {
-    // Animation loop using requestAnimationFrame
+    // Performance monitoring
+    const frameCountRef = useRef(0);
+    const lastFpsUpdateRef = useRef(0);
+    const fpsRef = useRef(0);
+
+    // Animation loop using requestAnimationFrame with throttling
     useEffect(() => {
       let lastTime = 0;
       let animationId: number | null = null;
+      let frameCount = 0;
+      let lastFpsUpdate = 0;
 
       const animate = (currentTime: number) => {
-        // Calculate delta time for consistent speed across devices
+        // Frame rate throttling based on performance tier
+        const minInterval = frameRateConfig.interval;
         const deltaTime = currentTime - lastTime;
+
+        if (deltaTime < minInterval) {
+          animationId = requestAnimationFrame(animate);
+          return;
+        }
+
+        // Update performance monitoring
+        frameCount++;
+        if (currentTime - lastFpsUpdate >= 1000) {
+          fpsRef.current = Math.round(
+            (frameCount * 1000) / (currentTime - lastFpsUpdate)
+          );
+          frameCount = 0;
+          lastFpsUpdate = currentTime;
+
+          // Log performance in development
+          if (
+            process.env.NODE_ENV === "development" &&
+            fpsRef.current < frameRateConfig.maxFps * 0.8
+          ) {
+            console.warn(
+              `🎬 Marquee2 Performance Warning: ${fpsRef.current}fps (target: ${frameRateConfig.maxFps}fps)`
+            );
+          }
+        }
+
+        // Calculate smooth delta time for consistent speed
+        const smoothDeltaTime = Math.min(deltaTime, 32); // Cap at 32ms for stability
         lastTime = currentTime;
 
         // Update scroll offset using refs (no React state updates)
@@ -287,9 +323,9 @@ const MDXMarquee2: React.FC<MDXMarquee2Props> = ({
         ) {
           const speed = currentSpeedRef.current;
           const newOffset =
-            scrollOffsetRef.current + (speed * deltaTime) / 1000;
+            scrollOffsetRef.current + (speed * smoothDeltaTime) / 1000;
 
-          // Handle infinite loop wrapping
+          // Handle infinite loop wrapping with smooth transitions
           if (newOffset >= totalWidth) {
             scrollOffsetRef.current = newOffset - totalWidth;
           } else if (newOffset < 0) {
@@ -300,7 +336,7 @@ const MDXMarquee2: React.FC<MDXMarquee2Props> = ({
 
           // Apply CSS transform directly to DOM for GPU acceleration
           if (containerRef.current) {
-            const transformValue = `translateX(${-scrollOffsetRef.current}px)`;
+            // Use transform3d for hardware acceleration
             containerRef.current.style.transform = `translate3d(${-scrollOffsetRef.current}px, 0, 0)`;
           }
         }
@@ -323,32 +359,37 @@ const MDXMarquee2: React.FC<MDXMarquee2Props> = ({
       dragState.isMouseDown,
       dragState.isTouchDown,
       totalWidth,
+      frameRateConfig.interval,
+      frameRateConfig.maxFps,
     ]);
 
-    // Update momentum decay
+    // Optimized momentum decay with reduced updates
     useEffect(() => {
-      if (
-        !dragState.isDragging &&
-        !dragState.isMouseDown &&
-        !dragState.isTouchDown
-      ) {
-        const currentSpeed = currentSpeedRef.current;
-        if (Math.abs(currentSpeed - NATURAL_SPEED) >= 0.1) {
-          const decayRate = MOMENTUM_DECAY;
-          currentSpeedRef.current =
-            currentSpeed + (NATURAL_SPEED - currentSpeed) * decayRate;
+      const momentumInterval = setInterval(() => {
+        if (
+          !dragState.isDragging &&
+          !dragState.isMouseDown &&
+          !dragState.isTouchDown
+        ) {
+          const currentSpeed = currentSpeedRef.current;
+          if (Math.abs(currentSpeed - NATURAL_SPEED) >= 0.1) {
+            const decayRate = MOMENTUM_DECAY;
+            currentSpeedRef.current =
+              currentSpeed + (NATURAL_SPEED - currentSpeed) * decayRate;
+          }
         }
-      }
+      }, 16); // Update momentum at 60fps max
+
+      return () => clearInterval(momentumInterval);
     }, [dragState.isDragging, dragState.isMouseDown, dragState.isTouchDown]);
 
     return {
-      currentSpeedRef,
-      scrollOffsetRef,
+      fpsRef,
     };
   };
 
   // Initialize CSS transform animation
-  useCSSTransformAnimation();
+  const { fpsRef } = useCSSTransformAnimation();
 
   // ============================================================================
   // SIMPLE IMAGE LOADING SYSTEM (Temporary - will be replaced with intersection observer)
