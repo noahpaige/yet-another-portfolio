@@ -1530,8 +1530,8 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
             whileHover={{ scale: 1.05, zIndex: 10 }}
             transition={{
               type: "spring",
-              stiffness: 300,
-              damping: 20,
+              stiffness: 200,
+              damping: 15,
             }}
             onClick={() => {
               // Only open fullscreen if no drag occurred and we have a loaded image
