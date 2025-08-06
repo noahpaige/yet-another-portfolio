@@ -47,11 +47,13 @@ function LoadingCircle({
   distance,
   circleRadius,
   color,
+  index,
 }: {
   position: { x: number; y: number };
   distance: MotionValue<number>;
   circleRadius: MotionValue<number>;
   color: string;
+  index: number;
 }) {
   // Calculate position accounting for circle radius
   const x = useTransform([distance, circleRadius], (values: number[]) => {
@@ -79,6 +81,14 @@ function LoadingCircle({
         style={{
           x,
           y,
+        }}
+        initial={{ opacity: 0, scale: 0 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0 }}
+        transition={{
+          duration: 0.3,
+          delay: index * 0.08, // 80ms stagger
+          ease: "easeOut",
         }}
       >
         <motion.div
@@ -155,17 +165,17 @@ export function LoadingTriangle({
       const deltaTime = currentTime - lastTime;
       lastTime = currentTime;
 
-      // Mode transition - modeA: 1.25s, modeB: 0.75s (2-second total cycle)
+      // Mode transition - modeA: 1.5s, modeB: 1s (2.5-second total cycle)
       const elapsed = currentTime / 1000;
       const modeTime = elapsed % TIMING_CONFIG.totalCycleDuration;
 
-      // Calculate mode value: 0-1.25s = modeA (0 to 1), 1.25-2s = modeB (1 to 0)
+      // Calculate mode value: 0-1.5s = modeA (0 to 1), 1.5-2.5s = modeB (1 to 0)
       let modeValue: number;
       if (modeTime < TIMING_CONFIG.modeADuration) {
-        // Mode A: 0 to 1 over 1.25 seconds
+        // Mode A: 0 to 1 over 1.5 seconds
         modeValue = modeTime / TIMING_CONFIG.modeADuration;
       } else {
-        // Mode B: 1 to 0 over 0.75 seconds (remaining time)
+        // Mode B: 1 to 0 over 1 second (remaining time)
         modeValue =
           1 -
           (modeTime - TIMING_CONFIG.modeADuration) /
@@ -213,6 +223,7 @@ export function LoadingTriangle({
             distance={distance}
             circleRadius={circleRadius}
             color={color}
+            index={index}
           />
         ))}
       </motion.div>

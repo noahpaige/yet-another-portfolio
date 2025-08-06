@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { LoadingTriangle } from "@/components/ui/loading-triangle";
 
 export default function TestSpinnerPage() {
@@ -20,28 +20,14 @@ export default function TestSpinnerPage() {
         >
           {showSpinner ? "Hide Spinner" : "Show Spinner"}
         </motion.button>
-        <div className="flex flex-row gap-4 mt-12">
-          {showSpinner ? (
-            <div className="text-lg">
-              <LoadingTriangle size="sm" color="white" />
-            </div>
-          ) : (
-            <></>
-          )}
-          {showSpinner ? (
-            <div className="text-lg">
-              <LoadingTriangle size="md" color="white" />
-            </div>
-          ) : (
-            <></>
-          )}
-          {showSpinner ? (
-            <div className="text-lg">
-              <LoadingTriangle size="lg" color="white" />
-            </div>
-          ) : (
-            <></>
-          )}
+
+        <div className="mt-12">
+          <AnimatePresence>
+            {showSpinner && <LoadingTriangle size="md" color="white" />}
+          </AnimatePresence>
+          <p className="mt-4 text-gray-400">
+            {showSpinner ? "Spinner is visible" : "Spinner is hidden"}
+          </p>
         </div>
       </div>
     </div>
