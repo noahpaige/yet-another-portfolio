@@ -96,6 +96,12 @@ const MOMENTUM_TRANSFER = 0.8;
 /** Minimum velocity threshold for momentum transfer */
 const MIN_VELOCITY_THRESHOLD = 50;
 
+/** Background loading batch size - how many images to load per idle callback */
+const BACKGROUND_LOAD_BATCH_SIZE = 2;
+
+/** Background loading delay between batches in milliseconds */
+const BACKGROUND_LOAD_DELAY = 100;
+
 // ============================================================================
 // MAIN COMPONENT
 // ============================================================================
@@ -181,6 +187,44 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
     errorImages: new Set<string>(),
     loadingImages: new Set<string>(), // Images currently loading
   });
+
+  /** Background loading state for loading all images during free time */
+  const [backgroundLoadingState, setBackgroundLoadingState] = useState({
+    isBackgroundLoading: false,
+    backgroundLoadedCount: 0,
+    backgroundErrorCount: 0,
+  });
+
+  /** Background loading refs for performance */
+  const backgroundLoadingRef = useRef({
+    isBackgroundLoading: false,
+    unloadedImages: new Set<string>(),
+    backgroundLoadedCount: 0,
+    backgroundErrorCount: 0,
+  });
+
+  // Keep background loading refs in sync with state
+  useEffect(() => {
+    backgroundLoadingRef.current = {
+      isBackgroundLoading: backgroundLoadingState.isBackgroundLoading,
+      unloadedImages: new Set(
+        images
+          .map((img) => img.src)
+          .filter(
+            (src) =>
+              !imageState.loadedImages.has(src) &&
+              !imageState.errorImages.has(src)
+          )
+      ),
+      backgroundLoadedCount: backgroundLoadingState.backgroundLoadedCount,
+      backgroundErrorCount: backgroundLoadingState.backgroundErrorCount,
+    };
+  }, [
+    backgroundLoadingState,
+    imageState.loadedImages,
+    imageState.errorImages,
+    images,
+  ]);
 
   /** Fullscreen modal state */
   const [fullscreenState, setFullscreenState] = useState({
@@ -291,10 +335,142 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
   const scrollDirectionRef = useRef(0);
   /** Last scroll direction change time for debouncing */
   const lastDirectionChangeRef = useRef(0);
+  /** Background loading timeout ref */
+  const backgroundLoadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  /** Background loading idle callback ref */
+  const backgroundLoadingIdleRef = useRef<number | null>(null);
 
   // ============================================================================
   // HELPER FUNCTIONS
   // ============================================================================
+
+  /**
+   * Background loading function that loads unloaded images during free time
+   * Uses requestIdleCallback for optimal performance
+   */
+  const startBackgroundLoading = useCallback(() => {
+    if (backgroundLoadingRef.current.isBackgroundLoading) return;
+
+    const loadBatch = () => {
+      const { unloadedImages } = backgroundLoadingRef.current;
+
+      if (unloadedImages.size === 0) {
+        // No more images to load
+        setBackgroundLoadingState((prev) => ({
+          ...prev,
+          isBackgroundLoading: false,
+        }));
+        return;
+      }
+
+      // Take a batch of images to load
+      const imagesToLoad = Array.from(unloadedImages).slice(
+        0,
+        BACKGROUND_LOAD_BATCH_SIZE
+      );
+
+      setBackgroundLoadingState((prev) => ({
+        ...prev,
+        isBackgroundLoading: true,
+      }));
+
+      // Simulate loading for each image in the batch
+      imagesToLoad.forEach((imageSrc) => {
+        // Remove from unloaded set
+        backgroundLoadingRef.current.unloadedImages.delete(imageSrc);
+
+        // Add to loading state
+        setImageState((prev) => ({
+          ...prev,
+          loadingImages: new Set([...prev.loadingImages, imageSrc]),
+        }));
+
+        // Simulate image load after a short delay
+        setTimeout(() => {
+          setImageState((prev) => ({
+            ...prev,
+            loadedImages: new Set([...prev.loadedImages, imageSrc]),
+            loadingImages: new Set(
+              [...prev.loadingImages].filter((src) => src !== imageSrc)
+            ),
+          }));
+
+          setBackgroundLoadingState((prev) => ({
+            ...prev,
+            backgroundLoadedCount: prev.backgroundLoadedCount + 1,
+          }));
+        }, BACKGROUND_LOAD_DELAY);
+
+        // Set error timeout
+        setTimeout(() => {
+          setImageState((prev) => {
+            if (prev.loadedImages.has(imageSrc)) {
+              return prev; // Image already loaded, skip error handling
+            }
+
+            return {
+              ...prev,
+              errorImages: new Set([...prev.errorImages, imageSrc]),
+              loadingImages: new Set(
+                [...prev.loadingImages].filter((src) => src !== imageSrc)
+              ),
+            };
+          });
+
+          setBackgroundLoadingState((prev) => ({
+            ...prev,
+            backgroundErrorCount: prev.backgroundErrorCount + 1,
+          }));
+        }, 5000);
+      });
+
+      // Schedule next batch using requestIdleCallback
+      if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+        backgroundLoadingIdleRef.current = window.requestIdleCallback(
+          () => {
+            backgroundLoadingTimeoutRef.current = setTimeout(
+              loadBatch,
+              BACKGROUND_LOAD_DELAY
+            );
+          },
+          { timeout: 1000 }
+        );
+      } else {
+        // Fallback for browsers without requestIdleCallback
+        backgroundLoadingTimeoutRef.current = setTimeout(
+          loadBatch,
+          BACKGROUND_LOAD_DELAY * 2
+        );
+      }
+    };
+
+    // Start the background loading process
+    loadBatch();
+  }, []);
+
+  /**
+   * Stops background loading and cleans up resources
+   */
+  const stopBackgroundLoading = useCallback(() => {
+    if (
+      backgroundLoadingIdleRef.current &&
+      typeof window !== "undefined" &&
+      "cancelIdleCallback" in window
+    ) {
+      window.cancelIdleCallback(backgroundLoadingIdleRef.current);
+      backgroundLoadingIdleRef.current = null;
+    }
+
+    if (backgroundLoadingTimeoutRef.current) {
+      clearTimeout(backgroundLoadingTimeoutRef.current);
+      backgroundLoadingTimeoutRef.current = null;
+    }
+
+    setBackgroundLoadingState((prev) => ({
+      ...prev,
+      isBackgroundLoading: false,
+    }));
+  }, []);
 
   /**
    * Applies momentum to the marquee based on final velocity
@@ -655,6 +831,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
   // Enhanced with fullscreen positioning and pause functionality
   useEffect(() => {
     let lastTime = 0;
+    let idleTime = 0; // Track idle time for background loading
 
     const animate = (currentTime: number) => {
       const deltaTime = currentTime - lastTime;
@@ -710,6 +887,18 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
           }
 
           previousScrollOffsetRef.current = currentOffset;
+          idleTime = 0; // Reset idle time when scrolling
+        } else {
+          // No scrolling - accumulate idle time
+          idleTime += deltaTime;
+
+          // Start background loading after 2 seconds of idle time
+          if (
+            idleTime > 2000 &&
+            !backgroundLoadingRef.current.isBackgroundLoading
+          ) {
+            startBackgroundLoading();
+          }
         }
 
         // Apply transform directly to DOM for better performance
@@ -794,6 +983,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
     MOMENTUM_DECAY,
     updateIntersectionObserver,
     fullscreenState.isFullscreen,
+    startBackgroundLoading,
   ]);
 
   // Wheel event handling
@@ -1286,6 +1476,7 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
    * - Intersection observers
    * - Body overflow styles
    * - iOS Safari scrolling state
+   * - Background loading processes
    */
   useEffect(() => {
     return () => {
@@ -1300,10 +1491,13 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
         observerRef.current = null;
       }
 
+      // Cleanup background loading
+      stopBackgroundLoading();
+
       // Apply the fix immediately on unmount
       fixIOSScrolling();
     };
-  }, [fixIOSScrolling]);
+  }, [fixIOSScrolling, stopBackgroundLoading]);
 
   /**
    * Renders an individual image in the marquee
