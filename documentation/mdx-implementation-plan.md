@@ -7,19 +7,16 @@ right now, this will be used only for the my projects, but in the future I want 
 ### ✅ Core Functional Requirements
 
 1. **Render `.mdx` Files in a React App**
-
    - Accept `.mdx` files stored locally (e.g., in `posts/`)
    - Render their content into a styled Article layout
    - Support JSX embedded inside markdown
 
 2. **Custom Article Layout**
-
    - Extend/repurpose `article-layout.tsx` to give some common layout to all articles
    - create a <main> tag in this component that we will put the mdx inside of.
    - try to keep this file mostly as-is, just add mdx support
 
 3. **MDX Integration**
-
    - Use `next-mdx-remote` library
    - Support custom React components in MDX (e.g., `<Callout>`, `<Image>`)
    - Enable passing components via `MDXProvider`
@@ -29,13 +26,11 @@ right now, this will be used only for the my projects, but in the future I want 
 ### ✳️ Optional Enhancements (Final Steps)
 
 5. **Frontmatter Support**
-
    - Allow each `.mdx` file to start with a frontmatter block (YAML format)
    - Fields might include: `title`, `date`, `description`, `tags`, `slug`
    - Parse frontmatter with a library like `gray-matter`
 
 6. **Metadata Extraction**
-
    - Dynamically load all `.mdx` files in a `posts/` directory
    - Extract frontmatter from each and build a post metadata index
    - Use this index to render article cards, lists, or previews elsewhere in the app

@@ -100,8 +100,8 @@ export function Magnetic({
       const actionAreaType = !actionArea
         ? "self"
         : actionArea.type === "element" || actionArea.type === "ref"
-        ? "self"
-        : actionArea.type;
+          ? "self"
+          : actionArea.type;
       registerMagnetic(
         magneticId.current,
         ref as React.RefObject<HTMLDivElement>,

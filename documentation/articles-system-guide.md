@@ -143,14 +143,15 @@ interface BlogArticle extends BaseArticle {
    ```
 
 4. **Add Image** (if needed)
-
    - Place image file in `public/` directory
    - Reference it in the `image` field
 
 5. **Build and Test**
+
    ```bash
    npm run dev
    ```
+
    - Visit `http://localhost:3000/projects` to see your project
    - Visit `http://localhost:3000/projects/your-project-name` for individual page
 
@@ -193,9 +194,11 @@ interface BlogArticle extends BaseArticle {
    ```
 
 4. **Build and Test**
+
    ```bash
    npm run dev
    ```
+
    - Visit `http://localhost:3000/blog` to see your blog post
    - Visit `http://localhost:3000/blog/your-blog-post-name` for individual page
 
@@ -216,9 +219,11 @@ interface BlogArticle extends BaseArticle {
    ```
 
 3. **Rebuild**
+
    ```bash
    npm run dev
    ```
+
    - The article will automatically disappear from listings
    - Individual pages will return 404 (handled by Next.js)
 
@@ -290,7 +295,6 @@ interface BlogArticle extends BaseArticle {
    ```
 
 4. **Update Content Files**
-
    - Add the new property to existing content files
    - Or leave as optional (undefined) if not required
 
@@ -325,7 +329,6 @@ interface BlogArticle extends BaseArticle {
    ```
 
 3. **Update Content Files**
-
    - Remove the property from all content files
    - Or leave it (it will be ignored if not in schema)
 

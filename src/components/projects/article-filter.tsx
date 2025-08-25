@@ -112,15 +112,15 @@ export function ArticleFilter({
                 articleType === "project"
                   ? "projects"
                   : articleType === "blog"
-                  ? "blogs"
-                  : "articles"
+                    ? "blogs"
+                    : "articles"
               }`
             : `${filteredArticles.total} of ${allArticlesCount} ${
                 articleType === "project"
                   ? "projects"
                   : articleType === "blog"
-                  ? "blogs"
-                  : "articles"
+                    ? "blogs"
+                    : "articles"
               }`}
         </div>
         <AnimatePresence>
