@@ -3,9 +3,14 @@ pandoc resume.md -o resume.html --from markdown+raw_html
 -->
 
 <table width="100%" style="margin-bottom: -24px;">
-  <tr>
-    <td><h2  style="border-bottom: none; text-decoration: none;">Noah Paige</h2></td>
-    <td align="right"><strong>San Diego, CA • noahlandonpaige@gmail.com • linkedin.com/in/noah-paige/</strong></td>
+  <tr style="display: flex; justify-content: space-between">
+    <td>
+      <h1 style="border-bottom: none; text-decoration: none">Noah Paige</h1>
+    </td>
+    <td style="display: flex; flex-direction: column; gap: 6px">
+      <strong>San Diego, CA • noahlandonpaige@gmail.com </strong>
+      <strong>noahpaige.dev • linkedin.com/in/noah-paige/</strong>
+    </td>
   </tr>
 </table>
 
@@ -69,7 +74,7 @@ pandoc resume.md -o resume.html --from markdown+raw_html
     <td><strong>Cal Poly / Apple</strong><br>
     <em>Cal Poly SURP Consultant to Apple (paid)</em>
     </td>
-    <td align="right">San Luis Obispo, CA<br>Jul 2019 - Sep 2022</td>
+    <td align="right">San Luis Obispo, CA<br>Jul 2019 - Sep 2019</td>
   </tr>
 </table>
 
