@@ -253,19 +253,11 @@ function generateUnifiedArticleIndex() {
 // All articles data
 export const articles: Article[] = ${JSON.stringify(allArticles, null, 2)};
 
-export const projectArticles: Article[] = ${JSON.stringify(
-    projectArticles,
-    null,
-    2
-  )};
+export const projectArticles: Article[] = ${JSON.stringify(projectArticles, null, 2)};
 
 export const blogArticles: Article[] = ${JSON.stringify(blogArticles, null, 2)};
 
-export const featuredArticles: Article[] = ${JSON.stringify(
-    featuredArticles,
-    null,
-    2
-  )};
+export const featuredArticles: Article[] = ${JSON.stringify(featuredArticles, null, 2)};
 
 export const articleIds: string[] = ${JSON.stringify(articleIds, null, 2)};
 `;

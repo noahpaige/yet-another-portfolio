@@ -33,6 +33,14 @@ const eslintConfig = [
       "prettier/prettier": "error", // Enforce Prettier formatting
     },
   },
+
+  // Exclude generated files from Prettier formatting
+  {
+    files: ["src/generated/**/*.ts"],
+    rules: {
+      "prettier/prettier": "off", // Disable Prettier for generated files
+    },
+  },
 ];
 
 export default eslintConfig;
