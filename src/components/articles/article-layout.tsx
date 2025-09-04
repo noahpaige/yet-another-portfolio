@@ -65,7 +65,7 @@ export default function ArticleLayout({
           className="container mx-auto px-4 py-12 relative z-10"
           style={{ paddingTop: "calc(var(--navbar-height, 80px) + 3rem)" }}
         >
-          <div className="max-w-6xl mx-auto">
+          <div className="max-w-[700px] mx-auto">
             <div className="text-center mb-16">
               <h1 className="text-5xl font-ibm-plex-mono md:text-6xl font-bold mb-6 text-zinc-100">
                 {header}
