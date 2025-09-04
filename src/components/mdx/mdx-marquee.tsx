@@ -785,6 +785,11 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
    * This function is duplicated in multiple places, so we've extracted it here
    */
   const fixIOSScrolling = useCallback(() => {
+    // Check if we're in a browser environment
+    if (typeof window === "undefined" || typeof document === "undefined") {
+      return;
+    }
+
     // Step 1: Trigger scroll events to wake up iOS Safari's scroll handling
     window.dispatchEvent(new Event("scroll"));
     window.dispatchEvent(new Event("resize"));
@@ -805,12 +810,15 @@ const MDXMarquee: React.FC<MDXMarqueeProps> = ({
     document.body.style.overflow = "auto";
 
     // Step 5: Dispatch touch event to re-enable touch scrolling
-    const touchEvent = new TouchEvent("touchstart", {
-      bubbles: true,
-      cancelable: true,
-      view: window,
-    });
-    document.dispatchEvent(touchEvent);
+    // Check if TouchEvent constructor is available
+    if (typeof TouchEvent !== "undefined") {
+      const touchEvent = new TouchEvent("touchstart", {
+        bubbles: true,
+        cancelable: true,
+        view: window,
+      });
+      document.dispatchEvent(touchEvent);
+    }
 
     // Step 6: Force layout recalculation
     document.body.style.display = "none";
