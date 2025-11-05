@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect } from "react";
-import { useScroll } from "framer-motion";
+import { useScroll } from "motion/react";
 import AnimatedBackground from "@/components/animated-background";
 import ClientOnly from "@/components/client-only";
 import NoiseOverlay from "@/components/noise-overlay";

@@ -3,7 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import { Magnetic } from "@/components/ui/magnetic";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 
 // Custom Image component for MDX
 const MDXImage: React.FC<{

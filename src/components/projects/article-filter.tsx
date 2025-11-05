@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import { filterArticles, getTagsByType } from "@/lib/content-filtering";
 import { type MDXContent } from "@/generated/article-mdx-index";
 import { Magnetic } from "@/components/ui/magnetic";

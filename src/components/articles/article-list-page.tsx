@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useRef, useState, useMemo } from "react";
-import { useScroll } from "framer-motion";
-import { motion, AnimatePresence } from "framer-motion";
+import { useScroll } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   getArticleTypeMDXContent,
   type MDXContent,

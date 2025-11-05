@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useInView } from "framer-motion";
+import { useInView } from "motion/react";
 import AnimatedAboutCard from "@/components/features/home/sections/about/animated-about-card";
 import { CONTENT_BOUNDS } from "@/app/constants";
 import { useClampCSS } from "@/hooks/useClampCSS";

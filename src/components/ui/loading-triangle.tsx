@@ -7,7 +7,7 @@ import {
   useSpring,
   useTransform,
   type MotionValue,
-} from "framer-motion";
+} from "motion/react";
 import { Magnetic } from "./magnetic";
 
 interface LoadingTriangleProps {

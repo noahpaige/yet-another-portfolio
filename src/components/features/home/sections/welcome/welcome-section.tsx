@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useInView } from "framer-motion";
+import { motion, AnimatePresence, useInView } from "motion/react";
 import { TextLoop } from "@/components/ui/text-loop";
 import { Magnetic } from "@/components/ui/magnetic";
 

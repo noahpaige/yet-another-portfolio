@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import { LoadingTriangle } from "@/components/ui/loading-triangle";
 
 export default function TestSpinnerPage() {

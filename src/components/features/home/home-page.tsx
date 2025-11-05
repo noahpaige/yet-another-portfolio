@@ -1,7 +1,7 @@
 "use client";
 
 import { RefObject, useRef, lazy, Suspense } from "react";
-import { useScroll } from "framer-motion";
+import { useScroll } from "motion/react";
 
 import HomePageSection from "@/components/features/home/sections/home-page-section";
 import BottomNav from "@/components/features/home/bottom-nav";

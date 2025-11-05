@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef } from "react";
-import { useScroll } from "framer-motion";
+import { useScroll } from "motion/react";
 import AnimatedBackground from "@/components/animated-background";
 import NoiseOverlay from "@/components/noise-overlay";
 import { MagneticButton } from "@/components/ui/magnetic-button";

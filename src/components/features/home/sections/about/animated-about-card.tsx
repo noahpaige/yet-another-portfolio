@@ -1,6 +1,6 @@
 "use client";
 
-import { useAnimate } from "framer-motion";
+import { useAnimate } from "motion/react";
 import { useEffect, useRef } from "react";
 import React from "react";
 import { CONTENT_BOUNDS } from "@/app/constants";

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { Suspense, useState, useEffect } from "react";
-import { useInView } from "framer-motion";
+import { useInView } from "motion/react";
 
 interface LazySectionProps {
   children: React.ReactNode;

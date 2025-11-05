@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useInView } from "framer-motion";
+import { useInView } from "motion/react";
 import { useRouter } from "next/navigation";
 import { ArticleCard } from "@/components/ui/article-card";
 import { getFeaturedArticlesByType } from "@/generated/article-index";

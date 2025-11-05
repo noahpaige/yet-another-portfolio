@@ -7,7 +7,7 @@ import React, {
   useState,
   useMemo,
 } from "react";
-import { MotionValue, useMotionValueEvent } from "framer-motion";
+import { MotionValue, useMotionValueEvent } from "motion/react";
 import { BlobData } from "@/app/types";
 import { interp } from "@/lib/interp";
 import { useHardwareCapability } from "@/context/HardwareCapabilityContext";
