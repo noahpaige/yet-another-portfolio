@@ -7,6 +7,15 @@
 @theme {
   --breakpoint-xs: 26.25rem;
 
+  /* Fluid Typography System */
+  --fluid-min-width: 992px;
+  --fluid-max-width: 1920px;
+  --fluid-design-width: 1728;
+  --fluid-design-unit: 16;
+  --fluid-scale-factor: 1;
+  --fluid-container: clamp(var(--fluid-min-width), 100vw, var(--fluid-max-width));
+  --fluid-font: calc(var(--fluid-container) / var(--fluid-design-width) * var(--fluid-design-unit) * var(--fluid-scale-factor));
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
@@ -228,6 +237,8 @@
   }
   html {
     scroll-behavior: smooth;
+    /* Apply fluid typography to root */
+    font-size: var(--fluid-font);
   }
   body {
     margin: 0;
