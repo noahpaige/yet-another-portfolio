@@ -3,8 +3,6 @@
 import { useAnimate } from "motion/react";
 import { useEffect, useRef } from "react";
 import React from "react";
-import { CONTENT_BOUNDS } from "@/app/constants";
-import { useClampCSS } from "@/hooks/useClampCSS";
 
 type RichTextSegment = string | React.ReactElement | undefined;
 
@@ -98,22 +96,16 @@ const AnimatedAboutCard = React.memo(function AnimatedAboutCard({
   const [scopeHeader, animateHeader] = useAnimate();
   const [scopeBody, animateBody] = useAnimate();
   const animationIdRef = useRef(Symbol());
-  const bodyFontSize = useClampCSS(
-    bodyMinPx,
-    bodyMaxPx,
-    CONTENT_BOUNDS.yMinPx,
-    CONTENT_BOUNDS.yMaxPx,
-    CONTENT_BOUNDS.xMinPx,
-    CONTENT_BOUNDS.xMaxPx
-  );
-  const headerFontSize = useClampCSS(
-    headerMinPx,
-    headerMaxPx,
-    CONTENT_BOUNDS.yMinPx,
-    CONTENT_BOUNDS.yMaxPx,
-    CONTENT_BOUNDS.xMinPx,
-    CONTENT_BOUNDS.xMaxPx
-  );
+  
+  // Convert pixel values to rem for fluid typography
+  // Using clamp with rem units that will scale with the fluid root font-size
+  const bodyMinRem = bodyMinPx / 16;
+  const bodyMaxRem = bodyMaxPx / 16;
+  const bodyFontSize = `clamp(${bodyMinRem}rem, ${bodyMinRem}rem + ${(bodyMaxRem - bodyMinRem) * 4}vw, ${bodyMaxRem}rem)`;
+  
+  const headerMinRem = headerMinPx / 16;
+  const headerMaxRem = headerMaxPx / 16;
+  const headerFontSize = `clamp(${headerMinRem}rem, ${headerMinRem}rem + ${(headerMaxRem - headerMinRem) * 4}vw, ${headerMaxRem}rem)`;
 
   // Set initial hidden styles
   useEffect(() => {

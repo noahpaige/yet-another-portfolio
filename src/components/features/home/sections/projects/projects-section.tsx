@@ -9,7 +9,6 @@ import { getArticleMDXContent } from "@/generated/article-mdx-index";
 import { motion, AnimatePresence } from "motion/react";
 import { MagneticButton } from "@/components/ui/magnetic-button";
 import { ArrowRight } from "lucide-react";
-import { useClampCSS } from "@/hooks/useClampCSS";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -35,26 +34,6 @@ export default function ProjectsSection() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: false, margin: "-100px" });
   const router = useRouter();
-
-  // Generate dynamic height based on screen height only
-  const cardHeight = useClampCSS(
-    60, // min height
-    320, // max height
-    500, // min screen height where scaling starts
-    1400, // max screen height where scaling stops
-    0, // min screen width (ignored)
-    0 // max screen width (ignored)
-  );
-
-  // Generate responsive font size based on container height
-  const titleFontSize = useClampCSS(
-    24, // min font size (1rem)
-    32, // max font size (2rem)
-    96, // min screen height (24 * 4px = 96px)
-    320, // max screen height (80 * 4px = 320px)
-    375, // min screen width
-    1280 // max screen width
-  );
 
   useEffect(() => setShow(isInView), [isInView]);
   return (
@@ -92,8 +71,8 @@ export default function ProjectsSection() {
                         article={project}
                         showReadTime="hide"
                         showDesc="hide"
-                        height={cardHeight}
-                        titleFontSize={titleFontSize}
+                        height="auto"
+                        titleFontSize="auto"
                         mdxContent={mdxContent}
                       />
                     </motion.div>

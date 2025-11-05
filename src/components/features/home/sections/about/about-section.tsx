@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { useInView } from "motion/react";
 import AnimatedAboutCard from "@/components/features/home/sections/about/animated-about-card";
 import { CONTENT_BOUNDS } from "@/app/constants";
-import { useClampCSS } from "@/hooks/useClampCSS";
 import { blocks } from "@/components/features/home/sections/about/content-blocks";
 
 export default function AboutSection() {
@@ -13,15 +12,6 @@ export default function AboutSection() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: false, margin: "-100px" });
 
-  const gapSize = useClampCSS(
-    16,
-    64,
-    CONTENT_BOUNDS.yMinPx,
-    CONTENT_BOUNDS.yMaxPx,
-    0,
-    0
-  );
-
   useEffect(() => {
     setShow(isInView);
   }, [isInView]);
@@ -29,8 +19,7 @@ export default function AboutSection() {
   return (
     <div ref={ref} className="h-full flex items-center justify-center">
       <div
-        className={`flex flex-col items-center justify-start px-6 max-w-[${CONTENT_BOUNDS.xMaxPx}px]`}
-        style={{ gap: gapSize }}
+        className={`flex flex-col items-center justify-start px-6 gap-4 sm:gap-8 md:gap-12 lg:gap-16 max-w-[${CONTENT_BOUNDS.xMaxPx}px]`}
       >
         {blocks.map((block, blockIndex) => {
           return (

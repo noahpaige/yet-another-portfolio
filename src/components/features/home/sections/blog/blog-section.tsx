@@ -9,7 +9,6 @@ import { getArticleMDXContent } from "@/generated/article-mdx-index";
 import { motion, AnimatePresence } from "motion/react";
 import { MagneticButton } from "@/components/ui/magnetic-button";
 import { ArrowRight } from "lucide-react";
-import { useClampCSS } from "@/hooks/useClampCSS";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -79,16 +78,6 @@ export default function BlogSection() {
   const isInView = useInView(ref, { once: false, margin: "-100px" });
   const router = useRouter();
 
-  // Generate responsive font size based on container height
-  const titleFontSize = useClampCSS(
-    24, // min font size (1rem)
-    32, // max font size (2rem)
-    96, // min screen height (24 * 4px = 96px)
-    320, // max screen height (80 * 4px = 320px)
-    375, // min screen width
-    1280 // max screen width
-  );
-
   useEffect(() => setShow(isInView), [isInView]);
   return (
     <div
@@ -122,7 +111,7 @@ export default function BlogSection() {
                         showDesc="show"
                         showTags="hide"
                         height={"fit"}
-                        titleFontSize={titleFontSize}
+                        titleFontSize="auto"
                         mdxContent={mdxContent}
                       />
                     </motion.div>

@@ -5,10 +5,6 @@ import { useInView } from "motion/react";
 import { motion, AnimatePresence } from "motion/react";
 import { MagneticButton } from "@/components/ui/magnetic-button";
 import { MailIcon, Github, Linkedin, FileText } from "lucide-react";
-import { useClampCSS } from "@/hooks/useClampCSS";
-
-// Remove the fixed icon classes since we'll use dynamic sizing
-// const iconClasses = "h-6 w-6 flex-shrink-0";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -62,14 +58,6 @@ export const ContactSection = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: false, margin: "-100px" });
 
-  // Responsive text scaling - slower scaling for more gradual text size changes
-  const h1FontSize = useClampCSS(44, 128, 320, 1200, 375, 2560);
-  const pFontSize = useClampCSS(16, 32, 320, 1200, 375, 2560);
-
-  // Responsive scaling for button text and icons
-  const buttonTextFontSize = useClampCSS(16, 32, 320, 1200, 375, 2560);
-  const iconSize = useClampCSS(20, 32, 320, 1200, 375, 2560);
-
   useEffect(() => setShow(isInView), [isInView]);
 
   return (
@@ -89,8 +77,7 @@ export const ContactSection = () => {
               exit="exit"
             >
               <motion.h1
-                className="font-bold z-10"
-                style={{ fontSize: h1FontSize }}
+                className="font-bold z-10 text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl"
                 variants={itemVariants}
               >
                 Get in touch!
@@ -99,7 +86,7 @@ export const ContactSection = () => {
                 className="flex flex-col gap-1 pl-4"
                 variants={itemVariants}
               >
-                <p className="z-10" style={{ fontSize: pFontSize }}>
+                <p className="z-10 text-base sm:text-lg md:text-xl">
                   I&apos;m open to new opportunities.
                 </p>
               </motion.div>
@@ -126,16 +113,9 @@ export const ContactSection = () => {
                   className="w-full h-14"
                 >
                   <IconComponent
-                    className="flex-shrink-0"
-                    style={{
-                      width: iconSize,
-                      height: iconSize,
-                    }}
+                    className="flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7"
                   />
-                  <span
-                    className="whitespace-nowrap flex-1 text-center"
-                    style={{ fontSize: buttonTextFontSize }}
-                  >
+                  <span className="whitespace-nowrap flex-1 text-center text-base sm:text-lg md:text-xl">
                     {button.name}
                   </span>
                 </MagneticButton>
