@@ -582,9 +582,10 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
 
     /**
      * Validates component props and logs warnings for invalid values
+     * Memoized to prevent re-running validation on every render
      * @returns Object containing validation errors and warnings
      */
-    const validateProps = () => {
+    const validationResult = useMemo(() => {
       const errors: string[] = [];
       const warnings: string[] = [];
 
@@ -648,10 +649,9 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
       }
 
       return { errors, warnings };
-    };
+    }, [colorPairs, scrollYProgress, numBlobs, renderSize, scrollSpeedDamping]);
 
-    // Run validation
-    const { errors } = validateProps();
+    const { errors } = validationResult;
 
     /**
      * Memoizes animation constants to reduce dependency changes and improve performance
