@@ -51,9 +51,9 @@ export const ArticleCard = React.memo(
         case "hide":
           return "hidden"; // Always hide
         case "auto":
-          return autoClasses; // Use responsive classes
+          return "flex"; // Always show with fluid typography (no breakpoints needed)
         default:
-          return autoClasses;
+          return "flex";
       }
     };
 
@@ -85,7 +85,7 @@ export const ArticleCard = React.memo(
     const getHeightStyle = () => {
       if (height === "auto") {
         return {
-          className: "h-40 sm:h-50 md:h-60 lg:h-70", // Responsive Tailwind classes
+          className: "h-48", // Single height that scales with fluid typography
         };
       } else if (height === "fit") {
         return {
@@ -102,7 +102,7 @@ export const ArticleCard = React.memo(
     const getTitleFontSizeStyle = () => {
       if (titleFontSize === "auto") {
         return {
-          className: "text-2xl sm:text-3xl md:text-4xl lg:text-5xl", // Responsive Tailwind classes
+          className: "text-3xl", // Single size that scales with fluid typography
         };
       } else {
         return {
@@ -146,7 +146,7 @@ export const ArticleCard = React.memo(
                   </div>
                 )}
                 {/* Content area - fits content height */}
-                <div className="p-2 sm:p-3 md:p-6">
+                <div className="p-4">
                   <Magnetic
                     intensity={0.1}
                     range={1000}
@@ -223,7 +223,7 @@ export const ArticleCard = React.memo(
                   <div
                     className={`${getVisibilityClasses(
                       showTags,
-                      "hidden md:flex"
+                      "flex"
                     )} flex-wrap gap-2 mt-1`}
                   >
                     {article.tags?.slice(0, 3).map((tag, index) => (
@@ -309,7 +309,7 @@ export const ArticleCard = React.memo(
                     )}
                   </div>
                 </Magnetic>
-                <div className="p-2 sm:p-3 md:p-6 absolute bottom-0 left-0">
+                <div className="p-4 absolute bottom-0 left-0">
                   <Magnetic
                     intensity={0.1}
                     range={1000}
@@ -386,7 +386,7 @@ export const ArticleCard = React.memo(
                   <div
                     className={`${getVisibilityClasses(
                       showTags,
-                      "hidden md:flex"
+                      "flex"
                     )} flex-wrap gap-2 mt-1`}
                   >
                     {article.tags?.slice(0, 3).map((tag, index) => (
