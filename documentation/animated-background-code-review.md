@@ -15,6 +15,7 @@ The `AnimatedBackground` component is a well-architected, high-performance canva
 ## Strengths
 
 ### ✅ Excellent Performance Optimizations
+
 - **Dirty region tracking** - Only redraws changed areas
 - **Object pooling** - Path2D and gradient caching reduces allocations
 - **Hardware-adaptive quality** - Adjusts based on device capabilities
@@ -23,12 +24,14 @@ The `AnimatedBackground` component is a well-architected, high-performance canva
 - **Memoization** - Proper use of `useMemo` and `useCallback`
 
 ### ✅ Good Code Organization
+
 - Clear separation of concerns with utility classes
 - Well-documented with JSDoc comments
 - Configuration extracted to constants
 - Proper TypeScript types and interfaces
 
 ### ✅ Error Handling
+
 - Validation of props and inputs
 - Try-catch blocks around critical operations
 - Graceful fallbacks for missing features
@@ -43,6 +46,7 @@ The `AnimatedBackground` component is a well-architected, high-performance canva
 **Location:** Lines 1006, 1079
 
 **Problem:**
+
 ```typescript
 // Line 1006: Global translate applied
 offCtx.translate(0, renderHeight * curY.current);
@@ -56,6 +60,7 @@ The global translate applies `renderHeight * curY.current`, but then each blob a
 **Impact:** Blobs may be positioned incorrectly vertically.
 
 **Recommendation:**
+
 - Remove the global translate if individual blob translation is desired, OR
 - Remove the per-blob `translateY` if global translation is desired
 - Clarify the intended positioning logic
@@ -68,6 +73,7 @@ The global translate applies `renderHeight * curY.current`, but then each blob a
 **Location:** Lines 238-239 in `calculateBlobBounds`
 
 **Problem:**
+
 ```typescript
 width: Math.min(size * 2 + padding * 2, 100),
 height: Math.min(size * 2 + padding * 2, 100),
@@ -78,17 +84,18 @@ The hard-coded `100` limit doesn't match the actual canvas dimensions (`renderSi
 **Impact:** Dirty region tracking may not capture full blob areas, causing rendering artifacts.
 
 **Recommendation:**
+
 ```typescript
 const calculateBlobBounds = (
   blob: BlobData,
   position: { x: number; y: number },
   scale: number,
-  canvasWidth: number,  // Add parameter
-  canvasHeight: number  // Add parameter
+  canvasWidth: number, // Add parameter
+  canvasHeight: number // Add parameter
 ): DirtyRegion => {
   const padding = 10;
   const size = Math.max(blob.scale * scale * 50, 20);
-  
+
   return {
     x: Math.max(0, position.x - size - padding),
     y: Math.max(0, position.y - size - padding),
@@ -106,6 +113,7 @@ const calculateBlobBounds = (
 **Location:** Line 646
 
 **Problem:**
+
 ```typescript
 // Run validation
 const { errors } = validateProps();
@@ -116,14 +124,12 @@ const { errors } = validateProps();
 **Impact:** Unnecessary computation on every render cycle.
 
 **Recommendation:**
+
 ```typescript
-const validationResult = useMemo(() => validateProps(), [
-  colorPairs,
-  scrollYProgress,
-  numBlobs,
-  renderSize,
-  scrollSpeedDamping,
-]);
+const validationResult = useMemo(
+  () => validateProps(),
+  [colorPairs, scrollYProgress, numBlobs, renderSize, scrollSpeedDamping]
+);
 
 const { errors } = validationResult;
 ```
@@ -136,6 +142,7 @@ const { errors } = validationResult;
 **Location:** Lines 1155-1157
 
 **Problem:**
+
 ```typescript
 // Clean up pools to prevent memory leaks
 path2DPool.clear();
@@ -148,6 +155,7 @@ These are **global singleton instances**. If multiple `AnimatedBackground` compo
 **Impact:** Performance degradation when multiple instances exist, potential memory leaks.
 
 **Recommendation:**
+
 - Make caches instance-based rather than global
 - OR use a ref-based cache per component instance
 - OR implement reference counting
@@ -165,12 +173,13 @@ When blobs are regenerated (e.g., when `qualitySettings.blobCount` changes), `pr
 **Impact:** Incorrect dirty region calculation after blob regeneration, potential rendering artifacts.
 
 **Recommendation:**
+
 ```typescript
 // Initialize blobs with appropriate count
 useEffect(() => {
   blobs.current = generateBlobs(qualitySettings.blobCount, colorPairs);
   previousBlobStates.current = []; // Reset state tracking
-  isFirstFrame.current = true;    // Reset first frame flag
+  isFirstFrame.current = true; // Reset first frame flag
 }, [qualitySettings.blobCount, colorPairs]);
 ```
 
@@ -183,9 +192,10 @@ useEffect(() => {
 **Location:** Line 924
 
 **Problem:**
+
 ```typescript
 const currentPosition = {
-  x: renderWidth / 2,  // Always centered
+  x: renderWidth / 2, // Always centered
   y: (curY.current * renderHeight) / 8,
 };
 ```
@@ -193,6 +203,7 @@ const currentPosition = {
 X position is hardcoded to center, but `calculateBlobBounds` uses `position.x`, suggesting blobs might be positioned elsewhere. However, the rendering code doesn't use X position for actual blob placement.
 
 **Recommendation:**
+
 - Document why X is always centered, OR
 - Make blob X positioning configurable/dynamic
 
@@ -206,6 +217,7 @@ X position is hardcoded to center, but `calculateBlobBounds` uses `position.x`, 
 `useMotionValueEvent` callback uses `scrollSpeedMultiplier`, `rotationSpeed`, `relativeBlobRotation`, `desiredYBase`, and `desiredYMultiplier` but doesn't have them in a dependency array (if applicable). However, `useMotionValueEvent` doesn't take dependencies—this is fine, but the closure may capture stale values.
 
 **Recommendation:**
+
 - Use refs for animation constants that change frequently
 - Document that these values are captured in closure
 
@@ -216,6 +228,7 @@ X position is hardcoded to center, but `calculateBlobBounds` uses `position.x`, 
 **Location:** Lines 1212-1230
 
 **Problem:**
+
 ```typescript
 filter: `blur(${qualitySettings.blurAmount * 20}px)`,
 ```
@@ -225,6 +238,7 @@ The `filter` CSS property blurs the element itself, not the backdrop. For a back
 **Impact:** On browsers without canvas blur support, the fallback blur may not work as intended.
 
 **Recommendation:**
+
 - Remove the `filter` fallback (it doesn't help)
 - Rely only on `backdrop-filter` for fallback
 - Consider a different fallback strategy (e.g., CSS filters on the canvas element)
@@ -237,6 +251,7 @@ The `filter` CSS property blurs the element itself, not the backdrop. For a back
 
 **Problem:**
 Several magic numbers without explanation:
+
 - `50` in blob size calculation (line 233)
 - `/ 8` in Y position calculation (line 925, 1079)
 - `5` degrees rotation threshold (line 940)
@@ -244,6 +259,7 @@ Several magic numbers without explanation:
 
 **Recommendation:**
 Extract to named constants:
+
 ```typescript
 const BLOB_SIZE_MULTIPLIER = 50;
 const Y_POSITION_DIVISOR = 8;
@@ -270,6 +286,7 @@ const POSITION_THRESHOLD_PIXELS = 2;
 **Location:** Line 432
 
 **Problem:**
+
 ```typescript
 const stepsPerSegment = ANIMATION_CONFIG.colorSteps / segments;
 ```
@@ -285,6 +302,7 @@ If `colorPairs.length === 1`, then `segments = 0`, causing division by zero. How
 **Location:** Line 477
 
 **Problem:**
+
 ```typescript
 const rawPath = BLOB_PATHS[Math.floor(Math.random() * BLOB_PATHS.length)];
 ```
@@ -292,6 +310,7 @@ const rawPath = BLOB_PATHS[Math.floor(Math.random() * BLOB_PATHS.length)];
 Using `Math.random()` makes blob generation non-deterministic. This is likely intentional for visual variety, but could be problematic for testing or reproducible animations.
 
 **Recommendation:**
+
 - Document that randomness is intentional
 - Consider allowing a seed for testing/debugging
 
@@ -305,6 +324,7 @@ Using `Math.random()` makes blob generation non-deterministic. This is likely in
 `React.memo` is used without a custom comparison function. Since props include `colorPairs` (an array), re-renders will occur even if array contents are identical (reference equality).
 
 **Recommendation:**
+
 ```typescript
 const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
   ({ ... }) => { ... },
@@ -325,13 +345,15 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
 **Location:** Line 206
 
 **Problem:**
+
 ```typescript
-return this.pool.get(rawPath)!;  // Non-null assertion
+return this.pool.get(rawPath)!; // Non-null assertion
 ```
 
 The non-null assertion is safe here (we just checked `has`), but TypeScript doesn't know that.
 
 **Recommendation:**
+
 ```typescript
 getPath(rawPath: string): Path2D {
   let path = this.pool.get(rawPath);
@@ -348,12 +370,14 @@ getPath(rawPath: string): Path2D {
 ## Performance Considerations
 
 ### ✅ **Excellent Optimizations:**
+
 - Dirty region tracking reduces redraws
 - Gradient and Path2D caching reduces allocations
 - Frame rate limiting prevents excessive rendering
 - Hardware-adaptive quality settings
 
 ### 💡 **Potential Improvements:**
+
 1. **Web Workers:** Consider offloading blob calculation to a worker
 2. **OffscreenCanvas API:** Use native OffscreenCanvas for better performance
 3. **Will-change CSS:** Add `will-change: transform` to canvas for GPU acceleration hints
@@ -382,11 +406,13 @@ getPath(rawPath: string): Path2D {
 ## Documentation Improvements
 
 ### ✅ **Existing Good Documentation:**
+
 - JSDoc comments on functions
 - Inline comments explaining complex logic
 - Component-level documentation
 
 ### 💡 **Suggested Additions:**
+
 1. **Architecture Diagram:** Visual representation of the rendering pipeline
 2. **Performance Tuning Guide:** How to adjust config for different devices
 3. **Troubleshooting Section:** Common issues and solutions
@@ -396,12 +422,14 @@ getPath(rawPath: string): Path2D {
 ## Code Style & Best Practices
 
 ### ✅ **Good Practices:**
+
 - Consistent naming conventions
 - Proper TypeScript usage
 - React hooks best practices
 - Error boundaries and validation
 
 ### 💡 **Minor Improvements:**
+
 - Extract magic numbers to constants
 - Consider splitting large component into smaller hooks
 - Add PropTypes or runtime validation (if not using TypeScript strict mode)
@@ -411,16 +439,19 @@ getPath(rawPath: string): Path2D {
 ## Priority Action Items
 
 ### 🔴 **Critical (Fix Immediately):**
+
 1. Fix double translation bug (Issue 1)
 2. Fix hard-coded canvas bounds (Issue 2)
 3. Fix global cache cleanup (Issue 4)
 
 ### ⚠️ **High Priority (Fix Soon):**
+
 4. Memoize validation (Issue 3)
 5. Fix dirty region state reset (Issue 5)
 6. Fix fallback blur implementation (Issue 8)
 
 ### 💡 **Low Priority (Nice to Have):**
+
 7. Extract magic numbers to constants (Issue 9)
 8. Add custom React.memo comparison (Issue 13)
 9. Improve type safety (Issue 14)
@@ -430,6 +461,7 @@ getPath(rawPath: string): Path2D {
 ## Conclusion
 
 The `AnimatedBackground` component is a well-written, performant React component with excellent attention to optimization details. The main issues are:
+
 - A potential double translation bug
 - Global cache management concerns
 - Some hard-coded values that should be configurable
@@ -437,8 +469,8 @@ The `AnimatedBackground` component is a well-written, performant React component
 With the critical issues addressed, this component is production-ready and demonstrates advanced React and canvas programming skills.
 
 **Recommended Next Steps:**
+
 1. Address critical issues (Issues 1, 2, 4)
 2. Add tests for edge cases
 3. Document the architecture and tuning parameters
 4. Consider extracting some logic into custom hooks for better testability
-

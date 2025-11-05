@@ -222,21 +222,29 @@ const path2DPool = new Path2DPool();
  * @param blob - Blob data containing scale information
  * @param position - Current position of the blob
  * @param scale - Additional scale factor
+ * @param canvasWidth - Width of the canvas to clamp bounds to
+ * @param canvasHeight - Height of the canvas to clamp bounds to
  * @returns DirtyRegion representing the area the blob occupies
  */
 const calculateBlobBounds = (
   blob: BlobData,
   position: { x: number; y: number },
-  scale: number
+  scale: number,
+  canvasWidth: number,
+  canvasHeight: number
 ): DirtyRegion => {
   const padding = 10; // Extra padding for smooth transitions
   const size = Math.max(blob.scale * scale * 50, 20); // Approximate blob size
+  const totalSize = size * 2 + padding * 2;
+
+  const x = Math.max(0, position.x - size - padding);
+  const y = Math.max(0, position.y - size - padding);
 
   return {
-    x: Math.max(0, position.x - size - padding),
-    y: Math.max(0, position.y - size - padding),
-    width: Math.min(size * 2 + padding * 2, 100),
-    height: Math.min(size * 2 + padding * 2, 100),
+    x,
+    y,
+    width: Math.min(totalSize, canvasWidth - x),
+    height: Math.min(totalSize, canvasHeight - y),
   };
 };
 
@@ -946,13 +954,21 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
               if (rotationChanged || positionChanged || colorChanged) {
                 // Add both old and new regions to dirty regions
                 dirtyRegions.push(
-                  calculateBlobBounds(blob, prevState.position, prevState.scale)
+                  calculateBlobBounds(
+                    blob,
+                    prevState.position,
+                    prevState.scale,
+                    renderWidth,
+                    renderHeight
+                  )
                 );
                 dirtyRegions.push(
                   calculateBlobBounds(
                     blob,
                     currentState.position,
-                    currentState.scale
+                    currentState.scale,
+                    renderWidth,
+                    renderHeight
                   )
                 );
               }
