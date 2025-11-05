@@ -68,6 +68,21 @@ const ANIMATION_CONFIG = {
     min: 0.2,
     max: 1.7,
   },
+
+  // Dirty region tracking thresholds
+  dirtyRegion: {
+    padding: 10, // Extra padding for smooth transitions
+    blobSizeMultiplier: 50, // Multiplier for approximate blob size calculation
+    minBlobSize: 20, // Minimum blob size in pixels
+    rotationThresholdDegrees: 5, // Rotation change threshold for dirty region detection
+    positionThresholdPixels: 2, // Position change threshold for dirty region detection
+  },
+
+  // Rendering constants
+  rendering: {
+    yPositionDivisor: 8, // Divisor for Y position calculation
+    gradientPositionDivisor: 8, // Divisor for gradient position calculation
+  },
 } as const;
 
 const DEFAULT_PROPS = {
@@ -83,6 +98,7 @@ const DEFAULT_PROPS = {
   curYInterp: ANIMATION_CONFIG.curYInterp,
   desiredYBase: ANIMATION_CONFIG.desiredYBase,
   desiredYMultiplier: ANIMATION_CONFIG.desiredYMultiplier,
+  blobXPosition: 0.5, // Normalized X position (0-1 is visible, but can be outside for off-screen positioning), 0.5 = center
 } as const;
 
 interface AnimatedBackgroundProps {
@@ -101,6 +117,8 @@ interface AnimatedBackgroundProps {
   curYInterp?: number;
   desiredYBase?: number;
   desiredYMultiplier?: number;
+  /** Normalized X position for blobs. 0 = left edge, 0.5 = center, 1 = right edge. Values outside 0-1 position blobs off-screen. Default: 0.5 */
+  blobXPosition?: number;
 }
 
 /**
@@ -233,8 +251,11 @@ const calculateBlobBounds = (
   canvasWidth: number,
   canvasHeight: number
 ): DirtyRegion => {
-  const padding = 10; // Extra padding for smooth transitions
-  const size = Math.max(blob.scale * scale * 50, 20); // Approximate blob size
+  const padding = ANIMATION_CONFIG.dirtyRegion.padding;
+  const size = Math.max(
+    blob.scale * scale * ANIMATION_CONFIG.dirtyRegion.blobSizeMultiplier,
+    ANIMATION_CONFIG.dirtyRegion.minBlobSize
+  );
   const totalSize = size * 2 + padding * 2;
 
   const x = Math.max(0, position.x - size - padding);
@@ -544,6 +565,13 @@ const generateBlobs = (
  *   numBlobs={12}
  *   renderSize={32}
  * />
+ *
+ * // Custom X position (blobs on the left side)
+ * <AnimatedBackground
+ *   scrollYProgress={scrollYProgress}
+ *   colorPairs={[...]}
+ *   blobXPosition={0.25} // 25% from left (0 = left, 0.5 = center, 1 = right)
+ * />
  * ```
  */
 const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
@@ -562,6 +590,7 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
     curYInterp = DEFAULT_PROPS.curYInterp,
     desiredYBase = DEFAULT_PROPS.desiredYBase,
     desiredYMultiplier = DEFAULT_PROPS.desiredYMultiplier,
+    blobXPosition = DEFAULT_PROPS.blobXPosition,
   }) => {
     const { performanceTier, loading } = useHardwareCapability();
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -692,6 +721,7 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
         relativeBlobRotation,
         desiredYBase,
         desiredYMultiplier,
+        blobXPosition,
       }),
       [
         renderSize,
@@ -704,8 +734,16 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
         relativeBlobRotation,
         desiredYBase,
         desiredYMultiplier,
+        blobXPosition,
       ]
     );
+
+    // Store animation constants in a ref so useMotionValueEvent callback always has latest values
+    // This ensures the callback always accesses current prop values, not stale closure values
+    const animationConstantsRef = useRef(animationConstants);
+    useEffect(() => {
+      animationConstantsRef.current = animationConstants;
+    }, [animationConstants]);
 
     const handleResize = useCallback(() => {
       if (debouncedResize.current) {
@@ -827,20 +865,23 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
       if (prevScrollY.current === null) prevScrollY.current = latest;
       scrollDirection.current = latest > prevScrollY.current ? -1 : 1;
 
+      // Use ref to access latest animation constants (prevents stale closure values)
+      const constants = animationConstantsRef.current;
       blobs.current.forEach((blob, index) => {
         blob.rotation.curSpeed =
-          scrollSpeedMultiplier *
-          rotationSpeed *
+          constants.scrollSpeedMultiplier *
+          constants.rotationSpeed *
           Math.pow(
             (blobs.current.length - index) / blobs.current.length,
-            relativeBlobRotation
+            constants.relativeBlobRotation
           ) *
           blob.rotation.baseSpeed *
           scrollDirection.current;
       });
       prevScrollY.current = latest;
 
-      desiredY.current = desiredYBase - latest * desiredYMultiplier;
+      desiredY.current =
+        constants.desiredYBase - latest * constants.desiredYMultiplier;
     });
 
     // Feature detection for canvas filter: blur support
@@ -963,8 +1004,10 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
 
             // Calculate current blob position and state
             const currentPosition = {
-              x: renderWidth / 2,
-              y: (curY.current * renderHeight) / 8,
+              x: animationConstants.blobXPosition * renderWidth,
+              y:
+                (curY.current * renderHeight) /
+                ANIMATION_CONFIG.rendering.yPositionDivisor,
             };
 
             const currentState: BlobState = {
@@ -979,9 +1022,11 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
             // Check if blob has changed significantly
             if (prevState) {
               const rotationChanged =
-                Math.abs(currentState.rotation - prevState.rotation) > 5;
+                Math.abs(currentState.rotation - prevState.rotation) >
+                ANIMATION_CONFIG.dirtyRegion.rotationThresholdDegrees;
               const positionChanged =
-                Math.abs(currentState.position.y - prevState.position.y) > 2;
+                Math.abs(currentState.position.y - prevState.position.y) >
+                ANIMATION_CONFIG.dirtyRegion.positionThresholdPixels;
               const colorChanged =
                 currentState.colorIndex !== prevState.colorIndex;
 
@@ -1053,7 +1098,10 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
         offCtx.save();
 
         // Set global context state once
-        offCtx.translate(0, renderHeight * curY.current);
+        offCtx.translate(
+          animationConstants.blobXPosition * renderWidth,
+          renderHeight * curY.current
+        );
         if (canvasBlurSupported) {
           offCtx.filter = `blur(${qualitySettings.blurAmount}px)`;
         } else {
@@ -1114,8 +1162,12 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
                   const gradient = offCtx.createLinearGradient(
                     -(animationConstants.renderSize / 2),
                     animationConstants.renderSize / 2,
-                    animationConstants.renderSize / 8,
-                    -(animationConstants.renderSize / 8)
+                    animationConstants.renderSize /
+                      ANIMATION_CONFIG.rendering.gradientPositionDivisor,
+                    -(
+                      animationConstants.renderSize /
+                      ANIMATION_CONFIG.rendering.gradientPositionDivisor
+                    )
                   );
                   gradient.addColorStop(0, colors.a);
                   gradient.addColorStop(1, colors.b);

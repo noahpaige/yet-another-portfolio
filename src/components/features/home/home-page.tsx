@@ -99,6 +99,7 @@ export default function HomePage() {
             <AnimatedBackground
               scrollYProgress={scrollYProgress}
               colorPairs={colorPairs}
+              blobXPosition={0}
             />
           </div>
           <div className="z-0 h-full w-full absolute">
