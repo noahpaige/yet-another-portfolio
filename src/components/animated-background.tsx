@@ -174,9 +174,10 @@ const interpolateHueShortestPath = (
 /**
  * Converts HSL color object to CSS string format with caching
  * @param hsl - HSL color object
+ * @param colorCache - Instance of ColorCache to use for caching
  * @returns CSS HSL string (e.g., "hsl(180, 50%, 50%)")
  */
-const hslToString = (hsl: HSLColor) => {
+const hslToString = (hsl: HSLColor, colorCache: ColorCache) => {
   const key = `${hsl.h},${hsl.s},${hsl.l}`;
   return colorCache.getColor(key, () => `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`);
 };
@@ -214,8 +215,7 @@ class Path2DPool {
   }
 }
 
-// Global pool instance
-const path2DPool = new Path2DPool();
+// Note: Path2DPool instances are created per component instance (see component code)
 
 /**
  * Calculates the bounding box for a blob including padding for smooth transitions
@@ -369,8 +369,7 @@ class ColorCache {
   }
 }
 
-const gradientCache = new GradientCache();
-const colorCache = new ColorCache();
+// Note: GradientCache and ColorCache instances are created per component instance (see component code)
 
 /**
  * Generates blob data with colors, paths, and animation properties
@@ -405,10 +404,12 @@ const interpolateHSLSimple = (
 /**
  * Pre-calculates all color steps for better performance
  * @param colorPairs - Array of HSL color pairs
+ * @param colorCache - Instance of ColorCache to use for caching
  * @returns Array of pre-calculated color strings
  */
 const generateColorSteps = (
-  colorPairs: [HSLColor, HSLColor][]
+  colorPairs: [HSLColor, HSLColor][],
+  colorCache: ColorCache
 ): { a: string; b: string }[] => {
   const startTime = performance.now();
 
@@ -417,8 +418,8 @@ const generateColorSteps = (
     const [c1, c2] = colorPairs[0];
     const colorSteps = [
       {
-        a: hslToString(c1),
-        b: hslToString(c2),
+        a: hslToString(c1, colorCache),
+        b: hslToString(c2, colorCache),
       },
     ];
 
@@ -453,8 +454,8 @@ const generateColorSteps = (
       if (j < segments - 1 && k === stepsPerSegment) continue;
 
       colorSteps.push({
-        a: hslToString(interpolatedA),
-        b: hslToString(interpolatedB),
+        a: hslToString(interpolatedA, colorCache),
+        b: hslToString(interpolatedB, colorCache),
       });
     }
   }
@@ -474,12 +475,14 @@ const generateColorSteps = (
 
 const generateBlobs = (
   count: number,
-  colorPairs: [HSLColor, HSLColor][]
+  colorPairs: [HSLColor, HSLColor][],
+  path2DPool: Path2DPool,
+  colorCache: ColorCache
 ): BlobData[] => {
   const blobs: BlobData[] = [];
 
   // Pre-calculate all color steps once for all blobs
-  const colorSteps = generateColorSteps(colorPairs);
+  const colorSteps = generateColorSteps(colorPairs, colorCache);
 
   for (let i = 0; i < count; i++) {
     const rawPath = BLOB_PATHS[Math.floor(Math.random() * BLOB_PATHS.length)];
@@ -579,6 +582,26 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
 
     // Debounced resize handler
     const debouncedResize = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    // Instance-based caches for better multi-instance support
+    // These are created once per component instance and cleaned up on unmount
+    const path2DPoolRef = useRef<Path2DPool | null>(null);
+    const gradientCacheRef = useRef<GradientCache | null>(null);
+    const colorCacheRef = useRef<ColorCache | null>(null);
+
+    // Lazy initialization of caches
+    if (!path2DPoolRef.current) {
+      path2DPoolRef.current = new Path2DPool();
+    }
+    if (!gradientCacheRef.current) {
+      gradientCacheRef.current = new GradientCache();
+    }
+    if (!colorCacheRef.current) {
+      colorCacheRef.current = new ColorCache();
+    }
+
+    const path2DPool = path2DPoolRef.current;
+    const colorCache = colorCacheRef.current;
 
     /**
      * Validates component props and logs warnings for invalid values
@@ -779,8 +802,14 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
 
     // Initialize blobs with appropriate count
     useEffect(() => {
-      blobs.current = generateBlobs(qualitySettings.blobCount, colorPairs);
-    }, [qualitySettings.blobCount, colorPairs]);
+      if (!path2DPool || !colorCache) return;
+      blobs.current = generateBlobs(
+        qualitySettings.blobCount,
+        colorPairs,
+        path2DPool,
+        colorCache
+      );
+    }, [qualitySettings.blobCount, colorPairs, path2DPool, colorCache]);
 
     useMotionValueEvent(scrollYProgress, "change", (latest) => {
       // Calculate color index based on scroll progress
@@ -860,7 +889,9 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
       }
 
       // Set up gradient cache for offscreen canvas
-      gradientCache.setCanvas(offscreen);
+      if (gradientCacheRef.current) {
+        gradientCacheRef.current.setCanvas(offscreen);
+      }
 
       // Set your target resolution for offscreen rendering
       const renderWidth = animationConstants.renderSize;
@@ -1074,17 +1105,22 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
               // Create gradient cache key
               const gradientKey = `${colors.a}-${colors.b}-${animationConstants.renderSize}`;
 
-              const grad = gradientCache.getGradient(gradientKey, () => {
-                const gradient = offCtx.createLinearGradient(
-                  -(animationConstants.renderSize / 2),
-                  animationConstants.renderSize / 2,
-                  animationConstants.renderSize / 8,
-                  -(animationConstants.renderSize / 8)
-                );
-                gradient.addColorStop(0, colors.a);
-                gradient.addColorStop(1, colors.b);
-                return gradient;
-              });
+              const grad = gradientCacheRef.current?.getGradient(
+                gradientKey,
+                () => {
+                  const gradient = offCtx.createLinearGradient(
+                    -(animationConstants.renderSize / 2),
+                    animationConstants.renderSize / 2,
+                    animationConstants.renderSize / 8,
+                    -(animationConstants.renderSize / 8)
+                  );
+                  gradient.addColorStop(0, colors.a);
+                  gradient.addColorStop(1, colors.b);
+                  return gradient;
+                }
+              );
+
+              if (!grad) continue;
 
               blobRenderData.push({
                 blob,
@@ -1164,10 +1200,16 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
         if (debouncedResize.current) {
           clearTimeout(debouncedResize.current);
         }
-        // Clean up pools to prevent memory leaks
-        path2DPool.clear();
-        gradientCache.clear();
-        colorCache.clear();
+        // Clean up instance-based caches to prevent memory leaks
+        if (path2DPoolRef.current) {
+          path2DPoolRef.current.clear();
+        }
+        if (gradientCacheRef.current) {
+          gradientCacheRef.current.clear();
+        }
+        if (colorCacheRef.current) {
+          colorCacheRef.current.clear();
+        }
       };
     }, [
       // Quality settings (changes when performance tier changes)
