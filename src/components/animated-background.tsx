@@ -809,6 +809,9 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
         path2DPool,
         colorCache
       );
+      // Reset dirty region tracking state when blobs regenerate
+      previousBlobStates.current = [];
+      isFirstFrame.current = true;
     }, [qualitySettings.blobCount, colorPairs, path2DPool, colorCache]);
 
     useMotionValueEvent(scrollYProgress, "change", (latest) => {
@@ -1277,10 +1280,8 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
               WebkitBackdropFilter: `blur(${
                 qualitySettings.blurAmount * 20
               }px)`,
-              // fallback for browsers that don't support backdrop-filter
-              filter: `blur(${qualitySettings.blurAmount * 20}px)`,
               background: "transparent",
-              transition: "backdrop-filter 0.3s, filter 0.3s",
+              transition: "backdrop-filter 0.3s",
             }}
           />
         )}
