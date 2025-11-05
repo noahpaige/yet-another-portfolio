@@ -1016,7 +1016,6 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
           rotation: number;
           gradient: CanvasGradient;
           transform: {
-            translateY: number;
             rotation: number;
             scale: number;
           };
@@ -1076,7 +1075,6 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
                 rotation,
                 gradient: grad,
                 transform: {
-                  translateY: (curY.current * renderHeight) / 8,
                   rotation: (rotation * Math.PI) / 180,
                   scale: blob.scale,
                 },
@@ -1098,7 +1096,6 @@ const AnimatedBackground = React.memo<AnimatedBackgroundProps>(
         const renderStartTime = performance.now();
         for (const renderData of blobRenderData) {
           offCtx.save();
-          offCtx.translate(0, renderData.transform.translateY);
           offCtx.rotate(renderData.transform.rotation);
           offCtx.scale(renderData.transform.scale, renderData.transform.scale);
           offCtx.fillStyle = renderData.gradient;
