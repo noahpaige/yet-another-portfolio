@@ -22,7 +22,7 @@ const DEFAULT_CONFIG = {
   springDamping: 0.35,
   springStiffness: 0.02,
   rotationSpeed: 10,
-  scrollSpeedMultiplier: 30,
+  scrollSpeedMultiplier: 20,
   relativeBlobRotation: 0.3,
   curYInterp: 0.8,
   desiredYBase: 0.8, // Y position when scroll progress is 0
