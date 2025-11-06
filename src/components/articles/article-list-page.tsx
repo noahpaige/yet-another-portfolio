@@ -10,7 +10,8 @@ import {
 import { ArticleCard } from "@/components/ui/article-card";
 import { ArticleFilter } from "@/components/projects/article-filter";
 import { TopNavbar } from "@/components/shared/top-navbar";
-import AnimatedBackground from "@/components/animated-background";
+import AnimatedBackground2 from "@/components/animated-background2";
+import { useAnimatedBackground } from "@/hooks/use-animated-background";
 import ClientOnly from "@/components/client-only";
 import NoiseOverlay from "@/components/noise-overlay";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
@@ -41,6 +42,11 @@ export function ArticleListPage({
   const { scrollYProgress } = useScroll({
     container: scrollContainerRef,
     offset: ["start start", "end end"],
+  });
+
+  const animatedBackgroundProps = useAnimatedBackground({
+    scrollYProgress,
+    colorPairs,
   });
 
   // Get all articles with MDX content
@@ -145,10 +151,7 @@ export function ArticleListPage({
         {/* Animated Background and Noise Overlay */}
         <ClientOnly>
           <div className="sticky inset-0">
-            <AnimatedBackground
-              scrollYProgress={scrollYProgress}
-              colorPairs={colorPairs}
-            />
+            <AnimatedBackground2 {...animatedBackgroundProps} />
           </div>
           <div className="z-0 h-full w-full absolute">
             <NoiseOverlay

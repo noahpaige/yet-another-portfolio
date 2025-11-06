@@ -1,4 +1,4 @@
-import type { HSLColor } from "@/components/animated-background";
+import type { HSLColor } from "@/components/animated-background2";
 
 export type BlobData = {
   path: Path2D;

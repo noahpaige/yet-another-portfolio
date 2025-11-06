@@ -2,7 +2,8 @@
 
 import React, { useRef, useEffect } from "react";
 import { useScroll } from "motion/react";
-import AnimatedBackground from "@/components/animated-background";
+import AnimatedBackground2 from "@/components/animated-background2";
+import { useAnimatedBackground } from "@/hooks/use-animated-background";
 import ClientOnly from "@/components/client-only";
 import NoiseOverlay from "@/components/noise-overlay";
 import { TopNavbar } from "@/components/shared/top-navbar";
@@ -38,14 +39,16 @@ export default function ArticleLayout({
     offset: ["start start", "end end"],
   });
 
+  const animatedBackgroundProps = useAnimatedBackground({
+    scrollYProgress,
+    colorPairs,
+  });
+
   return (
     <div>
       <ClientOnly>
         <div className="sticky inset-0">
-          <AnimatedBackground
-            scrollYProgress={scrollYProgress}
-            colorPairs={colorPairs}
-          />
+          <AnimatedBackground2 {...animatedBackgroundProps} />
         </div>
         <div className="z-0 h-full w-full absolute">
           <NoiseOverlay

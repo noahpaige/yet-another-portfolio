@@ -1,4 +1,4 @@
-import type { HSLColor } from "@/components/animated-background";
+import type { HSLColor } from "@/components/animated-background2";
 import type { Article } from "@/lib/enhanced-frontmatter";
 import type { MDXContent } from "@/generated/article-mdx-index";
 
