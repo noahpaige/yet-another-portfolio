@@ -44,7 +44,7 @@ export default function BottomNav({
               onMouseEnter={() => setHovered(option.name)}
               onMouseLeave={() => setHovered(null)}
               className={`
-                relative px-4 py-2 rounded-md text-sm font-medium z-10
+                relative px-4 py-2 rounded-md text-lg font-medium z-10
                 transition-colors duration-200
                 ${textColor}
                 cursor-pointer
@@ -63,8 +63,7 @@ export default function BottomNav({
               )}
               <span className="relative z-10 flex items-center gap-2">
                 <IconComponent
-                  size={18}
-                  className={`shrink-0 transition-colors ${
+                  className={`shrink-0 transition-colors w-[1.125em] h-[1.125em] ${
                     isActive && "stroke-3"
                   }`}
                 />
