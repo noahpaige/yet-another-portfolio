@@ -112,9 +112,7 @@ export const ContactSection = () => {
                   rel="noopener noreferrer"
                   className="w-full h-14"
                 >
-                  <IconComponent
-                    className="flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7"
-                  />
+                  <IconComponent className="flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" />
                   <span className="whitespace-nowrap flex-1 text-center text-base sm:text-lg md:text-xl">
                     {button.name}
                   </span>

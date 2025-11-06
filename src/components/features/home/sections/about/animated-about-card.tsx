@@ -55,7 +55,7 @@ interface AnimationProperties {
 const animateChildren = async (
   parent: Element,
   animateFn: ReturnType<typeof useAnimate>[1],
-  styles: unknown,
+  styles: Record<string, string | number>,
   properties: AnimationProperties,
   checkCancel?: () => boolean
 ) => {
@@ -65,8 +65,12 @@ const animateChildren = async (
   for (let i = 0; i < children.length; i++) {
     if (checkCancel?.()) return;
 
-    animateFn(children[i] as HTMLElement, styles, properties);
-    if (staggerDelay > 0) await new Promise((r) => setTimeout(r, staggerDelay));
+    const child = children[i];
+    if (child instanceof HTMLElement) {
+      animateFn(child, styles, properties);
+      if (staggerDelay > 0)
+        await new Promise((r) => setTimeout(r, staggerDelay));
+    }
   }
 };
 
@@ -96,13 +100,13 @@ const AnimatedAboutCard = React.memo(function AnimatedAboutCard({
   const [scopeHeader, animateHeader] = useAnimate();
   const [scopeBody, animateBody] = useAnimate();
   const animationIdRef = useRef(Symbol());
-  
+
   // Convert pixel values to rem for fluid typography
   // Using clamp with rem units that will scale with the fluid root font-size
   const bodyMinRem = bodyMinPx / 16;
   const bodyMaxRem = bodyMaxPx / 16;
   const bodyFontSize = `clamp(${bodyMinRem}rem, ${bodyMinRem}rem + ${(bodyMaxRem - bodyMinRem) * 4}vw, ${bodyMaxRem}rem)`;
-  
+
   const headerMinRem = headerMinPx / 16;
   const headerMaxRem = headerMaxPx / 16;
   const headerFontSize = `clamp(${headerMinRem}rem, ${headerMinRem}rem + ${(headerMaxRem - headerMinRem) * 4}vw, ${headerMaxRem}rem)`;

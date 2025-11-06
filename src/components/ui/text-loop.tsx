@@ -1,19 +1,18 @@
 "use client";
 import React, { useState, useEffect, Children, useMemo } from "react";
-import { motion, AnimatePresence, type Variants } from "motion/react";
+import {
+  motion,
+  AnimatePresence,
+  type Variants,
+  type Transition,
+} from "motion/react";
 import { cn } from "@/lib/utils";
 
 export type TextLoopProps = {
   children: React.ReactNode;
   className?: string;
   interval?: number;
-  transition?: {
-    duration?: number;
-    type?: string;
-    stiffness?: number;
-    damping?: number;
-    mass?: number;
-  };
+  transition?: Transition;
   variants?: Variants;
   onIndexChange?: (index: number) => void;
   trigger?: boolean;

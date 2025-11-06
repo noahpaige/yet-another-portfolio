@@ -41,10 +41,7 @@ export const ArticleCard = React.memo(
     };
 
     // Helper function to get visibility classes based on mode
-    const getVisibilityClasses = (
-      mode: "show" | "hide" | "auto",
-      autoClasses: string
-    ): string => {
+    const getVisibilityClasses = (mode: "show" | "hide" | "auto"): string => {
       switch (mode) {
         case "show":
           return "flex"; // Always show
@@ -221,10 +218,7 @@ export const ArticleCard = React.memo(
                     )}
                   {/* Tags */}
                   <div
-                    className={`${getVisibilityClasses(
-                      showTags,
-                      "flex"
-                    )} flex-wrap gap-2 mt-1`}
+                    className={`${getVisibilityClasses(showTags)} flex-wrap gap-2 mt-1`}
                   >
                     {article.tags?.slice(0, 3).map((tag, index) => (
                       <Magnetic
@@ -384,10 +378,7 @@ export const ArticleCard = React.memo(
                     )}
                   {/* Tags */}
                   <div
-                    className={`${getVisibilityClasses(
-                      showTags,
-                      "flex"
-                    )} flex-wrap gap-2 mt-1`}
+                    className={`${getVisibilityClasses(showTags)} flex-wrap gap-2 mt-1`}
                   >
                     {article.tags?.slice(0, 3).map((tag, index) => (
                       <Magnetic
