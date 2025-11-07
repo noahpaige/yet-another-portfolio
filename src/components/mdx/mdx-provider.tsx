@@ -273,7 +273,7 @@ export const mdxComponents = {
     />
   ),
   li: (props: React.HTMLAttributes<HTMLLIElement>) => (
-    <li className="text-zinc-200 font-normal" {...props} />
+    <li className="text-zinc-200 font-normal text-xl" {...props} />
   ),
   strong: (props: React.HTMLAttributes<HTMLElement>) => (
     <strong className="font-bold text-zinc-300" {...props} />
@@ -310,6 +310,9 @@ export const mdxComponents = {
       className="border-zinc-500/50 my-16 mx-15 md:mx-20 lg:mx-30"
       {...props}
     />
+  ),
+  p: (props: React.HTMLAttributes<HTMLParagraphElement>) => (
+    <p className="text-zinc-300 text-xl leading-relaxed mb-4" {...props} />
   ),
 };
 
