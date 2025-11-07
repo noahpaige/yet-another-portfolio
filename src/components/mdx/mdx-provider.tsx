@@ -258,7 +258,7 @@ export const mdxComponents = {
     <ArticleH4 id={generateHeadingId(props.children)} {...props} />
   ),
   p: (props: React.HTMLAttributes<HTMLParagraphElement>) => (
-    <p className="text-zinc-300 leading-relaxed mb-4" {...props} />
+    <p className="text-zinc-300 leading-relaxed mb-4 text-xl" {...props} />
   ),
   ul: (props: React.HTMLAttributes<HTMLUListElement>) => (
     <ul
@@ -310,9 +310,6 @@ export const mdxComponents = {
       className="border-zinc-500/50 my-16 mx-15 md:mx-20 lg:mx-30"
       {...props}
     />
-  ),
-  p: (props: React.HTMLAttributes<HTMLParagraphElement>) => (
-    <p className="text-zinc-300 text-xl leading-relaxed mb-4" {...props} />
   ),
 };
 
