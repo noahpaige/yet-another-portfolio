@@ -119,7 +119,12 @@ export function Magnetic({
   }, [registerMagnetic, unregisterMagnetic, intensity, range, actionArea]);
 
   // Update motion values based on magnetic offset
+  // IMPORTANT: Set hover state in context BEFORE calculating offset
   useEffect(() => {
+    // Update context hover state first
+    setMagneticHovered(magneticId.current, isHovered);
+
+    // Then calculate and apply offset
     if (isHovered) {
       const offset = getMagneticOffset(magneticId.current);
       x.set(offset.x);
@@ -128,12 +133,7 @@ export function Magnetic({
       x.set(0);
       y.set(0);
     }
-  }, [isHovered, getMagneticOffset, x, y]);
-
-  // Handle hover state changes
-  useEffect(() => {
-    setMagneticHovered(magneticId.current, isHovered);
-  }, [isHovered, setMagneticHovered]);
+  }, [isHovered, getMagneticOffset, setMagneticHovered, x, y]);
 
   useActionAreaListeners(
     actionArea,
