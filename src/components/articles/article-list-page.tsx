@@ -166,18 +166,11 @@ export function ArticleListPage({
           className="container mx-auto px-4 py-8 relative z-10"
           style={{ paddingTop: "var(--navbar-height, 80px)" }}
         >
-          {/* Page Header */}
-          <div className="text-center my-8">
-            <h1 className="text-5xl md:text-6xl font-bold text-zinc-100">
-              {pageTitle}
-            </h1>
-          </div>
-
           {/* Main Layout */}
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Sidebar with Filters */}
             <div className="lg:w-80 flex-shrink-0">
-              <div className="sticky top-26">
+              <div className="sticky top-26 mt-31">
                 <ArticleFilter
                   onFilterChange={handleFilterChange}
                   articleType={articleType}
@@ -187,6 +180,13 @@ export function ArticleListPage({
 
             {/* Articles Grid */}
             <div className="flex-1">
+              {/* Page Header */}
+              <div className="text-center my-8">
+                <h1 className="text-5xl md:text-6xl font-bold text-zinc-100">
+                  {pageTitle}
+                </h1>
+              </div>
+
               {filteredArticles.length > 0 ? (
                 <div className={gridClassName}>
                   <AnimatePresence mode="wait">

@@ -82,7 +82,7 @@ export const ArticleCard = React.memo(
     const getHeightStyle = () => {
       if (height === "auto") {
         return {
-          className: "h-48", // Single height that scales with fluid typography
+          className: "h-60", // Single height that scales with fluid typography
         };
       } else if (height === "fit") {
         return {

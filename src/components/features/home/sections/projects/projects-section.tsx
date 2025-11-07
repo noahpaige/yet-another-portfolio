@@ -47,7 +47,7 @@ export default function ProjectsSection() {
             <motion.div
               key="projects-grid"
               className="grid auto-rows-auto grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-4"
-              style={{ width: "calc(min(100%, 1536px))" }}
+              style={{ width: "calc(min(100%, 800px))" }}
               variants={containerVariants}
               initial="hidden"
               animate="show"
@@ -83,7 +83,7 @@ export default function ProjectsSection() {
         </AnimatePresence>
         <motion.div
           className="z-1 w-full flex pt-2 sm:pt-4 justify-end"
-          style={{ width: "calc(min(100%, 1536px))" }}
+          style={{ width: "calc(min(100%, 800px))" }}
           variants={itemVariants}
           initial="hidden"
           animate={show ? "show" : "hidden"}

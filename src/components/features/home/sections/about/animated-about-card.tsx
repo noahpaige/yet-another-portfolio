@@ -78,10 +78,6 @@ interface AnimatedAboutCardProps {
   show: boolean;
   header: string;
   body: RichTextSegment[]; // ✅ New structure
-  headerMinPx: number;
-  headerMaxPx: number;
-  bodyMinPx: number;
-  bodyMaxPx: number;
   delay?: number;
   bodyAnimDelay?: number;
 }
@@ -90,26 +86,12 @@ const AnimatedAboutCard = React.memo(function AnimatedAboutCard({
   show,
   header,
   body,
-  headerMinPx,
-  headerMaxPx,
-  bodyMinPx,
-  bodyMaxPx,
   delay = 0,
   bodyAnimDelay = 0,
 }: AnimatedAboutCardProps) {
   const [scopeHeader, animateHeader] = useAnimate();
   const [scopeBody, animateBody] = useAnimate();
   const animationIdRef = useRef(Symbol());
-
-  // Convert pixel values to rem for fluid typography
-  // Using clamp with rem units that will scale with the fluid root font-size
-  const bodyMinRem = bodyMinPx / 16;
-  const bodyMaxRem = bodyMaxPx / 16;
-  const bodyFontSize = `clamp(${bodyMinRem}rem, ${bodyMinRem}rem + ${(bodyMaxRem - bodyMinRem) * 4}vw, ${bodyMaxRem}rem)`;
-
-  const headerMinRem = headerMinPx / 16;
-  const headerMaxRem = headerMaxPx / 16;
-  const headerFontSize = `clamp(${headerMinRem}rem, ${headerMinRem}rem + ${(headerMaxRem - headerMinRem) * 4}vw, ${headerMaxRem}rem)`;
 
   // Set initial hidden styles
   useEffect(() => {
@@ -209,14 +191,11 @@ const AnimatedAboutCard = React.memo(function AnimatedAboutCard({
 
   return (
     <div className="text-white leading-none">
-      <div
-        className="font-lexend-deca font-extralight text-white responsive-animated-about-card"
-        style={{ fontSize: bodyFontSize }}
-      >
+      <div className="font-lexend-deca font-extralight text-white responsive-animated-about-card text-3xl md:text-6xl">
         <span
           ref={scopeHeader}
-          className="font-space-mono text-slate-100 text-nowrap pr-[0.2em] [word-spacing:-0.25em]"
-          style={{ fontSize: headerFontSize, transformOrigin: "left" }}
+          className="font-space-mono text-slate-100 text-nowrap pr-[0.2em] [word-spacing:-0.25em] text-8xl md:text-[10rem]"
+          style={{ transformOrigin: "left" }}
         >
           {header}
         </span>

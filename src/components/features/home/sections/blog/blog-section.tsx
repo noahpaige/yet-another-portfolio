@@ -122,7 +122,7 @@ export default function BlogSection() {
         </AnimatePresence>
         <motion.div
           className="z-1 w-full flex pt-2 sm:pt-4 max-w-xl justify-end"
-          style={{ width: "calc(min(100%, 1536px))" }}
+          style={{ width: "calc(min(100%, 800px))" }}
           variants={buttonVariants}
           initial="hidden"
           animate={show ? "show" : "hidden"}
