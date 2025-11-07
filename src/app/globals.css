@@ -13,8 +13,15 @@
   --fluid-design-width: 1728;
   --fluid-design-unit: 16;
   --fluid-scale-factor: 1;
-  --fluid-container: clamp(var(--fluid-min-width), 100vw, var(--fluid-max-width));
-  --fluid-font: calc(var(--fluid-container) / var(--fluid-design-width) * var(--fluid-design-unit) * var(--fluid-scale-factor));
+  --fluid-container: clamp(
+    var(--fluid-min-width),
+    100vw,
+    var(--fluid-max-width)
+  );
+  --fluid-font: calc(
+    var(--fluid-container) / var(--fluid-design-width) *
+      var(--fluid-design-unit) * var(--fluid-scale-factor)
+  );
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
