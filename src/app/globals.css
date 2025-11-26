@@ -8,7 +8,7 @@
   --breakpoint-xs: 26.25rem;
 
   /* Fluid Typography System */
-  --fluid-min-width: 992px;
+  --fluid-min-width: 1200px;
   --fluid-max-width: 1920px;
   --fluid-design-width: 1728;
   --fluid-design-unit: 16;

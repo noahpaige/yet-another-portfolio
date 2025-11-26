@@ -63,7 +63,7 @@ export default function BottomNav({
               )}
               <span className="relative z-10 flex items-center gap-2">
                 <IconComponent
-                  className={`shrink-0 transition-colors w-[1.125em] h-[1.125em] ${
+                  className={`shrink-0 transition-colors sm:w-[1.125em] sm:h-[1.125em] w-[1.5em] h-[1.5em] ${
                     isActive && "stroke-3"
                   }`}
                 />

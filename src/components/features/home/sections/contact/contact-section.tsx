@@ -77,7 +77,7 @@ export const ContactSection = () => {
               exit="exit"
             >
               <motion.h1
-                className="font-bold z-10 text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl"
+                className="font-bold z-10 text-7xl"
                 variants={itemVariants}
               >
                 Get in touch!
