@@ -3,7 +3,7 @@
 import React from "react";
 import { getArticleById } from "@/generated/article-index";
 import { ArticleListPage } from "@/components/articles/article-list-page";
-import type { HSLColor } from "@/components/animated-background2";
+import type { HSLColor } from "@noahpaige/react-blobs-bg";
 
 // Color pairs for the animated background (different from projects)
 const colorPairs: [HSLColor, HSLColor][] = [

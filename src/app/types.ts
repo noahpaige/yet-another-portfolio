@@ -1,4 +1,4 @@
-import type { HSLColor } from "@/components/animated-background2";
+import type { HSLColor } from "@noahpaige/react-blobs-bg";
 
 export type BlobData = {
   path: Path2D;
