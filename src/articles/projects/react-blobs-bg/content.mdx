@@ -1,0 +1,81 @@
+---
+title: "react-blobs-bg"
+description: "An open-source React component for animated blob backgrounds using layered HSL gradients."
+type: "project"
+date: "2025-11-26"
+readTime: 6
+tags:
+  [
+    "React",
+    "Open Source",
+    "NPM Package",
+    "UI Components",
+    "Backgrounds",
+    "Animation",
+  ]
+image: "/react-blobs-bg.png"
+imageAltText: "Colorful animated blob background created with react-blobs-bg"
+featured: true
+featuredOrder: 2
+colorPairs:
+  [
+    [{ h: 265, s: 60, l: 18 }, { h: 190, s: 65, l: 5 }],
+    [{ h: 350, s: 45, l: 22 }, { h: 210, s: 70, l: 5 }],
+  ]
+seo:
+  title: "react-blobs-bg: Animated blob backgrounds for React"
+  description: "A performant React component for animated blob backgrounds using HSL gradients, powering the animated background on this portfolio."
+  keywords:
+    [
+      "react",
+      "background animation",
+      "animated background",
+      "blob background",
+      "hsl gradient",
+      "npm package",
+      "react-blobs-bg",
+    ]
+  image: "/react-blobs-bg.png"
+---
+
+`react-blobs-bg` is a small React library for rendering an animated background with with HTML Canvas. It powers the animated background on this portfolio and is designed to be **easy to drop into any React app** while staying **performant and customizable**.
+
+You can find the package on [npm](https://www.npmjs.com/package/@noahpaige/react-blobs-bg) and on [GitHub](https://github.com/noahpaige/react-blobs-bg).
+
+Check out [a live example on CodePen](https://codepen.io/noahpaige/pen/EaKodox) to see it in action.
+
+---
+
+## Key Features
+
+#### ⚛️ Declarative, prop-driven animation API
+
+Exposed a simple, typed React API where all motion is controlled externally via props, making the component easy to integrate with arbitrary animation systems (hooks, GSAP, Framer Motion, scroll listeners, etc.).
+
+#### 🎨 Performance-focused canvas architecture
+
+Designed a canvas rendering pipeline that uses offscreen rendering, dirty-region computation, batch drawing, and frame-rate limiting to keep animations smooth and efficient.
+
+#### 🧬 Hardware-adaptive quality system
+
+Implemented a hardware probing layer (WebGL renderer info, `deviceMemory`, `hardwareConcurrency`) to classify devices into performance tiers and automatically tune blob count, FPS, and blur.
+
+#### ♻️ Memory- and allocation-aware design
+
+Built object pools and caches for `Path2D`, gradients, and HSL strings, plus systematic cleanup on unmount to avoid leaks and GC churn in long‑lived animations.
+
+#### 🧱 Robust validation and failure modes
+
+Added structured runtime validation for complex props, with clear dev-time logging and safe visual fallbacks instead of noisy crashes when misused.
+
+#### 🧰 TypeScript-first library packaging
+
+Shipped as a TypeScript-first npm package with bundled type definitions, ESM/CJS builds, and a minimal surface area (`AnimatedBackground`/`BlobsBg`, typed helpers) suitable for real-world integration.
+
+#### 🧪 Developer experience and observability
+
+Instrumented the component with structured console output (tables, FPS logs, efficiency metrics) in development mode to help diagnose real-world performance and configuration issues.
+
+---
+
+If you’re using `react-blobs-bg` in your own project or have feature ideas, I’d love to hear about it—open an issue or discussion in the repo linked from the [npm package page](https://www.npmjs.com/package/@noahpaige/react-blobs-bg).
