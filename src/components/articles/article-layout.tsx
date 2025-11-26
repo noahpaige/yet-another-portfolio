@@ -65,7 +65,7 @@ export default function ArticleLayout({
         <TopNavbar currentPage={currentPage} />
         {/* Header */}
         <div
-          className="container mx-auto px-4 py-12 relative z-10"
+          className="mx-auto px-4 py-12 relative z-10"
           style={{ paddingTop: "calc(var(--navbar-height, 80px) + 3rem)" }}
         >
           <div className="max-w-[700px] mx-auto">

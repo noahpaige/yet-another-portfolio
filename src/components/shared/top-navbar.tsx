@@ -72,7 +72,7 @@ export function TopNavbar({ currentPage }: TopNavbarProps) {
   return (
     <div className="fixed top-0 left-0 right-0 z-50 shadow-lg shadow-slate-950/60">
       <nav ref={navbarRef} className="p-4 glass-layer rounded-none">
-        <div className="container mx-auto flex items-center justify-between">
+        <div className="mx-auto flex items-center justify-between">
           {/* Logo/Home Link */}
           <Link
             href="/"
