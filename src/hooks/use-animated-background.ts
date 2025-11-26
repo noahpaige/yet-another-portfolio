@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 import { MotionValue, useMotionValueEvent } from "motion/react";
 import { interp } from "@/lib/interp";
-import type { HSLColor } from "@/components/animated-background2";
+import { type HSLColor } from "@noahpaige/react-blobs-bg";
 
 /**
  * Configuration constants matching the original animated-background component

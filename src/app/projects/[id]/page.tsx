@@ -4,7 +4,7 @@ import { getArticleMDXContent } from "@/generated/article-mdx-index";
 import ArticleLayout from "@/components/articles/article-layout";
 import MDXRenderer from "@/components/mdx/mdx-renderer";
 import { notFound } from "next/navigation";
-import type { HSLColor } from "@/components/animated-background2";
+import { type HSLColor } from "@noahpaige/react-blobs-bg";
 import type { Metadata } from "next";
 import { generateArticleMetadata } from "@/hooks/use-seo-metadata";
 

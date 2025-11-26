@@ -10,7 +10,8 @@ import {
 import { ArticleCard } from "@/components/ui/article-card";
 import { ArticleFilter } from "@/components/projects/article-filter";
 import { TopNavbar } from "@/components/shared/top-navbar";
-import AnimatedBackground2 from "@/components/animated-background2";
+import { BlobsBg } from "@noahpaige/react-blobs-bg";
+
 import { useAnimatedBackground } from "@/hooks/use-animated-background";
 import ClientOnly from "@/components/client-only";
 import NoiseOverlay from "@/components/noise-overlay";
@@ -151,7 +152,7 @@ export function ArticleListPage({
         {/* Animated Background and Noise Overlay */}
         <ClientOnly>
           <div className="sticky inset-0">
-            <AnimatedBackground2 {...animatedBackgroundProps} />
+            <BlobsBg {...animatedBackgroundProps} />
           </div>
           <div className="z-0 h-full w-full absolute">
             <NoiseOverlay
@@ -179,7 +180,7 @@ export function ArticleListPage({
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Sidebar with Filters */}
             <div className="lg:w-80 flex-shrink-0">
-              <div className="sticky top-26 mt-8 lg:mt-31">
+              <div className="sticky top-26 mt-8 lg:mt-0">
                 <ArticleFilter
                   onFilterChange={handleFilterChange}
                   articleType={articleType}

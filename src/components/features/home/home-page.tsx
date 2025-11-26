@@ -5,7 +5,8 @@ import { useScroll } from "motion/react";
 
 import HomePageSection from "@/components/features/home/sections/home-page-section";
 import BottomNav from "@/components/features/home/bottom-nav";
-import AnimatedBackground2 from "@/components/animated-background2";
+import { BlobsBg, type HSLColor } from "@noahpaige/react-blobs-bg";
+
 import ClientOnly from "@/components/client-only";
 import { useScrollSections } from "@/hooks/use-scroll-sections";
 import { useAnimatedBackground } from "@/hooks/use-animated-background";
@@ -13,7 +14,6 @@ import { Home, Folder, Info, Mail, MessageSquareQuote } from "lucide-react";
 import NoiseOverlay from "@/components/noise-overlay";
 import LazySection from "@/components/features/home/lazy-section";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import type { HSLColor } from "@/components/animated-background2";
 
 // Lazy load section components
 const WelcomeSection = lazy(
@@ -103,7 +103,7 @@ export default function HomePage() {
       >
         <ClientOnly>
           <div className="sticky inset-0">
-            <AnimatedBackground2 {...animatedBackgroundProps} />
+            <BlobsBg {...animatedBackgroundProps} />
           </div>
           <div className="z-0 h-full w-full absolute">
             <NoiseOverlay

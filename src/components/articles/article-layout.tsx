@@ -2,7 +2,7 @@
 
 import React, { useRef, useEffect } from "react";
 import { useScroll } from "motion/react";
-import AnimatedBackground2 from "@/components/animated-background2";
+import { BlobsBg } from "@noahpaige/react-blobs-bg";
 import { useAnimatedBackground } from "@/hooks/use-animated-background";
 import ClientOnly from "@/components/client-only";
 import NoiseOverlay from "@/components/noise-overlay";
@@ -48,7 +48,7 @@ export default function ArticleLayout({
     <div>
       <ClientOnly>
         <div className="sticky inset-0">
-          <AnimatedBackground2 {...animatedBackgroundProps} />
+          <BlobsBg {...animatedBackgroundProps} />
         </div>
         <div className="z-0 h-full w-full absolute">
           <NoiseOverlay

@@ -2,13 +2,12 @@
 
 import React, { useRef } from "react";
 import { useScroll } from "motion/react";
-import AnimatedBackground2 from "@/components/animated-background2";
+import { BlobsBg, type HSLColor } from "@noahpaige/react-blobs-bg";
 import { useAnimatedBackground } from "@/hooks/use-animated-background";
 import NoiseOverlay from "@/components/noise-overlay";
 import { MagneticButton } from "@/components/ui/magnetic-button";
 import ClientOnly from "@/components/client-only";
 import { TopNavbar } from "@/components/shared/top-navbar";
-import type { HSLColor } from "@/components/animated-background2";
 
 // Color pairs for the animated background
 const colorPairs: [HSLColor, HSLColor][] = [
@@ -41,7 +40,7 @@ export default function NotFound() {
         {/* Animated Background and Noise Overlay */}
         <ClientOnly>
           <div className="sticky inset-0">
-            <AnimatedBackground2 {...animatedBackgroundProps} />
+            <BlobsBg {...animatedBackgroundProps} />
           </div>
           <div className="z-0 h-full w-full absolute">
             <NoiseOverlay
